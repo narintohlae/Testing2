@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ระบบนับสต็อก 2026</title>
+    <title>ระบบนับสต็อก</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap');
 
         :root {
-            /* Modern Color Palette 2026 */
+            var(--primary): #4F46E5;
             --primary: #4F46E5;
             --primary-hover: #4338CA;
             --success: #10B981;
@@ -31,7 +31,7 @@
             color: var(--text-main);
             height: 100vh;
             display: flex; flex-direction: column;
-            -webkit-tap-highlight-color: transparent; /* เอาแถบสีฟ้าเวลากดในมือถือออก */
+            -webkit-tap-highlight-color: transparent; 
         }
 
         /* Glassmorphism Tabs Navigation */
@@ -42,7 +42,7 @@
             -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid rgba(0,0,0,0.05);
             position: sticky; top: 0; z-index: 999;
-            padding-top: env(safe-area-inset-top); /* สำหรับจอรอยบาก */
+            padding-top: env(safe-area-inset-top); 
         }
         
         .tab-btn {
@@ -209,6 +209,7 @@
             border-radius: 30px; opacity: 0; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             pointer-events: none; z-index: 1000; display: flex; align-items: center; gap: 8px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            white-space: nowrap;
         }
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -229,7 +230,7 @@
 
     <div id="page-scan" class="page-content active">
         <div class="input-group">
-            <input type="text" id="searchInput" placeholder="พิมพ์ชื่อ / รหัส / บาร์โค้ด" autocomplete="off">
+            <input type="text" id="searchInput" placeholder="พิมพ์ชื่อสินค้า หรือ สแกนบาร์โค้ด" autocomplete="off">
             <button class="btn-icon" onclick="startScanning()">📷</button>
             <button class="btn-icon btn-reset" onclick="resetScan()">🔄</button>
         </div>
@@ -306,8 +307,8 @@
 
         // --- SEARCH & SCAN ---
         function doSearch(keyword) {
-            const term = keyword.toLowerCase().trim();
-            document.getElementById('searchInput').value = keyword;
+            const term = String(keyword).toLowerCase().trim();
+            document.getElementById('searchInput').value = term;
             
             if(!term) { 
                 document.getElementById('scanResultArea').innerHTML = '';
@@ -316,25 +317,34 @@
                 return; 
             }
 
+            if(allProducts.length === 0) {
+                showToast("⚠️ ฐานข้อมูลว่างเปล่า กรุณารอโหลดข้อมูลสักครู่");
+                return;
+            }
+
+            // ค้นหาจากคอลัมน์ สินค้า และ บาร์โค้ด
             const item = allProducts.find(p => {
-                const n = String(p['ชื่อการค้า']||'').toLowerCase();
-                const c = String(p['รหัสสินค้า']||'').toLowerCase();
-                const b = String(p['บาร์โค้ด']||'').toLowerCase();
-                return n === term || c === term || b === term;
+                const n = String(p['สินค้า']||'').toLowerCase().trim();
+                const b = String(p['บาร์โค้ด']||'').toLowerCase().trim();
+                return n === term || b === term;
             }) || allProducts.find(p => {
-                 const n = String(p['ชื่อการค้า']||'').toLowerCase();
+                 const n = String(p['สินค้า']||'').toLowerCase().trim();
                  return n.includes(term);
             });
 
             if(item) {
-                triggerVibration([50, 50]); // สั่นสองจังหวะสั้นๆ แปลว่าเจอของ
+                triggerVibration([50, 50]); 
                 document.getElementById('statusMessage').style.display = 'none';
                 renderScanCard(item);
             } else {
-                triggerVibration(200); // สั่นยาว แปลว่าหาไม่เจอ
+                triggerVibration(200); 
                 document.getElementById('scanResultArea').innerHTML = `
                     <div style="text-align:center; margin-top:30px; padding:20px; background:#FEE2E2; border-radius:12px; color:var(--danger);">
-                        <b>❌ ไม่พบข้อมูลสินค้า</b><br><small>ลองตรวจสอบรหัสหรือบาร์โค้ดอีกครั้ง</small>
+                        <b>❌ ไม่พบข้อมูลสินค้า</b><br>
+                        <div style="margin: 10px 0; padding: 10px; background: white; border-radius: 8px; border: 1px dashed var(--danger);">
+                            ค่าที่สแกนได้: <br><span style="font-size: 1.2rem; color: #000;">"${term}"</span>
+                        </div>
+                        <small>ลองตรวจสอบว่าใน Google Sheets มีสินค้านี้หรือไม่</small>
                     </div>`;
                 document.getElementById('statusMessage').style.display = 'none';
                 currentActiveItem = null;
@@ -344,9 +354,11 @@
         function renderScanCard(item) {
             currentActiveItem = item; 
             const area = document.getElementById('scanResultArea');
-            const code = item['รหัสสินค้า'] || '-';
-            const name = item['ชื่อการค้า'] || 'ไม่ระบุชื่อ';
-            const oldQty = parseInt(item['คงเหลือ'] || 0);
+            
+            // ดึงค่าจากหัวคอลัมน์ บาร์โค้ด, สินค้า, รวม
+            const code = item['บาร์โค้ด'] || '-';
+            const name = item['สินค้า'] || 'ไม่ระบุชื่อ';
+            const oldQty = parseInt(item['รวม'] || 0);
 
             // เช็คว่าเคยนับไปแล้วหรือยัง เพื่อดึงค่าล่าสุดมาแสดง
             const existingCount = countedList.find(i => i.code === code);
@@ -356,7 +368,7 @@
                 <div class="product-card">
                     <div class="card-header">
                         <h3>${name}</h3>
-                        <div class="card-detail">รหัส: ${code} | ระบบเดิม: <b>${oldQty}</b></div>
+                        <div class="card-detail">บาร์โค้ด: ${code} | ระบบเดิม: <b>${oldQty}</b></div>
                     </div>
                     
                     <div class="count-control">
@@ -371,7 +383,7 @@
         }
 
         window.adjQty = (val) => {
-            triggerVibration(20); // สั่นสั้นๆ เวลากดบวกลบ
+            triggerVibration(20); 
             const el = document.getElementById('inputQty');
             let v = parseInt(el.value) || 0;
             el.value = Math.max(0, v + val);
@@ -379,11 +391,12 @@
 
         window.confirmCurrentCount = () => {
             if (!currentActiveItem) return;
-            triggerVibration([30, 50, 30]); // สั่นยืนยัน
+            triggerVibration([30, 50, 30]); 
 
-            const code = currentActiveItem['รหัสสินค้า'];
-            const name = currentActiveItem['ชื่อการค้า'];
-            const oldQty = parseInt(currentActiveItem['คงเหลือ'] || 0);
+            // เตรียมข้อมูลสำหรับเซฟ
+            const code = currentActiveItem['บาร์โค้ด'];
+            const name = currentActiveItem['สินค้า'];
+            const oldQty = parseInt(currentActiveItem['รวม'] || 0);
             const newQty = parseInt(document.getElementById('inputQty').value) || 0;
 
             saveCountProcess(code, name, oldQty, newQty);
@@ -401,7 +414,7 @@
 
             localStorage.setItem('countedStock', JSON.stringify(countedList));
             
-            showToast(`บันทึก ${name} = ${newQty}`);
+            showToast(`บันทึกแล้ว: ${newQty} ชิ้น`);
             updateBadge();
             resetScan();
         }
@@ -411,6 +424,7 @@
             document.getElementById('scanResultArea').innerHTML = '';
             document.getElementById('statusMessage').style.display = 'block';
             currentActiveItem = null;
+            document.getElementById('searchInput').focus();
         }
 
         // --- SUMMARY PAGE ---
@@ -516,8 +530,8 @@
             html5QrCode = new Html5Qrcode("reader");
             
             const config = { 
-                fps: 15, // เพิ่มเฟรมเรตให้สแกนลื่นขึ้น
-                qrbox: { width: 250, height: 150 }, // เปลี่ยนเป็นแนวนอนนิดๆ เหมาะกับบาร์โค้ด
+                fps: 15, 
+                qrbox: { width: 250, height: 150 }, 
                 aspectRatio: 1.0,
                 videoConstraints: {
                     facingMode: "environment",
@@ -557,7 +571,7 @@
             if(e.key === 'Enter') {
                 e.preventDefault();
                 doSearch(e.target.value);
-                e.target.blur(); // ซ่อนคีย์บอร์ดในมือถือเวลากด Enter
+                e.target.blur(); 
             }
         });
         
