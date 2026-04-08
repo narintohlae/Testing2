@@ -31,7 +31,6 @@
         .btn-action { background-color: #f3f4f6; color: #374151; padding: 10px; border-radius: 8px; font-size: 0.9em; margin-top: 10px; width: 100%; border: 1px solid #d1d5db; }
         .btn-logout { background-color: #fee2e2; color: #ef4444; padding: 10px; border-radius: 8px; font-size: 0.9em; margin-top: 10px; width: 100%; }
         
-        /* สไตล์สำหรับหน้า Dashboard */
         .dash-content { text-align: left; background: #f9fafb; padding: 15px; border-radius: 12px; font-size: 0.9em; min-height: 200px; max-height: 300px; overflow-y: auto; margin-bottom: 15px; }
         .dash-summary { display: flex; justify-content: space-between; background: #e0f2fe; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; color: #0369a1; }
         .dash-item { border-bottom: 1px dashed #e5e7eb; padding: 8px 0; }
@@ -76,10 +75,8 @@
     </div>
 
     <script>
-        // --- 🔴 ตั้งค่าระบบตรงนี้ ---
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyXuioI9v6FsX3lXZXej1_NXb-Mi8JYC_8JKSQH_8laQSud39ThLGm6X_1j38MiMNPv/exec';
         
-        // พิกัดออฟฟิศของคุณ
         const OFFICE_LAT = 8.597226393849; 
         const OFFICE_LON = 99.92618619071712; 
         const ALLOWED_RADIUS = 100;
@@ -87,7 +84,15 @@
         let currentUser = "";
         let currentPin = "";
 
-        // --- ควบคุมหน้าจอ ---
+        // ฟังก์ชันสร้างวันที่มาตรฐาน (ป้องกันปัญหามือถือแต่ละเครื่องส่งรูปแบบวันที่ไม่เหมือนกัน)
+        function getStandardDate() {
+            const d = new Date();
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear(); 
+            return `${day}/${month}/${year}`;
+        }
+
         function login() {
             const id = document.getElementById('inputId').value.trim();
             const pin = document.getElementById('inputPin').value.trim();
@@ -105,7 +110,6 @@
             document.getElementById('loginScreen').style.display = 'block';
         }
 
-        // --- นาฬิกา ---
         setInterval(() => {
             document.getElementById('clockDisplay').innerText = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }, 1000);
@@ -122,16 +126,13 @@
         }
 
         function processRecord(type, btnElement, requireGeofence) {
-            // --- 🛑 เพิ่มระบบป้องกันการกดซ้ำ ---
-            const todayStr = new Date().toLocaleDateString('th-TH');
+            const todayStr = getStandardDate();
             const actionKey = `log_${currentUser}_${todayStr}_${type}`;
             
-            // เช็คว่ามือถือเครื่องนี้ วันนี้ พนักงานคนนี้ เคยกดปุ่มนี้ไปหรือยัง
             if(localStorage.getItem(actionKey)) {
                 alert(`คุณได้กด "${type}" ของวันนี้ไปแล้วครับ ไม่สามารถกดซ้ำได้`);
-                return; // หยุดการทำงานทันที
+                return; 
             }
-            // ------------------------------------
 
             let remark = "";
             if(type === 'ลางาน') {
@@ -160,7 +161,7 @@
                         }
 
                         const locText = `${userLat.toFixed(5)}, ${userLon.toFixed(5)}`;
-                        saveData(type, locText, remark, btnElement, originalText, actionKey); // ส่ง actionKey ไปด้วย
+                        saveData(type, locText, remark, btnElement, originalText, actionKey);
                     },
                     (error) => {
                         alert("โปรดอนุญาตการเข้าถึงตำแหน่ง (GPS) ในการตั้งค่าเบราว์เซอร์");
@@ -180,7 +181,7 @@
             btnElement.innerText = "กำลังบันทึก...";
             const now = new Date();
             const payload = { 
-                date: now.toLocaleDateString('th-TH'), 
+                date: getStandardDate(), // ใช้วันที่แบบมาตรฐาน
                 time: now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }), 
                 type: type, location: location, empId: currentUser, pin: currentPin, remark: remark 
             };
@@ -190,13 +191,11 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(() => {
-                // --- 🛑 บันทึกความจำลงมือถือว่าทำรายการนี้เสร็จแล้ว ---
                 localStorage.setItem(actionKey, 'done');
-                
                 alert(`บันทึก [${type}] เรียบร้อยแล้ว`);
                 btnElement.innerText = originalText;
                 btnElement.disabled = false;
-                logout(); // บันทึกเสร็จแล้วออกจากระบบทันที
+                logout(); 
             }).catch(() => {
                 alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
                 btnElement.innerText = originalText;
@@ -204,12 +203,13 @@
             });
         }
 
-        // --- ระบบ Dashboard (ดึงข้อมูล) ---
         function openDashboard() {
             document.getElementById('mainScreen').style.display = 'none';
             document.getElementById('dashboardScreen').style.display = 'block';
             const dashContent = document.getElementById('dashContent');
             dashContent.innerHTML = "<div style='text-align:center; padding: 20px;'>กำลังโหลดข้อมูล...⏳</div>";
+
+            const todayStr = getStandardDate();
 
             fetch(SCRIPT_URL)
             .then(response => response.json())
@@ -219,13 +219,16 @@
                     return;
                 }
 
-                if(data.length === 0) {
-                    dashContent.innerHTML = "<div style='text-align:center; padding: 20px; color: #888;'>ยังไม่มีข้อมูลการลงเวลาในวันนี้</div>";
+                // กรองเฉพาะข้อมูลของวันนี้ (เปรียบเทียบด้วย String รูปแบบเดียวกัน)
+                let todayData = data.filter(d => d.date === todayStr);
+
+                if(todayData.length === 0) {
+                    dashContent.innerHTML = `<div style='text-align:center; padding: 20px; color: #888;'>ยังไม่มีข้อมูลการลงเวลาสำหรับวันนี้<br><small>(${todayStr})</small></div>`;
                     return;
                 }
 
-                let countIn = data.filter(d => d.type === 'เข้างาน').length;
-                let countLeave = data.filter(d => d.type === 'ลางาน').length;
+                let countIn = todayData.filter(d => d.type === 'เข้างาน').length;
+                let countLeave = todayData.filter(d => d.type === 'ลางาน').length;
 
                 let html = `
                     <div class="dash-summary">
@@ -234,7 +237,7 @@
                     </div>
                 `;
 
-                data.reverse().forEach(item => {
+                todayData.forEach(item => {
                     let color = '#555';
                     if(item.type === 'เข้างาน') color = '#10b981';
                     if(item.type === 'ออกงาน') color = '#ef4444';
