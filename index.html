@@ -2,368 +2,608 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบลงเวลาพนักงาน</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Time & Leave Tracker - ระบบบันทึกเวลาและลางาน</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap');
-        body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .app-container { background: white; padding: 30px 20px; border-radius: 16px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); width: 100%; max-width: 350px; text-align: center; max-height: 95vh; overflow-y: auto;}
-        h1 { font-size: 1.2em; color: #555; margin-top: 0; margin-bottom: 20px; }
-        
-        .login-box { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
-        input { width: 90%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1em; font-family: 'Sarabun'; text-align: center; margin: 0 auto; box-sizing: border-box; }
-        .btn-primary { background-color: #2563eb; color: white; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold; font-family: 'Sarabun'; width: 100%; transition: background 0.2s; }
-        .btn-primary:disabled { background-color: #9ca3af; cursor: not-allowed; }
-        
-        #userGreeting { color: #2563eb; font-weight: bold; margin-bottom: 5px; }
-        .clock { font-size: 3em; font-weight: bold; color: #222; margin: 15px 0; }
-        
-        .btn-group { display: flex; gap: 15px; margin-bottom: 15px; }
-        button { padding: 15px; border: none; border-radius: 12px; font-size: 1em; font-family: 'Sarabun', sans-serif; font-weight: bold; cursor: pointer; }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-in { flex: 1; background-color: #10b981; color: white; } 
-        .btn-out { flex: 1; background-color: #ef4444; color: white; } 
-        .btn-leave { width: 100%; background-color: #8b5cf6; color: white; padding: 12px; font-size: 0.9em; margin-bottom: 20px;}
-        
-        .btn-action { background-color: #f3f4f6; color: #374151; padding: 10px; border-radius: 8px; font-size: 0.9em; margin-top: 10px; width: 100%; border: 1px solid #d1d5db; }
-        .btn-logout { background-color: #fee2e2; color: #ef4444; padding: 10px; border-radius: 8px; font-size: 0.9em; margin-top: 10px; width: 100%; }
-        
-        /* Dashboard & Admin UI */
-        .dash-content { text-align: left; background: #f9fafb; padding: 15px; border-radius: 12px; font-size: 0.9em; min-height: 200px; margin-bottom: 15px; }
-        .dash-item { border-bottom: 1px dashed #e5e7eb; padding: 10px 0; display: flex; justify-content: space-between; align-items: center;}
-        .dash-item:last-child { border-bottom: none; }
-        
-        .admin-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
-        .tab-btn { flex: 1; padding: 8px; font-size: 0.9em; background: #e5e7eb; border-radius: 8px; color: #374151;}
-        .tab-btn.active { background: #1f2937; color: white; }
-        
-        .date-picker { display: flex; gap: 10px; margin-bottom: 15px; }
-        .date-picker input { padding: 8px; font-size: 0.9em; }
-        .date-picker button { padding: 8px; background: #1f2937; color: white; width: 80px; font-size: 0.9em;}
-        
-        .mini-btn { padding: 4px 8px; font-size: 0.8em; border-radius: 6px; margin-left: 5px; background: #e5e7eb; color: #333; }
-        .mini-btn.del { background: #fee2e2; color: #ef4444; }
+        body { font-family: 'Prompt', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
+        .animate-pulse-dot { animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .fade-enter { opacity: 0; transform: translateY(10px); transition: all 0.4s ease-out; }
+        .fade-enter-active { opacity: 1; transform: translateY(0); }
+        .modal-bg { background-color: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); }
     </style>
 </head>
-<body>
+<body class="text-gray-800 antialiased h-screen w-full flex justify-center items-center overflow-hidden">
 
-    <div class="app-container" id="loginScreen">
-        <h1>เข้าสู่ระบบลงเวลา</h1>
-        <div class="login-box">
-            <input type="text" id="inputId" placeholder="รหัสพนักงาน (User)">
-            <input type="password" id="inputPin" placeholder="รหัสผ่าน / PIN">
-            <button class="btn-primary" onclick="login()">เข้าสู่ระบบ</button>
-        </div>
-    </div>
-
-    <div class="app-container" id="mainScreen" style="display: none;">
-        <div id="userGreeting">รหัสพนักงาน: <span id="displayId"></span></div>
-        <div class="clock" id="clockDisplay">00:00</div>
-        <div class="btn-group">
-            <button class="btn-in" id="btnIn" onclick="processRecord('เข้างาน', this, true)">เข้างาน</button>
-            <button class="btn-out" id="btnOut" onclick="processRecord('ออกงาน', this, true)">ออกงาน</button>
-        </div>
-        <button class="btn-leave" id="btnLeave" onclick="processRecord('ลางาน', this, false)">📝 แจ้งลางาน</button>
-        <button class="btn-action" onclick="openDashboard()">📊 ดูสรุปข้อมูลวันนี้</button>
-        <button class="btn-logout" onclick="logout()">🚪 ออกจากระบบ</button>
-    </div>
-
-    <div class="app-container" id="dashboardScreen" style="display: none;">
-        <h1>สรุปข้อมูลวันนี้</h1>
-        <div class="dash-content" id="dashContent"></div>
-        <button class="btn-action" onclick="closeScreens()">🔙 กลับ</button>
-    </div>
-
-    <div class="app-container" id="adminScreen" style="display: none;">
-        <h1 style="color: #1f2937; margin-bottom: 10px;">👑 ผู้ดูแลระบบ</h1>
+    <div class="w-full h-full max-w-[480px] bg-white shadow-2xl relative flex flex-col sm:h-[95vh] sm:rounded-[2.5rem] sm:border-8 sm:border-gray-900 overflow-hidden">
         
-        <div class="admin-tabs">
-            <button class="tab-btn active" id="tabLogs" onclick="switchAdminTab('logs')">ประวัติลงเวลา</button>
-            <button class="tab-btn" id="tabUsers" onclick="switchAdminTab('users')">พนักงาน</button>
+        <div id="toast-container" class="absolute top-4 left-0 w-full px-4 z-[70] flex flex-col gap-2 pointer-events-none"></div>
+
+        <!-- 1. Loading Screen -->
+        <div id="screen-loading" class="absolute inset-0 bg-white z-50 flex flex-col items-center justify-center transition-opacity duration-300">
+            <i data-lucide="loader-2" class="w-10 h-10 text-blue-500 animate-spin mb-4"></i>
+            <p class="text-gray-500 text-sm font-medium">กำลังเชื่อมต่อระบบ...</p>
         </div>
 
-        <div id="adminViewLogs">
-            <div class="date-picker">
-                <input type="date" id="adminSearchDate">
-                <button onclick="fetchAdminLogs()">ค้นหา</button>
+        <!-- 2. Setup/Login Screen -->
+        <div id="screen-setup" class="absolute inset-0 bg-white z-30 hidden flex-col p-8 transition-opacity duration-300 overflow-y-auto">
+            <div class="absolute top-6 right-6 cursor-pointer text-gray-300 hover:text-gray-600 transition-colors" onclick="openAdminModal()">
+                <i data-lucide="settings" class="w-6 h-6"></i>
             </div>
-            <div class="dash-content" id="adminLogsContent" style="max-height: 250px; overflow-y: auto;">กำลังโหลด...</div>
-        </div>
-
-        <div id="adminViewUsers" style="display:none;">
-            <div style="background:#f3f4f6; padding:10px; border-radius:8px; margin-bottom:15px; display:flex; flex-direction:column; gap:8px;">
-                <input type="text" id="newEmpId" placeholder="รหัสพนักงาน (เช่น EMP01)" style="width:100%; padding:8px;">
-                <input type="text" id="newEmpName" placeholder="ชื่อ-นามสกุล" style="width:100%; padding:8px;">
-                <input type="text" id="newEmpPin" placeholder="รหัส PIN" style="width:100%; padding:8px;">
-                <button class="btn-primary" style="padding:8px;" onclick="addEmployee()">+ เพิ่มพนักงาน</button>
+            
+            <div class="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full mt-8">
+                <div class="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center mb-6">
+                    <i data-lucide="badge-check" class="w-8 h-8 text-blue-600"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">เข้าสู่ระบบ</h1>
+                <p class="text-gray-500 text-sm mb-8">กรุณากรอกรหัสพนักงานที่ระบบออกให้เพื่อเข้าใช้งาน</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">รหัสพนักงาน (Employee ID)</label>
+                        <input type="text" id="input-emp-id" placeholder="เช่น E001" 
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-base uppercase">
+                    </div>
+                    <button id="btn-login" onclick="loginWithEmpId()" 
+                        class="w-full bg-blue-600 text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-blue-200 active:scale-[0.98] transition-all flex justify-center items-center gap-2">
+                        <span>ตรวจสอบรหัส</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
             </div>
-            <div class="dash-content" id="adminUsersContent" style="max-height: 200px; overflow-y: auto;">กำลังโหลด...</div>
         </div>
 
-        <button class="btn-logout" onclick="logout()">🚪 ออกจากระบบ</button>
+        <!-- 3. Main Dashboard Screen -->
+        <div id="screen-dashboard" class="absolute inset-0 bg-gray-50 hidden flex-col z-20 transition-opacity duration-300">
+            <!-- Header -->
+            <div class="bg-white px-6 pt-8 pb-6 rounded-b-3xl shadow-sm z-10 relative">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium tracking-wide uppercase mb-1">ยินดีต้อนรับกลับมา</p>
+                        <h2 id="display-name" class="text-lg font-bold text-gray-900 truncate max-w-[150px]">กำลังโหลด...</h2>
+                        <p class="text-xs font-bold text-blue-600 bg-blue-50 inline-block px-2 py-0.5 rounded-md mt-1" id="display-emp-id">---</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center cursor-pointer hover:bg-orange-100 transition" onclick="switchScreen('screen-leaves')">
+                            <i data-lucide="calendar-clock" class="w-5 h-5 text-orange-600"></i>
+                        </div>
+                        <div class="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center cursor-pointer hover:bg-red-100 transition" onclick="logoutEmployee()">
+                            <i data-lucide="log-out" class="w-5 h-5 text-red-500"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Digital Clock -->
+                <div class="text-center mt-4">
+                    <div class="inline-flex items-center justify-center gap-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium mb-3">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse-dot"></span>
+                        เวลาปัจจุบัน
+                    </div>
+                    <h1 id="live-time" class="text-5xl font-light text-gray-900 tracking-tight tabular-nums">00:00</h1>
+                    <p id="live-date" class="text-sm text-gray-500 mt-2 font-medium">--</p>
+                </div>
+            </div>
+
+            <!-- Action Area -->
+            <div class="flex-1 flex flex-col justify-center items-center p-6 relative">
+                <div class="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+                    <div class="w-64 h-64 border border-gray-200 rounded-full opacity-50"></div>
+                    <div class="w-80 h-80 border border-gray-200 rounded-full absolute opacity-30"></div>
+                </div>
+
+                <button id="btn-action" disabled class="relative z-10 w-44 h-44 rounded-full flex flex-col items-center justify-center gap-3 text-white shadow-2xl transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-gray-300">
+                    <i id="action-icon" data-lucide="fingerprint" class="w-12 h-12"></i>
+                    <span id="action-text" class="text-xl font-bold tracking-wide">กำลังโหลด</span>
+                    <span id="action-subtext" class="text-xs opacity-80">กรุณารอสักครู่</span>
+                </button>
+            </div>
+
+            <!-- Recent Logs -->
+            <div class="bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.05)] h-[35vh] flex flex-col z-10">
+                <div class="flex justify-center pt-3 pb-2">
+                    <div class="w-12 h-1.5 bg-gray-200 rounded-full"></div>
+                </div>
+                <div class="px-6 pb-2 flex justify-between items-end">
+                    <h3 class="text-sm font-bold text-gray-800">ประวัติเข้า-ออกงาน</h3>
+                    <span class="text-xs text-gray-500">วันนี้</span>
+                </div>
+                <div class="flex-1 overflow-y-auto px-6 pb-6 pt-2" id="logs-container"></div>
+            </div>
+        </div>
+
+        <!-- 4. User Leaves Screen -->
+        <div id="screen-leaves" class="absolute inset-0 bg-gray-50 hidden flex-col z-30 transition-opacity duration-300">
+            <div class="bg-white px-4 pt-6 pb-4 shadow-sm z-20 flex items-center justify-between">
+                <button onclick="switchScreen('screen-dashboard')" class="p-2 rounded-full hover:bg-gray-100 transition">
+                    <i data-lucide="arrow-left" class="w-6 h-6 text-gray-700"></i>
+                </button>
+                <h2 class="text-lg font-bold text-gray-900">จัดการวันลา</h2>
+                <div class="w-10"></div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-4 relative space-y-3" id="user-leaves-container"></div>
+            <button onclick="switchScreen('screen-leave-form')" class="absolute bottom-6 right-6 w-14 h-14 bg-orange-500 text-white rounded-full shadow-xl shadow-orange-200 flex items-center justify-center active:scale-95 transition-all">
+                <i data-lucide="plus" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- 5. Leave Request Form Screen -->
+        <div id="screen-leave-form" class="absolute inset-0 bg-white hidden flex-col z-40 transition-opacity duration-300">
+            <div class="px-4 pt-6 pb-4 border-b border-gray-100 flex items-center justify-between">
+                <button onclick="switchScreen('screen-leaves')" class="p-2 rounded-full hover:bg-gray-100 transition">
+                    <i data-lucide="arrow-left" class="w-6 h-6 text-gray-700"></i>
+                </button>
+                <h2 class="text-lg font-bold text-gray-900">ยื่นใบลางาน</h2>
+                <div class="w-10"></div>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ประเภทการลา</label>
+                    <select id="leave-type" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
+                        <option value="sick">ลาป่วย</option>
+                        <option value="personal">ลากิจ</option>
+                        <option value="vacation">ลาพักร้อน</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">วันที่เริ่มต้น</label>
+                        <input type="date" id="leave-start" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">ถึงวันที่</label>
+                        <input type="date" id="leave-end" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">เหตุผลการลา</label>
+                    <textarea id="leave-reason" rows="3" placeholder="ระบุเหตุผล..." class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"></textarea>
+                </div>
+            </div>
+            <div class="p-4 bg-white border-t border-gray-100">
+                <button id="btn-submit-leave" onclick="submitLeave()" class="w-full bg-orange-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-orange-200 active:scale-[0.98] transition-all">ยื่นคำขอ</button>
+            </div>
+        </div>
+
+        <!-- 6. Admin Dashboard Screen -->
+        <div id="screen-admin" class="absolute inset-0 bg-gray-50 hidden flex-col z-40 transition-opacity duration-300">
+            <div class="bg-gray-900 text-white px-6 pt-8 pb-6 shadow-md z-20">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center gap-3">
+                        <button onclick="exitAdminMode()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 transition">
+                            <i data-lucide="arrow-left" class="w-4 h-4 text-gray-300"></i>
+                        </button>
+                        <h1 class="text-xl font-bold">Admin Panel</h1>
+                    </div>
+                    <div class="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded-full border border-red-500/30">ผู้ดูแลระบบ</div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-gray-800 rounded-xl p-3 border border-gray-700">
+                        <p class="text-gray-400 text-[10px] mb-1">พนักงาน</p>
+                        <h3 class="text-xl font-bold" id="admin-stat-users">0</h3>
+                    </div>
+                    <div class="bg-gray-800 rounded-xl p-3 border border-gray-700">
+                        <p class="text-gray-400 text-[10px] mb-1">ลงเวลาวันนี้</p>
+                        <h3 class="text-xl font-bold text-green-400" id="admin-stat-logs">0</h3>
+                    </div>
+                    <div class="bg-gray-800 rounded-xl p-3 border border-gray-700 relative">
+                        <p class="text-gray-400 text-[10px] mb-1">รออนุมัติลา</p>
+                        <h3 class="text-xl font-bold text-orange-400" id="admin-stat-leaves">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex bg-white border-b border-gray-200 z-10 shadow-sm">
+                <button onclick="switchAdminTab('logs')" id="tab-logs" class="flex-1 py-3 text-sm font-bold border-b-2 border-blue-600 text-blue-600 transition-colors">เข้า-ออก</button>
+                <button onclick="switchAdminTab('leaves')" id="tab-leaves" class="flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-gray-500 transition-colors">ลางาน</button>
+                <button onclick="switchAdminTab('users')" id="tab-users" class="flex-1 py-3 text-sm font-bold border-b-2 border-transparent text-gray-500 transition-colors">พนักงาน</button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 relative bg-gray-50">
+                <div id="admin-content-logs" class="space-y-3"></div>
+                <div id="admin-content-leaves" class="space-y-3 hidden"></div>
+                
+                <!-- Users Tab with Creation Form -->
+                <div id="admin-content-users" class="hidden flex-col gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                        <h4 class="font-bold text-sm mb-3 text-gray-800 flex items-center gap-2"><i data-lucide="user-plus" class="w-4 h-4 text-blue-600"></i>เพิ่มพนักงานใหม่</h4>
+                        <div class="flex gap-2 mb-3">
+                            <input type="text" id="admin-new-empid" placeholder="รหัส (เช่น E001)" class="w-2/5 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm uppercase">
+                            <input type="text" id="admin-new-empname" placeholder="ชื่อ-นามสกุล" class="w-3/5 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                        </div>
+                        <button onclick="adminCreateEmployee()" class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 rounded-lg transition-colors">บันทึกข้อมูลพนักงาน</button>
+                    </div>
+                    <div id="admin-users-list" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Modals -->
+        <div id="modal-admin-pin" class="absolute inset-0 z-50 hidden items-center justify-center modal-bg p-6 opacity-0 transition-opacity duration-300">
+            <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl transform scale-95 transition-transform duration-300" id="modal-admin-content">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2"><i data-lucide="lock" class="w-5 h-5 text-gray-500"></i> ยืนยันตัวตน Admin</h3>
+                    <button onclick="closeAdminModal()" class="text-gray-400 hover:text-gray-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                <p class="text-sm text-gray-500 mb-6">กรุณากรอกรหัส PIN</p>
+                <input type="password" id="input-admin-pin" maxlength="4" placeholder="••••" class="w-full text-center tracking-[1em] text-2xl font-bold px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-800 mb-4">
+                <button onclick="verifyAdmin()" class="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-[0.98] transition-all">เข้าสู่ระบบจัดการ</button>
+            </div>
+        </div>
+
+        <div id="modal-confirm" class="absolute inset-0 z-[60] hidden items-center justify-center modal-bg p-6 opacity-0 transition-opacity duration-300">
+            <div class="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl transform scale-95 transition-transform duration-300" id="modal-confirm-content">
+                <h3 class="text-lg font-bold text-gray-900 mb-2" id="confirm-title">ยืนยันการทำรายการ</h3>
+                <p class="text-sm text-gray-500 mb-6" id="confirm-message">คุณแน่ใจหรือไม่?</p>
+                <div class="flex gap-3">
+                    <button id="btn-confirm-cancel" class="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl active:scale-95 transition-all">ยกเลิก</button>
+                    <button id="btn-confirm-ok" class="flex-1 py-3 text-white font-bold rounded-xl active:scale-95 transition-all">ตกลง</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <script>
-        // 🔴 SCRIPT URL และตั้งค่าของคุณ
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyXuioI9v6FsX3lXZXej1_NXb-Mi8JYC_8JKSQH_8laQSud39ThLGm6X_1j38MiMNPv/exec';
-        const OFFICE_LAT = 8.597226393849; 
-        const OFFICE_LON = 99.92618619071712; 
-        const ALLOWED_RADIUS = 100;
-        const ADMIN_USER = "admin"; const ADMIN_PIN = "123456";
+    <!-- Firebase Script & App Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, setDoc, getDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        let currentUser = ""; let currentPin = "";
+        let firebaseConfig = {};
+        try { firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}'); } catch (e) {}
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-time-tracker';
 
-        // --- Utils ---
-        function getStandardDate() {
-            const d = new Date();
-            return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+        let currentUser = null, userProfile = null, savedEmpId = null;
+        let allLogs = [], allProfiles = [], allLeaves = [];
+        let unsubscribeLogs = null, unsubscribeProfiles = null, unsubscribeLeaves = null;
+        let currentStatus = 'unknown';
+        const ADMIN_PIN = "9999";
+
+        const leaveTypes = { 'sick': 'ลาป่วย', 'personal': 'ลากิจ', 'vacation': 'ลาพักร้อน' };
+        const statusConfig = {
+            'pending': { label: 'รออนุมัติ', bg: 'bg-orange-100', text: 'text-orange-700', icon: 'clock' },
+            'approved': { label: 'อนุมัติแล้ว', bg: 'bg-green-100', text: 'text-green-700', icon: 'check-circle' },
+            'rejected': { label: 'ไม่อนุมัติ', bg: 'bg-red-100', text: 'text-red-700', icon: 'x-circle' }
+        };
+
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                else await signInAnonymously(auth);
+            } catch (error) { window.showToast("ไม่สามารถเข้าสู่ระบบได้", "error"); }
+        };
+        initAuth();
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user; 
+                await loadDeviceLink(); 
+                setupPublicDataListeners(); // เริ่มโหลดข้อมูลสาธารณะ (Profile ถูกเช็คในนี้)
+            } else { 
+                currentUser = null; window.switchScreen('screen-loading'); 
+            }
+        });
+
+        // ดึงข้อมูลว่าอุปกรณ์นี้เคยผูกกับรหัสพนักงานใดไว้
+        async function loadDeviceLink() {
+            try {
+                const snap = await getDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'link'));
+                if(snap.exists()) savedEmpId = snap.data().empId;
+            } catch(e) {}
         }
-        function formatHTMLDateToStandard(htmlDate) {
-            if(!htmlDate) return "";
-            const parts = htmlDate.split('-');
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
 
-function login() {
-            const id = document.getElementById('inputId').value.trim();
-            const pin = document.getElementById('inputPin').value.trim();
+        // ระบบพนักงานล็อกอินด้วยรหัส
+        window.loginWithEmpId = async () => {
+            if (!currentUser) return;
+            const inputEl = document.getElementById('input-emp-id');
+            const btnEl = document.getElementById('btn-login');
+            const empIdInput = inputEl.value.trim().toUpperCase();
             
-            if(id === "" || pin === "") { 
-                alert("กรุณากรอกข้อมูลให้ครบถ้วน"); 
-                return; 
+            if (!empIdInput) return window.showToast("กรุณากรอกรหัสพนักงาน", "error");
+            
+            const profile = allProfiles.find(p => p.empId === empIdInput);
+            if (!profile) return window.showToast("ไม่พบรหัสพนักงานนี้ในระบบ", "error");
+
+            btnEl.disabled = true; btnEl.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> ตรวจสอบ...'; lucide.createIcons();
+
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'link'), { empId: profile.empId });
+                savedEmpId = profile.empId;
+                userProfile = profile;
+                document.getElementById('display-name').textContent = profile.name;
+                document.getElementById('display-emp-id').textContent = profile.empId;
+                window.showToast("เข้าสู่ระบบสำเร็จ", "success");
+                updateUserDashboardState(); renderUserLogs(); renderUserLeaves();
+                window.switchScreen('screen-dashboard');
+                inputEl.value = '';
+            } catch(e) { 
+                window.showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ", "error"); 
+            } finally { 
+                btnEl.disabled = false; btnEl.innerHTML = '<span>ตรวจสอบรหัส</span><i data-lucide="arrow-right" class="w-4 h-4"></i>'; lucide.createIcons(); 
             }
+        };
 
-            // 1. ตรวจสอบสิทธิ์ Admin ก่อน
-            if(id.toLowerCase() === ADMIN_USER && pin === ADMIN_PIN) {
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('adminScreen').style.display = 'block';
-                document.getElementById('adminSearchDate').valueAsDate = new Date(); 
-                fetchAdminLogs();
-                return;
-            }
+        // ระบบออกจากระบบ
+        window.logoutEmployee = () => {
+            window.showConfirm("ออกจากระบบ", "ต้องการออกจากระบบในอุปกรณ์นี้ใช่หรือไม่?", async () => {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'settings', 'link'));
+                    userProfile = null;
+                    savedEmpId = null;
+                    window.switchScreen('screen-setup');
+                    window.showToast("ออกจากระบบเรียบร้อย", "success");
+                } catch(e) { window.showToast("เกิดข้อผิดพลาด", "error"); }
+            }, 'bg-red-600');
+        };
 
-            // 2. ตรวจสอบสิทธิ์พนักงาน พร้อมเช็คประวัติวันนี้
-            const loginBtn = document.querySelector('.btn-primary');
-            const origText = loginBtn.innerText;
-            loginBtn.innerText = "กำลังตรวจสอบข้อมูล...";
-            loginBtn.disabled = true;
-
-            const todayStr = getStandardDate();
-            const timestamp = new Date().getTime(); // ป้องกันแคชจำค่าเก่า
-
-            // วิ่งไปดึงข้อมูล 2 อย่างพร้อมกัน: 1.รายชื่อผู้ใช้ 2.ประวัติวันนี้
-            Promise.all([
-                fetch(SCRIPT_URL + "?action=getUsers&t=" + timestamp).then(res => res.json()),
-                fetch(SCRIPT_URL + "?action=getLogs&date=" + todayStr + "&t=" + timestamp).then(res => res.json())
-            ])
-            .then(([users, logs]) => {
-                loginBtn.innerText = origText;
-                loginBtn.disabled = false;
-
-                // 🛠️ แก้ไข: บังคับแปลงค่าให้เป็น String ก่อนเทียบกันเสมอ ป้องกันบั๊ก Google Sheets
-                const user = users.find(u => String(u.empId).toLowerCase() === String(id).toLowerCase());
+        function setupPublicDataListeners() {
+            if (!currentUser) return;
+            
+            if (unsubscribeProfiles) unsubscribeProfiles();
+            unsubscribeProfiles = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'profiles'), (snapshot) => {
+                let temp = []; snapshot.forEach(doc => temp.push({ id: doc.id, ...doc.data() }));
+                allProfiles = temp.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                 
-                if (!user) return alert("❌ ไม่พบรหัสพนักงานนี้ในระบบ");
-                if (String(user.pin) !== String(pin)) return alert("❌ รหัสผ่าน (PIN) ไม่ถูกต้อง");
-
-                currentUser = user.empId; 
-                currentPin = pin;
-
-                // 🛠️ แก้ไข: บังคับแปลงค่าให้เป็น String ก่อนค้นหาประวัติ
-                const myLogsToday = logs.filter(l => String(l.empId).toLowerCase() === String(currentUser).toLowerCase());
-                
-                const hasClockedIn = myLogsToday.some(l => l.type === 'เข้างาน');
-                const hasClockedOut = myLogsToday.some(l => l.type === 'ออกงาน');
-                const hasLeave = myLogsToday.some(l => l.type === 'ลางาน');
-
-                // จัดการปุ่มตามสถานะจริง
-                const btnIn = document.getElementById('btnIn');
-                const btnOut = document.getElementById('btnOut');
-                const btnLeave = document.getElementById('btnLeave');
-
-                btnIn.disabled = hasClockedIn;
-                btnIn.innerText = hasClockedIn ? "✅ เข้างานแล้ว" : "เข้างาน";
-
-                btnOut.disabled = hasClockedOut;
-                btnOut.innerText = hasClockedOut ? "✅ ออกงานแล้ว" : "ออกงาน";
-
-                btnLeave.disabled = hasLeave;
-                btnLeave.innerText = hasLeave ? "✅ แจ้งลางานแล้ว" : "📝 แจ้งลางาน";
-                
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('mainScreen').style.display = 'block';
-                document.getElementById('displayId').innerText = "👤 " + user.name + " (" + currentUser + ")";
-            })
-            .catch(err => {
-                loginBtn.innerText = origText;
-                loginBtn.disabled = false;
-                alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล กรุณาลองใหม่");
-            });
-        }
-
-        function logout() {
-            currentUser = ""; currentPin = "";
-            document.getElementById('inputId').value = ""; document.getElementById('inputPin').value = "";
-            closeScreens();
-            document.getElementById('loginScreen').style.display = 'block';
-        }
-
-        function closeScreens() {
-            document.getElementById('mainScreen').style.display = 'none';
-            document.getElementById('adminScreen').style.display = 'none';
-            document.getElementById('dashboardScreen').style.display = 'none';
-        }
-
-        setInterval(() => {
-            document.getElementById('clockDisplay').innerText = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        }, 1000);
-
-        function getDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; const φ1 = lat1 * Math.PI/180; const φ2 = lat2 * Math.PI/180;
-            const a = Math.sin((lat2-lat1)*Math.PI/360) * Math.sin((lat2-lat1)*Math.PI/360) + Math.cos(φ1) * Math.cos(φ2) * Math.sin((lon2-lon1)*Math.PI/360) * Math.sin((lon2-lon1)*Math.PI/360);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-        }
-
-        function postData(payload, successMsg, callback) {
-            fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-            .then(() => { setTimeout(() => { if(successMsg) alert(successMsg); if(callback) callback(); }, 500); })
-            .catch(() => alert("เชื่อมต่อล้มเหลว"));
-        }
-
-        function processRecord(type, btn, requireGeofence) {
-            let remark = "";
-            if(type === 'ลางาน') {
-                remark = prompt("เหตุผลการลา:");
-                if(!remark) return; 
-            }
-
-            const origText = btn.innerText; btn.innerText = "กำลังตรวจพิกัด..."; btn.disabled = true;
-
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    if(requireGeofence && getDistance(OFFICE_LAT, OFFICE_LON, pos.coords.latitude, pos.coords.longitude) > ALLOWED_RADIUS) {
-                        alert("อยู่นอกพื้นที่ออฟฟิศ!"); btn.innerText = origText; btn.disabled = false; return;
+                // ตรวจสอบความถูกต้องของการล็อกอินหลังจากโหลดข้อมูลเสร็จ
+                if (savedEmpId && !userProfile) {
+                    const matchedProfile = allProfiles.find(p => p.empId === savedEmpId);
+                    if (matchedProfile) {
+                        userProfile = matchedProfile;
+                        document.getElementById('display-name').textContent = matchedProfile.name;
+                        document.getElementById('display-emp-id').textContent = matchedProfile.empId;
+                        window.switchScreen('screen-dashboard');
+                    } else {
+                        savedEmpId = null; window.switchScreen('screen-setup'); // ถูกลบตอนออฟไลน์
                     }
-                    const payload = { action: 'logTime', date: getStandardDate(), time: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }), type: type, location: `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`, empId: currentUser, pin: currentPin, remark: remark };
-                    
-                    btn.innerText = "กำลังบันทึก...";
-                    postData(payload, `บันทึก ${type} สำเร็จ`, () => {
-                        // ไม่ใช้ localStorage แล้ว เมื่อบันทึกเสร็จให้เด้งออกไปหน้า Login ทันที
-                        btn.innerText = origText; 
-                        btn.disabled = false; 
-                        logout();
-                    });
-                },
-                () => { alert("กรุณาเปิด GPS"); btn.innerText = origText; btn.disabled = false; },
-                { enableHighAccuracy: true }
-            );
+                } else if (userProfile) {
+                    // หากถูกแอดมินลบโปรไฟล์ออกขณะที่กำลังใช้งาน
+                    if (!allProfiles.find(p => p.empId === userProfile.empId)) {
+                        userProfile = null; savedEmpId = null;
+                        window.switchScreen('screen-setup');
+                        window.showToast("รหัสพนักงานนี้ถูกเพิกถอนจากระบบ", "error");
+                    }
+                } else if (!savedEmpId && !userProfile) {
+                    window.switchScreen('screen-setup');
+                }
+
+                renderAdminUsers(); updateAdminStats();
+                if (userProfile) { updateUserDashboardState(); renderUserLogs(); renderUserLeaves(); }
+            }, (err) => console.error(err));
+
+            if (unsubscribeLogs) unsubscribeLogs();
+            unsubscribeLogs = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'time_logs'), (snapshot) => {
+                let temp = []; snapshot.forEach(doc => temp.push({ id: doc.id, ...doc.data() }));
+                allLogs = temp.sort((a, b) => b.timestamp - a.timestamp);
+                if(userProfile) { updateUserDashboardState(); renderUserLogs(); }
+                renderAdminLogs(); updateAdminStats();
+            }, (err) => console.error(err));
+
+            if (unsubscribeLeaves) unsubscribeLeaves();
+            unsubscribeLeaves = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'leave_requests'), (snapshot) => {
+                let temp = []; snapshot.forEach(doc => temp.push({ id: doc.id, ...doc.data() }));
+                allLeaves = temp.sort((a, b) => b.timestamp - a.timestamp);
+                if(userProfile) renderUserLeaves();
+                renderAdminLeaves(); updateAdminStats();
+            }, (err) => console.error(err));
         }
 
-        // --- Dashboard & Admin Features ---
-        function openDashboard() {
-            closeScreens(); document.getElementById('dashboardScreen').style.display = 'block';
-            document.getElementById('dashContent').innerHTML = "⏳ โหลดข้อมูล...";
-            fetch(SCRIPT_URL + "?action=getLogs&date=" + getStandardDate() + "&t=" + new Date().getTime())
-            .then(res => res.json()).then(data => {
-                if(data.length === 0) return document.getElementById('dashContent').innerHTML = "ไม่มีข้อมูลวันนี้";
-                let html = "";
-                data.forEach(item => {
-                    html += `<div class="dash-item"><div>🆔 <b>${item.empId}</b> <br> <small>${item.time} น. | <b>${item.type}</b></small></div></div>`;
-                });
-                document.getElementById('dashContent').innerHTML = html;
-            });
-        }
+        // --- Core Actions ---
+        window.handleClockAction = async () => {
+            if (!currentUser || !userProfile || currentStatus === 'unknown') return;
+            const actionType = currentStatus === 'in' ? 'out' : 'in';
+            const btnAction = document.getElementById('btn-action');
+            btnAction.disabled = true; const originalHTML = btnAction.innerHTML;
+            btnAction.innerHTML = '<i data-lucide="loader-2" class="w-12 h-12 animate-spin"></i><span class="text-xl font-bold">กำลังบันทึก...</span>'; lucide.createIcons();
 
-        function switchAdminTab(tab) {
-            document.getElementById('tabLogs').classList.remove('active');
-            document.getElementById('tabUsers').classList.remove('active');
-            document.getElementById('adminViewLogs').style.display = 'none';
-            document.getElementById('adminViewUsers').style.display = 'none';
-            
-            if(tab === 'logs') {
-                document.getElementById('tabLogs').classList.add('active');
-                document.getElementById('adminViewLogs').style.display = 'block';
-                fetchAdminLogs();
+            try {
+                // บันทึกโดยอ้างอิง empId แทน userId
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'time_logs'), { empId: userProfile.empId, employeeName: userProfile.name, type: actionType, timestamp: Date.now() });
+                window.showToast(`บันทึกเวลา${actionType === 'in' ? 'เข้างาน' : 'ออกงาน'}สำเร็จ!`, "success");
+            } catch (error) {
+                window.showToast("เกิดข้อผิดพลาดในการบันทึก", "error"); btnAction.innerHTML = originalHTML; btnAction.disabled = false; lucide.createIcons();
+            }
+        };
+
+        window.submitLeave = async () => {
+            if(!currentUser || !userProfile) return;
+            const btnSubmit = document.getElementById('btn-submit-leave');
+            const type = document.getElementById('leave-type').value, startDate = document.getElementById('leave-start').value, endDate = document.getElementById('leave-end').value, reason = document.getElementById('leave-reason').value.trim();
+            if(!startDate || !endDate || !reason) { window.showToast("กรุณากรอกข้อมูลให้ครบ", "error"); return; }
+            if(new Date(endDate) < new Date(startDate)) { window.showToast("วันที่สิ้นสุดต้องไม่น้อยกว่าวันที่เริ่ม", "error"); return; }
+
+            btnSubmit.disabled = true; btnSubmit.innerHTML = 'กำลังบันทึก...';
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'leave_requests'), { empId: userProfile.empId, employeeName: userProfile.name, type, startDate, endDate, reason, status: 'pending', timestamp: Date.now() });
+                window.showToast("ยื่นคำขอลาสำเร็จ", "success");
+                document.getElementById('leave-start').value = ''; document.getElementById('leave-end').value = ''; document.getElementById('leave-reason').value = '';
+                window.switchScreen('screen-leaves');
+            } catch(e) { window.showToast("เกิดข้อผิดพลาด", "error"); } finally { btnSubmit.disabled = false; btnSubmit.innerHTML = 'ยื่นคำขอ'; }
+        };
+
+        // --- Admin Controls ---
+        window.adminCreateEmployee = async () => {
+            const empId = document.getElementById('admin-new-empid').value.trim().toUpperCase();
+            const name = document.getElementById('admin-new-empname').value.trim();
+            if(!empId || !name) return window.showToast("กรุณากรอกข้อมูลให้ครบ", "error");
+            if(allProfiles.some(p => p.empId === empId)) return window.showToast("รหัสพนักงานนี้มีในระบบแล้ว", "error");
+
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', empId), { empId, name, createdAt: Date.now() });
+                window.showToast("สร้างพนักงานใหม่สำเร็จ", "success");
+                document.getElementById('admin-new-empid').value = ''; document.getElementById('admin-new-empname').value = '';
+            } catch(e) { window.showToast("เกิดข้อผิดพลาดในการสร้าง", "error"); }
+        };
+
+        window.updateLeaveStatus = (id, status) => {
+            const isApprove = status === 'approved';
+            window.showConfirm(isApprove ? "ยืนยันการอนุมัติ" : "ยืนยันการปฏิเสธ", isApprove ? "คุณต้องการอนุมัติคำขอลางานนี้ใช่หรือไม่?" : "คุณต้องการปฏิเสธคำขอลางานนี้ใช่หรือไม่?", async () => {
+                try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leave_requests', id), { status, updatedAt: Date.now() }); window.showToast("อัปเดตสถานะสำเร็จ", "success"); } 
+                catch(e) { window.showToast("เกิดข้อผิดพลาด", "error"); }
+            }, isApprove ? 'bg-green-600' : 'bg-red-600');
+        };
+
+        window.deleteLog = (logId) => {
+            window.showConfirm("ยืนยันการลบ", "ต้องการลบรายการนี้ใช่หรือไม่?", async () => {
+                try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'time_logs', logId)); window.showToast("ลบรายการสำเร็จ", "success"); } 
+                catch(e) { window.showToast("ไม่สามารถลบได้", "error"); }
+            }, 'bg-red-600');
+        };
+
+        window.deleteProfile = (empId) => {
+             window.showConfirm("ยืนยันการลบพนักงาน", `ต้องการลบข้อมูลพนักงานรหัส ${empId} ใช่หรือไม่?`, async () => {
+                 try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'profiles', empId));
+                    window.showToast("ลบข้อมูลสำเร็จ", "success");
+                 } catch(e) { window.showToast("ไม่สามารถลบได้", "error"); }
+             }, 'bg-red-600');
+        };
+
+        // --- Render Functions ---
+        function updateUserDashboardState() {
+            if(!userProfile) return;
+            const userLogs = allLogs.filter(log => log.empId === userProfile.empId);
+            const latestLog = userLogs[0];
+            const btnAction = document.getElementById('btn-action');
+            if (!latestLog || latestLog.type === 'out') {
+                currentStatus = 'out'; btnAction.disabled = false;
+                btnAction.className = "relative z-10 w-44 h-44 rounded-full flex flex-col items-center justify-center gap-2 text-white shadow-[0_15px_40px_-10px_rgba(34,197,94,0.6)] active:scale-95 disabled:opacity-50 bg-gradient-to-br from-emerald-400 to-green-600 transition-all";
+                btnAction.innerHTML = `<i data-lucide="log-in" class="w-10 h-10 mb-1"></i><span class="text-2xl font-bold">เข้างาน</span><span class="text-xs bg-black/10 px-3 py-1 rounded-full backdrop-blur-sm">กดเพื่อบันทึก</span>`;
             } else {
-                document.getElementById('tabUsers').classList.add('active');
-                document.getElementById('adminViewUsers').style.display = 'block';
-                fetchAdminUsers();
+                currentStatus = 'in'; btnAction.disabled = false;
+                btnAction.className = "relative z-10 w-44 h-44 rounded-full flex flex-col items-center justify-center gap-2 text-white shadow-[0_15px_40px_-10px_rgba(249,115,22,0.6)] active:scale-95 disabled:opacity-50 bg-gradient-to-br from-orange-400 to-red-500 transition-all";
+                btnAction.innerHTML = `<i data-lucide="log-out" class="w-10 h-10 mb-1"></i><span class="text-2xl font-bold">ออกงาน</span><span class="text-xs bg-black/10 px-3 py-1 rounded-full backdrop-blur-sm">กดเพื่อบันทึก</span>`;
             }
+            lucide.createIcons();
         }
 
-        // --- Admin: Logs ---
-        function fetchAdminLogs() {
-            const dateVal = document.getElementById('adminSearchDate').value;
-            const searchDate = formatHTMLDateToStandard(dateVal);
-            const content = document.getElementById('adminLogsContent');
-            content.innerHTML = "⏳ โหลดข้อมูล...";
+        function renderUserLogs() {
+            if(!userProfile) return;
+            const container = document.getElementById('logs-container');
+            const userLogs = allLogs.filter(log => log.empId === userProfile.empId).slice(0, 10);
+            if (userLogs.length === 0) { container.innerHTML = `<div class="flex flex-col items-center justify-center h-full text-gray-400"><div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mb-2"><i data-lucide="clock-4" class="w-6 h-6 text-gray-300"></i></div><p class="text-sm">ยังไม่มีประวัติ</p></div>`; lucide.createIcons(); return; }
+            let html = '<div class="space-y-3 pb-6">';
+            userLogs.forEach((log, i) => {
+                const isOpIn = log.type === 'in';
+                const dateStr = new Date(log.timestamp).setHours(0,0,0,0) === new Date().setHours(0,0,0,0) ? 'วันนี้' : new Date(log.timestamp).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+                html += `<div class="flex items-center justify-between p-3.5 bg-gray-50 border border-gray-100 rounded-2xl fade-enter" style="animation-delay: ${i*40}ms"><div class="flex items-center gap-3"><div class="w-10 h-10 ${isOpIn ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-500'} rounded-xl flex items-center justify-center"><i data-lucide="${isOpIn ? 'arrow-down-right' : 'arrow-up-right'}" class="w-5 h-5"></i></div><div><p class="text-sm font-bold text-gray-800">${isOpIn ? 'เข้างาน' : 'ออกงาน'}</p><p class="text-xs text-gray-500">${dateStr}</p></div></div><div class="text-right"><span class="text-base font-bold text-gray-900">${new Date(log.timestamp).toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'})}</span><span class="text-xs text-gray-500 block">น.</span></div></div>`;
+            });
+            container.innerHTML = html + '</div>'; lucide.createIcons(); setTimeout(() => container.querySelectorAll('.fade-enter').forEach(el => el.classList.add('fade-enter-active')), 50);
+        }
 
-            fetch(SCRIPT_URL + `?action=getLogs&date=${searchDate}&t=${new Date().getTime()}`)
-            .then(res => res.json()).then(data => {
-                if(data.length === 0) return content.innerHTML = "ไม่พบข้อมูลในวันที่เลือก";
-                let html = "";
-                data.forEach(item => {
-                    html += `
-                    <div class="dash-item">
-                        <div><b>${item.empId}</b> <span style="color:#666;">(${item.type})</span><br><small>⏱️ ${item.time} น.</small></div>
-                        <div>
-                            <button class="mini-btn" onclick="editLog(${item.rowIndex}, '${item.time}', '${item.type}')">✏️ แก้</button>
-                            <button class="mini-btn del" onclick="deleteLog(${item.rowIndex})">🗑️ ลบ</button>
-                        </div>
-                    </div>`;
-                });
-                content.innerHTML = html;
+        function renderUserLeaves() {
+            if(!userProfile) return;
+            const container = document.getElementById('user-leaves-container');
+            const userLeaves = allLeaves.filter(l => l.empId === userProfile.empId);
+            if(userLeaves.length === 0) { container.innerHTML = `<div class="flex flex-col items-center justify-center h-[50vh] text-gray-400"><div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4"><i data-lucide="file-text" class="w-8 h-8 text-gray-300"></i></div><p>ยังไม่มีประวัติการลางาน</p></div>`; lucide.createIcons(); return; }
+            let html = '';
+            userLeaves.forEach(leave => {
+                const conf = statusConfig[leave.status];
+                html += `<div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative"><div class="flex justify-between items-start mb-2"><div><h3 class="font-bold text-gray-900">${leaveTypes[leave.type]}</h3><p class="text-xs text-gray-500">${new Date(leave.startDate).toLocaleDateString('th-TH', { day:'numeric', month:'short' })} - ${new Date(leave.endDate).toLocaleDateString('th-TH', { day:'numeric', month:'short' })}</p></div><span class="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md ${conf.bg} ${conf.text}"><i data-lucide="${conf.icon}" class="w-3 h-3"></i> ${conf.label}</span></div><p class="text-sm text-gray-600 bg-gray-50 p-2 rounded-lg mt-2">${leave.reason}</p></div>`;
+            });
+            container.innerHTML = html; lucide.createIcons();
+        }
+
+        function updateAdminStats() {
+            document.getElementById('admin-stat-users').textContent = allProfiles.length;
+            document.getElementById('admin-stat-logs').textContent = allLogs.filter(l => l.timestamp >= new Date().setHours(0,0,0,0)).length;
+            document.getElementById('admin-stat-leaves').textContent = allLeaves.filter(l => l.status === 'pending').length;
+        }
+
+        function renderAdminLogs() {
+            const container = document.getElementById('admin-content-logs');
+            if (allLogs.length === 0) { container.innerHTML = `<p class="text-center text-gray-400 py-10 text-sm">ยังไม่มีข้อมูล</p>`; return; }
+            let html = '';
+            allLogs.slice(0, 50).forEach(log => {
+                const isOpIn = log.type === 'in';
+                const dStr = new Date(log.timestamp).toLocaleDateString('th-TH', {day:'numeric', month:'short'}) + ' ' + new Date(log.timestamp).toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
+                html += `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center"><div class="flex items-center gap-3"><div class="w-2 h-10 rounded-full ${isOpIn ? 'bg-green-400' : 'bg-orange-400'}"></div><div><h4 class="font-bold text-sm text-gray-900">${log.employeeName || '?'} <span class="text-gray-400 font-normal">(${log.empId})</span></h4><p class="text-xs text-gray-500"><span class="${isOpIn ? 'text-green-600' : 'text-orange-500'} font-medium">${isOpIn ? 'เข้า' : 'ออก'}</span> • ${dStr}</p></div></div><button onclick="deleteLog('${log.id}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`;
+            });
+            container.innerHTML = html; lucide.createIcons();
+        }
+
+        function renderAdminLeaves() {
+            const container = document.getElementById('admin-content-leaves');
+            if (allLeaves.length === 0) { container.innerHTML = `<p class="text-center text-gray-400 py-10 text-sm">ยังไม่มีคำขอลางาน</p>`; return; }
+            let html = '';
+            allLeaves.forEach(leave => {
+                const conf = statusConfig[leave.status];
+                let actions = leave.status === 'pending' ? `<div class="flex gap-2 mt-3 pt-3 border-t border-gray-100"><button onclick="updateLeaveStatus('${leave.id}', 'rejected')" class="flex-1 py-1.5 bg-red-50 text-red-600 text-xs font-bold rounded-lg hover:bg-red-100">ไม่อนุมัติ</button><button onclick="updateLeaveStatus('${leave.id}', 'approved')" class="flex-1 py-1.5 bg-green-50 text-green-600 text-xs font-bold rounded-lg hover:bg-green-100">อนุมัติ</button></div>` : '';
+                html += `<div class="bg-white p-4 rounded-xl shadow-sm border ${leave.status === 'pending' ? 'border-orange-300' : 'border-gray-100'} relative"><div class="flex justify-between items-start mb-2"><div><h4 class="font-bold text-sm text-gray-900">${leave.employeeName} <span class="text-gray-400 font-normal">(${leave.empId})</span></h4><p class="text-xs font-medium text-blue-600">${leaveTypes[leave.type]} <span class="text-gray-400 font-normal">(${new Date(leave.startDate).toLocaleDateString('th-TH', { day:'numeric', month:'short' })} - ${new Date(leave.endDate).toLocaleDateString('th-TH', { day:'numeric', month:'short' })})</span></p></div><span class="flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-md ${conf.bg} ${conf.text}"><i data-lucide="${conf.icon}" class="w-3 h-3"></i> ${conf.label}</span></div><p class="text-xs text-gray-600 bg-gray-50 p-2 rounded">${leave.reason}</p>${actions}</div>`;
+            });
+            container.innerHTML = html; lucide.createIcons();
+        }
+
+        function renderAdminUsers() {
+            const container = document.getElementById('admin-users-list');
+            if (allProfiles.length === 0) { container.innerHTML = `<p class="text-center text-gray-400 py-10 text-sm">ยังไม่มีข้อมูลพนักงาน</p>`; return; }
+            let html = '';
+            allProfiles.forEach(profile => {
+                html += `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center font-bold">${(profile.name || '?').charAt(0)}</div><div><h4 class="font-bold text-sm text-gray-900">${profile.name}</h4><p class="text-[10px] font-bold text-gray-400">รหัส: ${profile.empId}</p></div></div><button onclick="deleteProfile('${profile.empId}')" class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 text-red-500 hover:bg-red-100"><i data-lucide="user-minus" class="w-4 h-4"></i></button></div>`;
+            });
+            container.innerHTML = html; lucide.createIcons();
+        }
+
+        // --- Custom UI Utilities ---
+        window.showConfirm = (title, message, onConfirm, okClass = 'bg-blue-600') => {
+            const m = document.getElementById('modal-confirm'), c = document.getElementById('modal-confirm-content');
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+            
+            const btnOk = document.getElementById('btn-confirm-ok');
+            btnOk.className = `flex-1 py-3 text-white font-bold rounded-xl active:scale-95 transition-all ${okClass}`;
+            
+            m.classList.remove('hidden'); m.classList.add('flex');
+            requestAnimationFrame(() => { m.classList.remove('opacity-0'); c.classList.remove('scale-95'); });
+            
+            const closeConfirm = () => { m.classList.add('opacity-0'); c.classList.add('scale-95'); setTimeout(() => { m.classList.remove('flex'); m.classList.add('hidden'); }, 300); };
+            document.getElementById('btn-confirm-cancel').onclick = closeConfirm; btnOk.onclick = () => { closeConfirm(); onConfirm(); };
+        };
+
+        window.switchScreen = (id) => {
+            ['screen-loading', 'screen-setup', 'screen-dashboard', 'screen-admin', 'screen-leaves', 'screen-leave-form'].forEach(s => { document.getElementById(s).classList.add('hidden'); document.getElementById(s).classList.remove('flex'); });
+            document.getElementById(id).classList.remove('hidden'); document.getElementById(id).classList.add('flex');
+        }
+
+        window.showToast = (message, type = 'info') => {
+            const container = document.getElementById('toast-container'); const toast = document.createElement('div');
+            const conf = { success: ['bg-green-600', 'check-circle'], error: ['bg-red-600', 'alert-circle'], info: ['bg-blue-600', 'info'] }[type];
+            toast.className = `${conf[0]} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 transform transition-all duration-300 translate-y-[-100%] opacity-0`;
+            toast.innerHTML = `<i data-lucide="${conf[1]}" class="w-5 h-5"></i><span class="text-sm font-medium">${message}</span>`;
+            container.appendChild(toast); lucide.createIcons();
+            requestAnimationFrame(() => toast.classList.remove('translate-y-[-100%]', 'opacity-0'));
+            setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        window.switchAdminTab = (tab) => {
+            ['logs', 'leaves', 'users'].forEach(t => {
+                const elTab = document.getElementById('tab-' + t), elContent = document.getElementById('admin-content-' + t);
+                if(t === tab) { elTab.classList.add('border-blue-600', 'text-blue-600'); elTab.classList.remove('border-transparent', 'text-gray-500'); elContent.classList.remove('hidden'); elContent.classList.add(t==='users'?'flex':'block'); } 
+                else { elTab.classList.remove('border-blue-600', 'text-blue-600'); elTab.classList.add('border-transparent', 'text-gray-500'); elContent.classList.add('hidden'); elContent.classList.remove(t==='users'?'flex':'block'); }
             });
         }
 
-        function deleteLog(rowIndex) {
-            if(confirm("แน่ใจหรือไม่ที่จะลบประวัตินี้?")) {
-                postData({ action: 'deleteLog', rowIndex: rowIndex }, "ลบประวัติแล้ว", fetchAdminLogs);
-            }
-        }
+        // Admin Modal logic
+        window.openAdminModal = () => { const m = document.getElementById('modal-admin-pin'), c = document.getElementById('modal-admin-content'); m.classList.remove('hidden'); m.classList.add('flex'); document.getElementById('input-admin-pin').value = ''; requestAnimationFrame(() => { m.classList.remove('opacity-0'); c.classList.remove('scale-95'); }); setTimeout(() => document.getElementById('input-admin-pin').focus(), 100); };
+        window.closeAdminModal = () => { const m = document.getElementById('modal-admin-pin'), c = document.getElementById('modal-admin-content'); m.classList.add('opacity-0'); c.classList.add('scale-95'); setTimeout(() => { m.classList.remove('flex'); m.classList.add('hidden'); }, 300); };
+        window.verifyAdmin = () => { if(document.getElementById('input-admin-pin').value === ADMIN_PIN) { closeAdminModal(); window.switchScreen('screen-admin'); renderAdminLogs(); renderAdminLeaves(); renderAdminUsers(); } else { window.showToast("รหัส PIN ไม่ถูกต้อง", "error"); document.getElementById('input-admin-pin').value = ''; } };
+        window.exitAdminMode = () => window.switchScreen(userProfile ? 'screen-dashboard' : 'screen-setup');
 
-        function editLog(rowIndex, oldTime, oldType) {
-            let newTime = prompt("แก้ไขเวลา (เช่น 08:30):", oldTime);
-            if(!newTime) return;
-            let newType = prompt("แก้ไขประเภท (เข้างาน, ออกงาน, ลางาน):", oldType);
-            if(!newType) return;
-            postData({ action: 'updateLog', rowIndex: rowIndex, time: newTime, type: newType }, "อัปเดตข้อมูลแล้ว", fetchAdminLogs);
-        }
+        setInterval(() => { const now = new Date(); const elTime = document.getElementById('live-time'), elDate = document.getElementById('live-date'); if(elTime) elTime.textContent = now.toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' }); if(elDate) elDate.textContent = now.toLocaleDateString('th-TH', { weekday:'long', year:'numeric', month:'long', day:'numeric' }); }, 1000);
 
-        // --- Admin: Users ---
-        function fetchAdminUsers() {
-            const content = document.getElementById('adminUsersContent');
-            content.innerHTML = "⏳ โหลดข้อมูล...";
-            fetch(SCRIPT_URL + "?action=getUsers&t=" + new Date().getTime())
-            .then(res => res.json()).then(data => {
-                if(data.length === 0) return content.innerHTML = "ยังไม่มีพนักงานในระบบ";
-                let html = "";
-                data.forEach(item => {
-                    html += `
-                    <div class="dash-item">
-                        <div><b>${item.empId}</b><br><small>👤 ${item.name}</small></div>
-                        <button class="mini-btn del" onclick="deleteUser(${item.rowIndex}, '${item.name}')">🗑️ ลบ</button>
-                    </div>`;
-                });
-                content.innerHTML = html;
-            });
-        }
+        document.getElementById('btn-action').addEventListener('click', window.handleClockAction);
+        document.getElementById('input-emp-id').addEventListener('keypress', (e) => e.key === 'Enter' && window.loginWithEmpId());
+        document.getElementById('input-admin-pin').addEventListener('keypress', (e) => e.key === 'Enter' && window.verifyAdmin());
 
-        function addEmployee() {
-            const id = document.getElementById('newEmpId').value.trim();
-            const name = document.getElementById('newEmpName').value.trim();
-            const pin = document.getElementById('newEmpPin').value.trim();
-            if(!id || !name || !pin) return alert("กรอกข้อมูลให้ครบถ้วน");
-
-            document.getElementById('newEmpId').value = ""; document.getElementById('newEmpName').value = ""; document.getElementById('newEmpPin').value = "";
-            postData({ action: 'addUser', empId: id, name: name, pin: pin }, "เพิ่มพนักงานเรียบร้อย", fetchAdminUsers);
-        }
-
-        function deleteUser(rowIndex, name) {
-            if(confirm(`ต้องการลบรายชื่อ: ${name} ออกจากระบบ?`)) {
-                postData({ action: 'deleteUser', rowIndex: rowIndex }, "ลบรายชื่อแล้ว", fetchAdminUsers);
-            }
-        }
     </script>
 </body>
 </html>
