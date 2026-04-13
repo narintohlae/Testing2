@@ -277,8 +277,11 @@
                         <h2 class="text-xl font-bold text-gray-800">รายการบันทึกเวลา</h2>
                         <div class="flex gap-2 w-full sm:w-auto">
                             <input type="month" id="filter-timelog-month" class="p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none flex-1" title="กรองดูตามเดือน">
-                            <button id="btn-export-csv" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow flex items-center">
-                                <i class="fa-solid fa-file-excel mr-2"></i> Export
+                            <button id="btn-add-manual-log" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow flex items-center whitespace-nowrap">
+                                <i class="fa-solid fa-plus mr-1"></i> เพิ่มย้อนหลัง
+                            </button>
+                            <button id="btn-export-csv" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow flex items-center">
+                                <i class="fa-solid fa-file-excel mr-1"></i> Export
                             </button>
                         </div>
                     </div>
@@ -340,7 +343,12 @@
                             </button>
                         </div>
 
-                        <h3 class="text-lg font-bold text-gray-800 mb-4">รายชื่อพนักงานในระบบ</h3>
+                        <div class="flex justify-between items-center mb-4 border-t pt-6">
+                            <h3 class="text-lg font-bold text-gray-800">รายชื่อพนักงานในระบบ</h3>
+                            <button id="btn-export-monthly-summary" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-bold shadow transition flex items-center">
+                                <i class="fa-solid fa-file-excel mr-2"></i> สรุปเงินเดือน (CSV)
+                            </button>
+                        </div>
                         <div class="overflow-x-auto border rounded-lg">
                             <table class="w-full text-left border-collapse">
                                 <thead>
@@ -401,7 +409,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, orderBy, serverTimestamp, doc, deleteDoc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs, onSnapshot, orderBy, serverTimestamp, Timestamp, doc, deleteDoc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAgTWrI1G1t3GYVz4-SPM7btrsixSe0el8",
@@ -427,6 +435,7 @@
         let systemSettings = { officeLat: null, officeLng: null, radius: 100, workHours: 8, coreTime: "09:00" };
         let allLogsRaw = []; 
         let allLogsForExport = [];
+        let allEmployeesList = []; // เก็บรายชื่อพนักงานไว้สำหรับฟอร์ม Manual Entry
         
         let listeners = { empTimelogs: null, empLeaves: null, adminTimelogs: null, adminLeaves: null, adminEmployees: null };
 
@@ -622,7 +631,8 @@
                     timestamp: serverTimestamp(),
                     lat: currentLat, lng: currentLng,
                     photoBase64: capturedPhotoData,
-                    remark: remark 
+                    remark: remark,
+                    isManual: false 
                 });
                 Swal.fire({ icon: 'success', title: `บันทึกเวลา${type === 'in' ? 'เข้า' : 'ออก'}สำเร็จ!`, timer: 1500 });
                 btnRetake.click(); 
@@ -686,7 +696,6 @@
                 document.getElementById('emp-stat-late').innerHTML = `${lateDays}<span class="text-xs font-normal text-gray-500"> วัน</span>`;
                 document.getElementById('emp-stat-ot').innerHTML = `${totalOT.toFixed(1)}<span class="text-xs font-normal text-gray-500"> ชม.</span>`;
 
-
                 // แสดงรายการประวัติล่าสุด (10 รายการ)
                 const container = document.getElementById('emp-personal-history');
                 if (logs.length === 0) container.innerHTML = '<div class="text-center text-sm text-gray-400 py-4">ยังไม่มีประวัติการบันทึกเวลา</div>';
@@ -696,6 +705,8 @@
                         const timeStr = log.timestamp ? log.timestamp.toDate().toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }) : '...';
                         const isCheckIn = log.type === 'in';
                         const remarkStr = log.remark ? `<p class="text-xs text-blue-500 mt-1"><i class="fa-regular fa-comment-dots"></i> ${log.remark}</p>` : '';
+                        const manualBadge = log.isManual ? `<span class="text-[10px] bg-gray-200 text-gray-600 px-1 rounded ml-2">แอดมินเพิ่ม</span>` : '';
+                        
                         html += `
                             <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-100">
                                 <div class="flex items-start">
@@ -703,7 +714,7 @@
                                         <i class="fa-solid ${isCheckIn ? 'fa-arrow-right-to-bracket' : 'fa-arrow-right-from-bracket'}"></i>
                                     </div>
                                     <div>
-                                        <p class="font-bold text-sm text-gray-700">${isCheckIn ? 'เข้างาน' : 'ออกงาน'}</p>
+                                        <p class="font-bold text-sm text-gray-700">${isCheckIn ? 'เข้างาน' : 'ออกงาน'} ${manualBadge}</p>
                                         <p class="text-xs text-gray-500">${timeStr}</p>
                                         ${remarkStr}
                                     </div>
@@ -762,10 +773,15 @@
             const qEmp = query(collection(db, "employees"));
             listeners.adminEmployees = onSnapshot(qEmp, (empSnapshot) => {
                 document.getElementById('stat-total').textContent = empSnapshot.size;
+                
+                allEmployeesList = []; // เก็บไว้ใช้กับระบบเพิ่มเวลาย้อนหลัง
+                
                 const tbodyEmp = document.getElementById('employees-table-body');
                 let empHtml = '';
                 empSnapshot.forEach(doc => {
                     const data = doc.data();
+                    allEmployeesList.push({ id: doc.id, name: data.name }); // เก็บใส่ Array
+                    
                     empHtml += `
                         <tr class="hover:bg-gray-50 border-b">
                             <td class="p-4 text-sm font-medium text-gray-800">${data.name}</td>
@@ -911,6 +927,117 @@
             }
         };
 
+        // แอดมิน: โหลดสรุปเงินเดือน (Payroll Summary) แบบเหมาทั้งหมดลง CSV
+        document.getElementById('btn-export-monthly-summary').addEventListener('click', async () => {
+            const currentMonthStr = new Date().toISOString().slice(0, 7); 
+            const { value: monthRaw } = await Swal.fire({
+                title: `โหลดสรุปข้อมูลพนักงานทั้งหมด`,
+                html: `<p class="mb-2 text-sm text-gray-600">เลือกเดือนที่ต้องการส่งทำเงินเดือน</p><input type="month" id="swal-payroll-month" value="${currentMonthStr}" class="w-[80%] p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-center">`,
+                showCancelButton: true, confirmButtonText: 'ดาวน์โหลด CSV', cancelButtonText: 'ยกเลิก',
+                preConfirm: () => document.getElementById('swal-payroll-month').value
+            });
+
+            if (monthRaw) {
+                const [year, m] = monthRaw.split('-');
+                let csvContent = "data:text/csv;charset=utf-8,\uFEFFชื่อพนักงาน,วันทำงานทั้งหมด,วันมาสาย,ชั่วโมงทำงานรวม,ชั่วโมง OT รวม\n";
+                const standardHours = Number(systemSettings.workHours) || 8;
+
+                allEmployeesList.forEach(emp => {
+                    const userLogs = allLogsRaw.filter(l => {
+                        if (l.userId !== emp.id || !l.timestamp) return false;
+                        const d = l.timestamp.toDate(); return d.getFullYear() == year && (d.getMonth() + 1) == m;
+                    });
+
+                    const dailyData = {};
+                    userLogs.forEach(log => {
+                        const dateStr = log.timestamp.toDate().toISOString().split('T')[0];
+                        if (!dailyData[dateStr]) dailyData[dateStr] = { in: null, out: null };
+                        const t = log.timestamp.toDate();
+                        if (log.type === 'in') { if (!dailyData[dateStr].in || t < dailyData[dateStr].in) dailyData[dateStr].in = t; } 
+                        else { if (!dailyData[dateStr].out || t > dailyData[dateStr].out) dailyData[dateStr].out = t; }
+                    });
+
+                    let totalDays = 0, lateDays = 0, totalWorkHrs = 0, totalOT = 0;
+                    
+                    Object.values(dailyData).forEach(day => {
+                        if (day.in) {
+                            totalDays++;
+                            if (systemSettings.coreTime) {
+                                const [cH, cM] = systemSettings.coreTime.split(':');
+                                const coreDate = new Date(day.in); coreDate.setHours(cH, cM, 0, 0);
+                                if (day.in > coreDate) lateDays++;
+                            }
+                            if (day.out) {
+                                const hrs = (day.out - day.in) / (1000 * 60 * 60);
+                                totalWorkHrs += hrs;
+                                if (hrs > standardHours) totalOT += (hrs - standardHours);
+                            }
+                        }
+                    });
+
+                    csvContent += `"${emp.name}","${totalDays}","${lateDays}","${totalWorkHrs.toFixed(2)}","${totalOT.toFixed(2)}"\n`;
+                });
+
+                const link = document.createElement("a"); 
+                link.href = encodeURI(csvContent); 
+                link.download = `Payroll_Summary_${m}_${year}.csv`; 
+                link.click();
+            }
+        });
+
+        // แอดมิน: ฟังก์ชันเพิ่มบันทึกเวลาย้อนหลัง (Manual Time Entry)
+        document.getElementById('btn-add-manual-log').addEventListener('click', async () => {
+            if(allEmployeesList.length === 0) return Swal.fire('ไม่พบพนักงาน', 'กรุณาเพิ่มรายชื่อพนักงานเข้าระบบก่อน', 'warning');
+            
+            let empOptions = '';
+            allEmployeesList.forEach(e => { empOptions += `<option value="${e.id}">${e.name}</option>`; });
+
+            const { value: formValues } = await Swal.fire({
+                title: 'เพิ่มเวลาย้อนหลัง',
+                html: `
+                    <div class="text-left space-y-3 mt-4">
+                        <div><label class="text-sm text-gray-600">พนักงาน</label><select id="swal-m-emp" class="w-full p-2 border rounded outline-none">${empOptions}</select></div>
+                        <div><label class="text-sm text-gray-600">ประเภท</label><select id="swal-m-type" class="w-full p-2 border rounded outline-none"><option value="in">เข้างาน</option><option value="out">ออกงาน</option></select></div>
+                        <div class="flex gap-2">
+                            <div class="flex-1"><label class="text-sm text-gray-600">วันที่</label><input type="date" id="swal-m-date" class="w-full p-2 border rounded outline-none"></div>
+                            <div class="flex-1"><label class="text-sm text-gray-600">เวลา</label><input type="time" id="swal-m-time" class="w-full p-2 border rounded outline-none"></div>
+                        </div>
+                        <div><label class="text-sm text-gray-600">หมายเหตุ</label><input type="text" id="swal-m-remark" placeholder="เช่น แอดมินเพิ่มให้ (ลืมกด)" class="w-full p-2 border rounded outline-none"></div>
+                    </div>
+                `,
+                focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึกรายการ', cancelButtonText: 'ยกเลิก',
+                preConfirm: () => {
+                    const empId = document.getElementById('swal-m-emp').value;
+                    const type = document.getElementById('swal-m-type').value;
+                    const date = document.getElementById('swal-m-date').value;
+                    const time = document.getElementById('swal-m-time').value;
+                    const remark = document.getElementById('swal-m-remark').value;
+                    if (!date || !time) { Swal.showValidationMessage('กรุณาเลือกวันที่และเวลา'); return false; }
+                    return { empId, type, date, time, remark };
+                }
+            });
+
+            if (formValues) {
+                Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try {
+                    const selectedEmp = allEmployeesList.find(e => e.id === formValues.empId);
+                    const timestamp = Timestamp.fromDate(new Date(`${formValues.date}T${formValues.time}:00`));
+                    
+                    await addDoc(collection(db, "timelogs"), {
+                        userId: selectedEmp.id,
+                        name: selectedEmp.name,
+                        type: formValues.type,
+                        timestamp: timestamp,
+                        lat: null, lng: null,
+                        photoBase64: null, // ไม่มีรูปเพราะเป็นแอดมินใส่ให้
+                        remark: formValues.remark || 'เพิ่มข้อมูลย้อนหลัง',
+                        isManual: true // ใช้เช็คเพื่อโชว์ป้ายกำกับ
+                    });
+                    Swal.fire({ icon: 'success', title: 'บันทึกเวลาสำเร็จ!', timer: 1500, showConfirmButton: false });
+                } catch (error) { Swal.fire('ผิดพลาด', error.message, 'error'); }
+            }
+        });
+
         window.updateLeaveStatus = async (docId, newStatus) => {
             const actionText = newStatus === 'approved' ? 'อนุมัติ' : 'ไม่อนุมัติ';
             const result = await Swal.fire({ title: `ยืนยันการ${actionText}?`, icon: 'question', showCancelButton: true, confirmButtonColor: newStatus === 'approved' ? '#10b981' : '#e11d48', confirmButtonText: `ใช่, ${actionText}` });
@@ -937,7 +1064,6 @@
             .then(async (result) => { if (result.isConfirmed) { await deleteDoc(doc(db, "employees", docId)); Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', timer: 1000, showConfirmButton: false }); } });
         };
 
-        // แอดมิน: ฟังก์ชันลบประวัติการเข้า-ออกงาน (Timelog)
         window.deleteTimelog = (docId) => {
             Swal.fire({ title: 'ลบรายการนี้?', text: "เมื่อลบแล้วจะไม่สามารถกู้คืนได้ และอาจส่งผลต่อสรุปชั่วโมงทำงาน", icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48', confirmButtonText: 'ใช่, ลบทิ้ง' })
             .then(async (result) => { 
@@ -985,16 +1111,20 @@
                 
                 const remarkBadge = data.remark ? `<div class="mt-1 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded inline-block"><i class="fa-regular fa-comment-dots"></i> ${data.remark}</div>` : '';
                 const remarkExport = data.remark ? data.remark : '-';
+                
+                // ตรวจสอบว่าเป็นข้อมูลที่แอดมิน Manual กรอกให้หรือไม่
+                const photoHtml = data.isManual ? '<span class="text-[10px] text-gray-500 bg-gray-100 px-2 py-1 rounded border">แอดมินเพิ่ม</span>' : `<img src="${data.photoBase64}" class="w-10 h-10 rounded-lg object-cover border cursor-pointer hover:scale-[2] transition-transform origin-left" alt="Selfie">`;
+                const gpsHtml = data.isManual || !data.lat ? '<span class="text-xs text-gray-400">-</span>' : `<a href="https://www.google.com/maps/search/?api=1&query=${data.lat},${data.lng}" target="_blank" class="text-blue-600 hover:underline"><i class="fa-solid fa-map-location-dot"></i> ดูแผนที่</a>`;
 
-                allLogsForExport.push({ Date_Time: exportTimeStr, Employee: empName, Type: isCheckIn?'เข้างาน':'ออกงาน', Remark: remarkExport, Lat: data.lat, Lng: data.lng });
+                allLogsForExport.push({ Date_Time: exportTimeStr, Employee: empName, Type: isCheckIn?'เข้างาน':'ออกงาน', Remark: remarkExport, Lat: data.lat || '', Lng: data.lng || '' });
 
                 logHtml += `
                     <tr class="hover:bg-gray-50 border-b">
                         <td class="p-3 text-sm whitespace-nowrap">${timeStr}</td>
                         <td class="p-3 text-sm font-medium text-gray-800">${empName}</td>
                         <td class="p-3">${typeBadge}<br>${remarkBadge}</td>
-                        <td class="p-3"><img src="${data.photoBase64}" class="w-10 h-10 rounded-lg object-cover border cursor-pointer hover:scale-[2] transition-transform origin-left" alt="Selfie"></td>
-                        <td class="p-3 text-xs"><a href="https://www.google.com/maps/search/?api=1&query=${data.lat},${data.lng}" target="_blank" class="text-blue-600 hover:underline"><i class="fa-solid fa-map-location-dot"></i> ดูแผนที่</a></td>
+                        <td class="p-3">${photoHtml}</td>
+                        <td class="p-3 text-xs">${gpsHtml}</td>
                         <td class="p-3 text-center">
                             <button onclick="window.deleteTimelog('${data.id}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded transition text-xs shadow-sm" title="ลบรายการนี้">
                                 <i class="fa-solid fa-trash"></i>
