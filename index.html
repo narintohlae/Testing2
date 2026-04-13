@@ -10,6 +10,8 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- FontAwesome สำหรับไอคอน -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js สำหรับวาดกราฟสถิติ -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
@@ -260,24 +262,36 @@
 
                 <!-- Section: ภาพรวมวันนี้ (Dashboard) -->
                 <div id="section-admin-dashboard" class="space-y-6">
-                    <h2 class="text-2xl font-bold text-gray-800">สถิติประจำวัน (<span id="dash-date">วันนี้</span>)</h2>
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-bold text-gray-800">สถิติประจำวัน (<span id="dash-date">วันนี้</span>)</h2>
+                        <div id="dash-holiday-badge" class="hide bg-indigo-100 text-indigo-700 font-bold px-4 py-2 rounded-full text-sm shadow-sm border border-indigo-200">
+                            <i class="fa-solid fa-champagne-glasses mr-1"></i> วันหยุดบริษัท: <span id="dash-holiday-name"></span>
+                        </div>
+                    </div>
                     
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-blue-100 flex items-center justify-between">
-                            <div><p class="text-sm text-gray-500 mb-1">พนักงานทั้งหมด</p><p class="text-2xl font-bold text-blue-600" id="stat-total">0</p></div>
-                            <div class="bg-blue-50 p-3 rounded-full text-blue-500"><i class="fa-solid fa-users"></i></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- กล่องตัวเลข 4 กล่อง -->
+                        <div class="lg:col-span-2 grid grid-cols-2 gap-4">
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-blue-100 flex flex-col justify-between">
+                                <div class="flex justify-between items-start"><p class="text-sm text-gray-500">พนักงานทั้งหมด</p><div class="bg-blue-50 p-2 rounded-lg text-blue-500"><i class="fa-solid fa-users"></i></div></div>
+                                <p class="text-3xl font-bold text-blue-600 mt-2" id="stat-total">0</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-emerald-100 flex flex-col justify-between">
+                                <div class="flex justify-between items-start"><p class="text-sm text-gray-500">มาทำงานแล้ว</p><div class="bg-emerald-50 p-2 rounded-lg text-emerald-500"><i class="fa-solid fa-user-check"></i></div></div>
+                                <p class="text-3xl font-bold text-emerald-600 mt-2" id="stat-present">0</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-rose-100 flex flex-col justify-between">
+                                <div class="flex justify-between items-start"><p class="text-sm text-gray-500">ขาด/ยังไม่เข้า</p><div class="bg-rose-50 p-2 rounded-lg text-rose-500"><i class="fa-solid fa-user-xmark"></i></div></div>
+                                <p class="text-3xl font-bold text-rose-600 mt-2" id="stat-absent">0</p>
+                            </div>
+                            <div class="bg-white p-4 rounded-xl shadow-sm border border-yellow-100 flex flex-col justify-between">
+                                <div class="flex justify-between items-start"><p class="text-sm text-gray-500">ลางาน</p><div class="bg-yellow-50 p-2 rounded-lg text-yellow-500"><i class="fa-solid fa-user-injured"></i></div></div>
+                                <p class="text-3xl font-bold text-yellow-600 mt-2" id="stat-leave">0</p>
+                            </div>
                         </div>
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-emerald-100 flex items-center justify-between">
-                            <div><p class="text-sm text-gray-500 mb-1">มาทำงานแล้ว</p><p class="text-2xl font-bold text-emerald-600" id="stat-present">0</p></div>
-                            <div class="bg-emerald-50 p-3 rounded-full text-emerald-500"><i class="fa-solid fa-user-check"></i></div>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-rose-100 flex items-center justify-between">
-                            <div><p class="text-sm text-gray-500 mb-1">ขาด/ยังไม่เข้า</p><p class="text-2xl font-bold text-rose-600" id="stat-absent">0</p></div>
-                            <div class="bg-rose-50 p-3 rounded-full text-rose-500"><i class="fa-solid fa-user-xmark"></i></div>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-yellow-100 flex items-center justify-between">
-                            <div><p class="text-sm text-gray-500 mb-1">ลางาน</p><p class="text-2xl font-bold text-yellow-600" id="stat-leave">0</p></div>
-                            <div class="bg-yellow-50 p-3 rounded-full text-yellow-500"><i class="fa-solid fa-user-injured"></i></div>
+                        <!-- กราฟ Chart.js -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center items-center h-48 lg:h-full">
+                            <canvas id="dashChart" class="w-full h-full max-w-[200px]"></canvas>
                         </div>
                     </div>
 
@@ -426,6 +440,19 @@
                         </div>
 
                         <hr class="my-6 border-gray-100">
+                        
+                        <!-- ระบบเพิ่มวันหยุดประจำปี -->
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-calendar-day text-blue-500 mr-2"></i>ตั้งค่าวันหยุดบริษัท (Public Holidays)</h3>
+                            <button id="btn-add-holiday" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-sm font-medium transition shadow-sm"><i class="fa-solid fa-plus"></i> เพิ่มวันหยุด</button>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4">ในวันที่ตั้งเป็นวันหยุด ระบบจะไม่นับว่าพนักงาน "ขาดงาน"</p>
+                        
+                        <div id="holidays-list" class="space-y-4 mb-6 max-h-48 overflow-y-auto pr-2">
+                            <!-- รายการวันหยุดจะถูกสร้างที่นี่ -->
+                        </div>
+
+                        <hr class="my-6 border-gray-100">
 
                         <h3 class="text-lg font-bold text-gray-800 mb-4"><i class="fa-solid fa-clock text-blue-500 mr-2"></i>ตั้งค่าเวลาทำงาน & สาย</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -477,7 +504,7 @@
         let capturedPhotoData = null;
         let stream = null;
         
-        let systemSettings = { branches: [], workHours: 8, coreTime: "09:00", announcement: "" };
+        let systemSettings = { branches: [], holidays: [], workHours: 8, coreTime: "09:00", announcement: "" };
         let allLogsRaw = []; 
         let allLogsForExport = [];
         let allEmployeesList = []; 
@@ -516,6 +543,7 @@
                     if (docSnap.data().officeLat && (!systemSettings.branches || systemSettings.branches.length === 0)) {
                         systemSettings.branches = [{ id: Date.now(), name: 'สำนักงานใหญ่', lat: docSnap.data().officeLat, lng: docSnap.data().officeLng, radius: docSnap.data().radius || 100 }];
                     }
+                    if (!systemSettings.holidays) systemSettings.holidays = [];
                 }
             } catch (e) { console.error("Could not load settings", e); }
         }
@@ -548,7 +576,6 @@
                         initLocation(); 
                         loadEmployeeData(); 
                         
-                        // แสดงประกาศบริษัท
                         if (systemSettings.announcement) {
                             document.getElementById('emp-announcement-box').classList.remove('hide');
                             document.getElementById('emp-announcement-text').textContent = systemSettings.announcement;
@@ -708,7 +735,7 @@
                     type: type,
                     timestamp: serverTimestamp(),
                     lat: currentLat, lng: currentLng,
-                    branchName: currentBranchName, // บันทึกชื่อสาขา
+                    branchName: currentBranchName, 
                     photoBase64: capturedPhotoData,
                     remark: remark,
                     isManual: false 
@@ -722,7 +749,6 @@
         document.getElementById('btn-checkout').addEventListener('click', () => saveTimeLog('out'));
 
         function loadEmployeeData() {
-            // โหลดข้อมูลตัวเองแบบ Realtime เพื่ออัปเดตโควตาวันลา
             listeners.empSelf = onSnapshot(doc(db, "employees", currentEmployee.id), (docSnap) => {
                 if (docSnap.exists()) {
                     currentEmployee = { id: docSnap.id, ...docSnap.data() };
@@ -745,7 +771,6 @@
                 
                 document.getElementById('emp-month-label').textContent = now.toLocaleDateString('th-TH', { month: 'short', year: 'numeric' });
 
-                // เช็คสถานะปัจจุบันของวันนี้
                 const todayLogs = logs.filter(l => {
                     if(!l.timestamp) return false;
                     return l.timestamp.toDate().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }) === todayStrTh;
@@ -753,17 +778,13 @@
 
                 const statusEl = document.getElementById('emp-current-status');
                 if(todayLogs.length > 0) {
-                    const lastLog = todayLogs[0]; // array ถูก sort จากใหม่ไปเก่าแล้ว
-                    if(lastLog.type === 'in') {
-                        statusEl.innerHTML = '<span class="text-emerald-600">เข้างานแล้ว (กำลังทำงาน)</span>';
-                    } else {
-                        statusEl.innerHTML = '<span class="text-rose-600">ออกงานแล้ว</span>';
-                    }
+                    const lastLog = todayLogs[0]; 
+                    if(lastLog.type === 'in') statusEl.innerHTML = '<span class="text-emerald-600">เข้างานแล้ว (กำลังทำงาน)</span>';
+                    else statusEl.innerHTML = '<span class="text-rose-600">ออกงานแล้ว</span>';
                 } else {
                     statusEl.innerHTML = '<span class="text-gray-400">ยังไม่ได้เข้างาน</span>';
                 }
 
-                // คำนวณสรุปรายเดือน
                 const monthlyLogs = logs.filter(l => {
                     if(!l.timestamp) return false;
                     const d = l.timestamp.toDate(); return d.getFullYear() === currYear && d.getMonth() === currMonth;
@@ -801,7 +822,6 @@
                 document.getElementById('emp-stat-late').innerHTML = `${lateDays}<span class="text-xs font-normal text-gray-500"> วัน</span>`;
                 document.getElementById('emp-stat-ot').innerHTML = `${totalOT.toFixed(1)}<span class="text-xs font-normal text-gray-500"> ชม.</span>`;
 
-                // แสดงรายการประวัติล่าสุด
                 const container = document.getElementById('emp-personal-history');
                 if (logs.length === 0) container.innerHTML = '<div class="text-center text-sm text-gray-400 py-4">ยังไม่มีประวัติการบันทึกเวลา</div>';
                 else {
@@ -863,7 +883,6 @@
             const days = parseFloat(document.getElementById('leave-days').value) || 0;
             if (!startDate || !endDate || !reason || days <= 0) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุวันที่ จำนวนวัน และเหตุผล', 'warning');
 
-            // ตรวจสอบโควตาก่อนส่ง
             const currentQuotas = currentEmployee.quotas || { 'ลาป่วย': 30, 'ลากิจ': 6, 'ลาพักร้อน': 6, 'อื่นๆ': 0 };
             if (currentQuotas[type] !== undefined && days > currentQuotas[type]) {
                 return Swal.fire('โควตาไม่พอ', `คุณมีสิทธิ์ ${type} เหลือเพียง ${currentQuotas[type]} วัน`, 'error');
@@ -882,6 +901,25 @@
             const today = new Date();
             document.getElementById('dash-date').textContent = today.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
             today.setHours(0, 0, 0, 0); const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+
+            // ตรวจสอบวันหยุดบริษัท
+            let isHolidayToday = false;
+            let holidayName = '';
+            const todayIso = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split("T")[0];
+            
+            if (systemSettings.holidays && systemSettings.holidays.length > 0) {
+                const foundHoliday = systemSettings.holidays.find(h => h.date === todayIso);
+                if (foundHoliday) {
+                    isHolidayToday = true;
+                    holidayName = foundHoliday.name;
+                    document.getElementById('dash-holiday-badge').classList.remove('hide');
+                    document.getElementById('dash-holiday-name').textContent = holidayName;
+                } else {
+                    document.getElementById('dash-holiday-badge').classList.add('hide');
+                }
+            } else {
+                document.getElementById('dash-holiday-badge').classList.add('hide');
+            }
 
             const qEmp = query(collection(db, "employees"));
             listeners.adminEmployees = onSnapshot(qEmp, (empSnapshot) => {
@@ -930,7 +968,7 @@
                         else { if (!userDaily[log.userId].lastOut || t > userDaily[log.userId].lastOut) userDaily[log.userId].lastOut = t; }
                     });
 
-                    let presentCount = 0, sumHtml = '';
+                    let presentCount = 0, lateCountToday = 0, sumHtml = '';
                     Object.values(userDaily).forEach(u => {
                         if (u.firstIn) presentCount++; 
                         let inStr = u.firstIn ? u.firstIn.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '-';
@@ -940,7 +978,10 @@
                         if (u.firstIn && systemSettings.coreTime) {
                             const [coreH, coreM] = systemSettings.coreTime.split(':');
                             const coreDate = new Date(u.firstIn); coreDate.setHours(coreH, coreM, 0, 0);
-                            if (u.firstIn > coreDate) lateBadge = '<span class="text-[10px] bg-red-100 text-red-600 px-1 rounded ml-1 font-bold">สาย</span>';
+                            if (u.firstIn > coreDate) {
+                                lateBadge = '<span class="text-[10px] bg-red-100 text-red-600 px-1 rounded ml-1 font-bold">สาย</span>';
+                                lateCountToday++;
+                            }
                         }
 
                         let workHrsStr = '-', otHrsStr = '-';
@@ -996,10 +1037,38 @@
                         
                         document.getElementById('admin-leaves-body').innerHTML = leaveHtml || '<tr><td colspan="5" class="p-8 text-center text-gray-400">ไม่มีคำขอลางาน</td></tr>';
                         document.getElementById('stat-leave').textContent = leaveCountToday;
+                        
+                        // ระบบคำนวณวันขาด แบบคำนึงถึงวันหยุดบริษัท
                         let finalAbsent = empSnapshot.size - presentCount - leaveCountToday;
+                        if (isHolidayToday) finalAbsent = 0; // ถ้าเป็นวันหยุด ยอดขาดเป็น 0 อัตโนมัติ
+                        
                         document.getElementById('stat-absent').textContent = finalAbsent < 0 ? 0 : finalAbsent;
                         document.getElementById('leave-badge').textContent = pendingCount;
                         document.getElementById('leave-badge').className = pendingCount > 0 ? 'bg-rose-500 text-white text-xs rounded-full px-2 py-0.5 ml-1' : 'hide';
+
+                        // --- วาดกราฟ Chart.js ---
+                        if(window.myDashChart) window.myDashChart.destroy();
+                        const ctx = document.getElementById('dashChart').getContext('2d');
+                        const onTimeCount = presentCount - lateCountToday;
+                        window.myDashChart = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['ตรงเวลา', 'สาย', 'ลา', 'ขาด'],
+                                datasets: [{
+                                    data: [onTimeCount < 0 ? 0 : onTimeCount, lateCountToday, leaveCountToday, finalAbsent < 0 ? 0 : finalAbsent],
+                                    backgroundColor: ['#10b981', '#f59e0b', '#eab308', '#f43f5e'],
+                                    borderWidth: 0,
+                                    hoverOffset: 4
+                                }]
+                            },
+                            options: { 
+                                responsive: true, maintainAspectRatio: false, 
+                                plugins: { 
+                                    legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: "'Segoe UI', sans-serif" } } }
+                                },
+                                cutout: '65%'
+                            }
+                        });
                     });
                 });
             });
@@ -1010,7 +1079,7 @@
             const { value: monthRaw } = await Swal.fire({
                 title: `สรุปรายงาน: ${name}`,
                 html: `<p class="mb-2 text-sm text-gray-600">เลือกเดือนที่ต้องการสรุปข้อมูล</p><input type="month" id="swal-month-input" value="${currentMonthStr}" class="w-[80%] p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-center">`,
-                showCancelButton: true, confirmButtonText: 'สร้างรายงาน', cancelButtonText: 'ยกเลิก',
+                showCancelButton: true, confirmButtonText: '<i class="fa-solid fa-file-lines"></i> สร้างรายงาน', cancelButtonText: 'ยกเลิก',
                 preConfirm: () => document.getElementById('swal-month-input').value
             });
 
@@ -1052,15 +1121,36 @@
                 Swal.fire({
                     title: `รายงานของ ${name}`,
                     html: `
-                        <div class="text-left bg-gray-50 p-4 rounded-xl mt-2 text-gray-800 border">
-                            <p class="mb-2"><i class="fa-solid fa-calendar text-blue-500 w-5"></i> <b>ประจำเดือน:</b> ${m}/${year}</p>
-                            <p class="mb-2"><i class="fa-solid fa-briefcase text-blue-500 w-5"></i> <b>มาทำงานรวม:</b> <span class="text-emerald-600 font-bold">${totalDays} วัน</span></p>
+                        <div id="print-report-area" class="text-left bg-gray-50 p-5 rounded-xl mt-2 text-gray-800 border">
+                            <p class="mb-3 border-b pb-2"><i class="fa-solid fa-calendar text-blue-500 w-5"></i> <b>สรุปผลประจำเดือน:</b> ${m}/${year}</p>
+                            <p class="mb-2"><i class="fa-solid fa-briefcase text-blue-500 w-5"></i> <b>มาทำงานรวม:</b> <span class="text-emerald-600 font-bold text-lg">${totalDays}</span> วัน</p>
                             <p class="mb-2"><i class="fa-solid fa-clock text-blue-500 w-5"></i> <b>ชั่วโมงทำงานรวม:</b> ${totalWorkHrs.toFixed(2)} ชม.</p>
                             <p class="mb-2"><i class="fa-solid fa-fire text-orange-500 w-5"></i> <b>ล่วงเวลา (OT):</b> <span class="text-orange-600 font-bold">${totalOT.toFixed(2)} ชม.</span></p>
                             <p class="mb-0"><i class="fa-solid fa-triangle-exclamation text-rose-500 w-5"></i> <b>มาสาย (หลัง ${systemSettings.coreTime}):</b> <span class="${lateDays > 0 ? 'text-rose-600 font-bold' : ''}">${lateDays} วัน</span></p>
                         </div>
                     `,
-                    confirmButtonText: 'ปิด'
+                    showDenyButton: true,
+                    confirmButtonText: 'ปิด',
+                    denyButtonText: '<i class="fa-solid fa-print"></i> สั่งพิมพ์',
+                    denyButtonColor: '#4b5563'
+                }).then((result) => {
+                    if (result.isDenied) {
+                        // พิมพ์รายงาน
+                        const printWindow = window.open('', '', 'height=600,width=800');
+                        printWindow.document.write('<html><head><title>พิมพ์รายงาน: '+name+'</title>');
+                        printWindow.document.write('<style>body{font-family:sans-serif; padding:20px;} .box{border:1px solid #ddd; padding:20px; border-radius:8px;} h2{color:#2563eb;} p{margin-bottom:10px; font-size:16px;} hr{margin:20px 0;}</style>');
+                        printWindow.document.write('</head><body><div class="box">');
+                        printWindow.document.write(`<h2>สรุปรายงานการทำงาน - ${name}</h2><hr>`);
+                        printWindow.document.write(`<p><b>ประจำเดือน:</b> ${m}/${year}</p>`);
+                        printWindow.document.write(`<p><b>มาทำงานรวม:</b> ${totalDays} วัน</p>`);
+                        printWindow.document.write(`<p><b>ชั่วโมงทำงานรวม:</b> ${totalWorkHrs.toFixed(2)} ชั่วโมง</p>`);
+                        printWindow.document.write(`<p><b>ล่วงเวลา (OT):</b> ${totalOT.toFixed(2)} ชั่วโมง</p>`);
+                        printWindow.document.write(`<p><b>มาสาย (หลัง ${systemSettings.coreTime}):</b> ${lateDays} วัน</p>`);
+                        printWindow.document.write('<hr><p style="text-align:right; font-size:12px; color:#888;">เอกสารออกโดยระบบ Time Tracker</p>');
+                        printWindow.document.write('</div></body></html>');
+                        printWindow.document.close();
+                        printWindow.print();
+                    }
                 });
             }
         };
@@ -1406,11 +1496,47 @@
             renderBranchesList();
         });
 
+        // ระบบเพิ่มวันหยุดบริษัท
+        function renderHolidaysList() {
+            const container = document.getElementById('holidays-list');
+            if (!systemSettings.holidays || systemSettings.holidays.length === 0) {
+                container.innerHTML = '<div class="text-sm text-gray-400 border border-dashed rounded-lg p-4 text-center">ยังไม่มีการตั้งวันหยุดบริษัท</div>';
+                return;
+            }
+            let html = '';
+            // เรียงวันที่จากเก่าไปใหม่
+            systemSettings.holidays.sort((a,b) => new Date(a.date) - new Date(b.date));
+            systemSettings.holidays.forEach((h, idx) => {
+                html += `
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 flex justify-between items-center">
+                        <div class="flex gap-4 w-full mr-4">
+                            <input type="date" id="hol-date-${idx}" value="${h.date}" class="p-2 border border-gray-300 rounded text-sm w-1/3 focus:ring-2 focus:ring-blue-500 outline-none">
+                            <input type="text" id="hol-name-${idx}" value="${h.name}" placeholder="ชื่อวันหยุด (เช่น วันสงกรานต์)" class="p-2 border border-gray-300 rounded text-sm w-2/3 focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <button onclick="window.removeHoliday(${idx})" class="text-rose-500 hover:text-rose-700 bg-rose-50 p-2 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        window.removeHoliday = (idx) => {
+            systemSettings.holidays.splice(idx, 1);
+            renderHolidaysList();
+        };
+
+        document.getElementById('btn-add-holiday').addEventListener('click', () => {
+            if (!systemSettings.holidays) systemSettings.holidays = [];
+            systemSettings.holidays.push({ date: '', name: '' });
+            renderHolidaysList();
+        });
+
         function populateSettingsForm() {
             document.getElementById('setting-announcement').value = systemSettings.announcement || '';
             document.getElementById('setting-workhours').value = systemSettings.workHours || 8;
             document.getElementById('setting-coretime').value = systemSettings.coreTime || '09:00';
             renderBranchesList();
+            renderHolidaysList();
         }
 
         document.getElementById('btn-save-settings').addEventListener('click', async () => {
@@ -1432,17 +1558,31 @@
                 });
             }
 
+            // ดึงค่าวันหยุดบริษัท
+            let updatedHolidays = [];
+            if (systemSettings.holidays) {
+                systemSettings.holidays.forEach((h, idx) => {
+                    const hdate = document.getElementById(`hol-date-${idx}`).value;
+                    const hname = document.getElementById(`hol-name-${idx}`).value;
+                    if(hdate && hname) {
+                        updatedHolidays.push({ date: hdate, name: hname });
+                    }
+                });
+            }
+
             Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             try {
                 const newData = { 
                     announcement: announcement,
                     branches: updatedBranches, 
+                    holidays: updatedHolidays,
                     workHours: workHours ? parseFloat(workHours) : 8, 
                     coreTime: coreTime || "09:00" 
                 };
                 await setDoc(doc(db, "settings", "general"), newData);
                 systemSettings = { ...systemSettings, ...newData }; 
-                renderBranchesList(); // อัปเดต UI หน้าตาเผื่อมีการลบสาขาที่ข้อมูลไม่ครบออกไป
+                renderBranchesList(); 
+                renderHolidaysList();
                 Swal.fire({ icon: 'success', title: 'บันทึกตั้งค่าสำเร็จ', timer: 1500 });
             } catch (error) { Swal.fire('ผิดพลาด', error.message, 'error'); }
         });
