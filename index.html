@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ระบบลงเวลาเข้า-ออกงาน V5 (Split UI)</title>
+    <title>ระบบลงเวลา V6.1 (User Management Ready)</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,7 +16,7 @@
                     fontFamily: { sans: ['Prompt', 'sans-serif'] },
                     colors: { 
                         primary: '#4F46E5', secondary: '#10B981', danger: '#EF4444', warning: '#F59E0B',
-                        hrPrimary: '#334155', hrSecondary: '#475569', // Slate colors for HR
+                        hrPrimary: '#334155', hrSecondary: '#475569',
                         darkBg: '#111827', darkCard: '#1F2937', darkBorder: '#374151'
                     }
                 }
@@ -24,6 +24,7 @@
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
         body { background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; transition: background-color 0.3s; }
@@ -34,26 +35,23 @@
         .view-section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Employee Nav */
         .nav-emp .nav-item.active { color: #4F46E5; font-weight: 600; }
         .dark .nav-emp .nav-item.active { color: #818CF8; }
-        
-        /* HR Nav */
         .nav-hr .nav-item.active { color: #334155; font-weight: 600; }
         .dark .nav-hr .nav-item.active { color: #94A3B8; }
-        
         .nav-item.active i { transform: scale(1.1); transition: all 0.2s; }
-        #camera-modal { backdrop-filter: blur(5px); }
+        
+        .sub-tab.active { border-bottom: 2px solid #4F46E5; color: #4F46E5; font-weight: 600; }
+        .dark .sub-tab.active { border-bottom-color: #818CF8; color: #818CF8; }
+        .hr-sub-tab.active { border-bottom: 2px solid #334155; color: #334155; font-weight: 600; }
+        .dark .hr-sub-tab.active { border-bottom-color: #94A3B8; color: #94A3B8; }
     </style>
 </head>
 <body class="text-gray-800 dark:text-gray-200 antialiased h-screen flex justify-center">
 
-    <!-- Mobile App Container -->
     <div class="w-full max-w-md h-full bg-white dark:bg-gray-900 relative shadow-2xl flex flex-col overflow-hidden sm:rounded-2xl sm:h-[95vh] sm:my-auto sm:border sm:border-gray-200 dark:sm:border-gray-800 transition-colors duration-300">
         
-        <!-- ========================================== -->
-        <!-- GATEWAY SCREEN (Role Selection)            -->
-        <!-- ========================================== -->
+        <!-- GATEWAY SCREEN -->
         <div id="gateway-screen" class="absolute inset-0 bg-white dark:bg-gray-900 z-50 flex flex-col items-center justify-center p-6 transition-colors">
             <div class="w-24 h-24 bg-gradient-to-tr from-primary to-blue-400 rounded-3xl flex items-center justify-center shadow-lg shadow-indigo-200 dark:shadow-none mb-6">
                 <i class="fas fa-clock text-white text-5xl"></i>
@@ -63,41 +61,30 @@
 
             <div class="w-full space-y-4">
                 <button onclick="enterMode('employee')" class="w-full bg-indigo-50 dark:bg-indigo-900/30 border-2 border-indigo-100 dark:border-indigo-800 rounded-2xl p-4 flex items-center gap-4 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition transform active:scale-95 group">
-                    <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition">
-                        <i class="fas fa-user text-primary text-xl"></i>
-                    </div>
+                    <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition"><i class="fas fa-user text-primary text-xl"></i></div>
                     <div class="text-left flex-1">
                         <h2 class="font-bold text-gray-800 dark:text-white text-lg">พนักงาน</h2>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">ลงเวลาเข้า-ออกงาน, ดูประวัติ</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">ลงเวลา, ลางาน, ขอโอที</p>
                     </div>
                     <i class="fas fa-chevron-right text-gray-300"></i>
                 </button>
-
                 <button onclick="enterMode('hr')" class="w-full bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-700 rounded-2xl p-4 flex items-center gap-4 hover:bg-slate-100 dark:hover:bg-slate-800 transition transform active:scale-95 group">
-                    <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition">
-                        <i class="fas fa-user-shield text-slate-700 dark:text-slate-300 text-xl"></i>
-                    </div>
+                    <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition"><i class="fas fa-user-shield text-slate-700 dark:text-slate-300 text-xl"></i></div>
                     <div class="text-left flex-1">
                         <h2 class="font-bold text-gray-800 dark:text-white text-lg">ฝ่ายบุคคล (HR)</h2>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">จัดการระบบ, ดูภาพรวมพนักงาน</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">ภาพรวม, อนุมัติคำร้อง, พนักงาน</p>
                     </div>
                     <i class="fas fa-chevron-right text-gray-300"></i>
                 </button>
             </div>
             
             <div class="mt-auto pt-10 pb-4">
-                <button onclick="toggleDarkMode()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition flex items-center gap-2 text-sm">
-                    <i class="fas fa-moon" id="theme-icon-gateway"></i> สลับโหมดกลางคืน
-                </button>
+                <button onclick="toggleDarkMode()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition flex items-center gap-2 text-sm"><i class="fas fa-moon" id="theme-icon-gateway"></i> สลับโหมดกลางคืน</button>
             </div>
         </div>
 
-        <!-- ========================================== -->
-        <!-- MAIN APP INTERFACE                         -->
-        <!-- ========================================== -->
+        <!-- MAIN INTERFACE -->
         <div id="app-interface" class="hidden flex-col h-full w-full">
-            
-            <!-- Dynamic Header -->
             <header id="app-header" class="bg-gradient-to-r text-white p-5 rounded-b-3xl shadow-lg z-10 relative shrink-0 transition-colors duration-500">
                 <div class="flex justify-between items-center">
                     <div>
@@ -105,37 +92,28 @@
                         <p class="text-xs opacity-90 mt-0.5" id="header-subtitle"><span id="header-user-id" class="font-mono bg-white/20 px-1.5 py-0.5 rounded mr-1">EMP</span> <span id="header-user-name">พนักงาน</span></p>
                     </div>
                     <div class="flex items-center gap-3">
-                        <button onclick="logoutToGateway()" class="bg-white/20 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-white/30 transition text-xs" title="สลับบทบาท">
-                            <i class="fas fa-exchange-alt"></i>
-                        </button>
+                        <button onclick="logoutToGateway()" class="bg-white/20 p-2 rounded-full w-9 h-9 flex items-center justify-center hover:bg-white/30 transition text-xs" title="สลับบทบาท"><i class="fas fa-exchange-alt"></i></button>
                         <div class="bg-white/20 p-1.5 rounded-full backdrop-blur-sm shadow-sm border border-white/10">
                             <img id="header-avatar" src="" class="w-8 h-8 rounded-full hidden" alt="Profile">
-                            <i id="header-icon" class="fas fa-user-circle text-2xl hidden"></i>
                             <i id="header-hr-icon" class="fas fa-shield-alt text-2xl hidden p-1"></i>
                         </div>
                     </div>
                 </div>
-                <!-- Cloud Status Indicator -->
-                <div id="cloud-indicator" class="absolute bottom-2 right-5 text-[10px] hidden items-center gap-1 text-green-200">
-                    <i class="fas fa-cloud-check"></i> ซิงก์คลาวด์แล้ว
-                </div>
+                <div id="cloud-indicator" class="absolute bottom-2 right-5 text-[10px] hidden items-center gap-1 text-green-200"><i class="fas fa-cloud-check"></i> ซิงก์คลาวด์แล้ว</div>
             </header>
 
-            <!-- Content Area -->
             <main class="flex-1 overflow-y-auto no-scrollbar pb-24 bg-gray-50 dark:bg-darkBg relative transition-colors duration-300" id="main-content">
                 
-                <!-- --------------------------------------- -->
-                <!-- EMPLOYEE VIEWS                          -->
-                <!-- --------------------------------------- -->
+                <!-- EMPLOYEE VIEWS -->
                 <div id="view-emp-home" class="view-section px-5 py-6">
-                    <div class="bg-white dark:bg-darkCard rounded-3xl shadow-sm border border-gray-100 dark:border-darkBorder p-6 text-center mb-6 transition-colors">
+                    <div class="bg-white dark:bg-darkCard rounded-3xl shadow-sm border border-gray-100 dark:border-darkBorder p-6 text-center mb-6">
                         <p class="text-gray-500 dark:text-gray-400 text-sm mb-1" id="current-date">--/--/----</p>
                         <h2 class="text-5xl font-bold text-gray-800 dark:text-white mb-2 tracking-tight" id="current-time">00:00<span class="text-2xl text-gray-400 dark:text-gray-500">00</span></h2>
                         <div class="inline-flex items-center justify-center bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-full text-xs font-medium mt-2" id="location-status">
                             <i class="fas fa-location-arrow mr-2 animate-pulse"></i> กำลังหาตำแหน่ง...
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="grid grid-cols-2 gap-4 mb-6">
                         <button onclick="initiateCheck('in')" class="bg-gradient-to-b from-secondary to-green-600 text-white rounded-2xl p-4 shadow-md shadow-green-200 dark:shadow-none hover:shadow-lg transform transition active:scale-95 flex flex-col items-center justify-center gap-2">
                             <div class="bg-white/20 rounded-full p-3 w-12 h-12 flex items-center justify-center"><i class="fas fa-sign-in-alt text-xl"></i></div>
                             <span class="font-semibold text-lg">เข้างาน</span>
@@ -145,14 +123,8 @@
                             <span class="font-semibold text-lg">ออกงาน</span>
                         </button>
                     </div>
-                    <button id="btn-note" onclick="openNoteModal()" class="w-full mb-6 bg-white dark:bg-darkCard text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-darkBorder rounded-xl p-3 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition shadow-sm flex justify-center items-center gap-2">
-                        <i class="fas fa-edit"></i> ลางาน / บันทึกหมายเหตุ
-                    </button>
-                    <h3 class="font-semibold text-gray-700 dark:text-gray-300 mb-3 px-1">บันทึกของวันนี้</h3>
-                    <div class="bg-white dark:bg-darkCard rounded-2xl shadow-sm border border-gray-100 dark:border-darkBorder p-4 transition-colors">
-                        <div id="today-note-container" class="hidden mb-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-100 dark:border-yellow-900/50 rounded-xl">
-                            <div class="flex items-start gap-2 text-warning"><i class="fas fa-info-circle mt-0.5"></i><div><p class="text-xs font-bold" id="today-note-type">หมายเหตุ</p><p class="text-xs mt-0.5" id="today-note-text">-</p></div></div>
-                        </div>
+                    <h3 class="font-semibold text-gray-700 dark:text-gray-300 mb-3 px-1">ประวัติการลงเวลาวันนี้</h3>
+                    <div class="bg-white dark:bg-darkCard rounded-2xl shadow-sm border border-gray-100 dark:border-darkBorder p-4">
                         <div class="flex items-center justify-between border-b border-gray-50 dark:border-gray-800 pb-3 mb-3">
                             <div class="flex items-center text-gray-600 dark:text-gray-400"><i class="fas fa-arrow-right text-secondary w-5"></i><span class="text-sm">เข้างาน</span></div>
                             <div class="flex items-center gap-2"><img id="today-in-img" class="w-8 h-8 rounded-md object-cover hidden border" src=""><span class="font-semibold" id="today-in">--:--</span></div>
@@ -164,15 +136,42 @@
                     </div>
                 </div>
 
+                <div id="view-emp-req" class="view-section px-5 py-6">
+                    <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">ยื่นคำร้อง</h2>
+                    <div class="flex border-b border-gray-200 dark:border-gray-700 mb-5">
+                        <button onclick="toggleEmpReqTab('leave')" id="tab-emp-leave" class="sub-tab active flex-1 py-2 text-sm text-center text-gray-500 transition-colors">ลางาน</button>
+                        <button onclick="toggleEmpReqTab('ot')" id="tab-emp-ot" class="sub-tab flex-1 py-2 text-sm text-center text-gray-500 transition-colors">ขอโอที</button>
+                    </div>
+                    <form id="form-leave" class="bg-white dark:bg-darkCard p-4 rounded-2xl shadow-sm border space-y-3 mb-6 block">
+                        <div><label class="block text-xs text-gray-500 mb-1">ประเภทการลา</label><select id="req-leave-type" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm" required><option value="ลาป่วย">ลาป่วย</option><option value="ลากิจ">ลากิจ</option><option value="ลาพักร้อน">ลาพักร้อน</option></select></div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="block text-xs text-gray-500 mb-1">วันที่เริ่ม</label><input type="date" id="req-leave-start" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm" required></div>
+                            <div><label class="block text-xs text-gray-500 mb-1">ถึงวันที่</label><input type="date" id="req-leave-end" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm" required></div>
+                        </div>
+                        <div><label class="block text-xs text-gray-500 mb-1">เหตุผล</label><textarea id="req-leave-reason" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm" rows="2" required></textarea></div>
+                        <button type="submit" class="w-full bg-primary text-white font-semibold rounded-xl p-2 shadow-md active:scale-95 transition text-sm">ส่งคำขอลางาน</button>
+                    </form>
+                    <form id="form-ot" class="bg-white dark:bg-darkCard p-4 rounded-2xl shadow-sm border space-y-3 mb-6 hidden">
+                        <div><label class="block text-xs text-gray-500 mb-1">วันที่ทำ OT</label><input type="date" id="req-ot-date" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm" required></div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="block text-xs text-gray-500 mb-1">เวลาเริ่ม</label><input type="time" id="req-ot-start" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm" required></div>
+                            <div><label class="block text-xs text-gray-500 mb-1">เวลาสิ้นสุด</label><input type="time" id="req-ot-end" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm" required></div>
+                        </div>
+                        <div><label class="block text-xs text-gray-500 mb-1">รายละเอียดงาน</label><textarea id="req-ot-reason" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm" rows="2" required></textarea></div>
+                        <button type="submit" class="w-full bg-orange-500 text-white font-semibold rounded-xl p-2 shadow-md active:scale-95 transition text-sm">ส่งคำขอ OT</button>
+                    </form>
+                    <h3 class="font-semibold text-gray-700 dark:text-gray-300 mb-3 px-1 text-sm">ประวัติคำร้อง</h3>
+                    <div id="emp-req-list" class="space-y-3"></div>
+                </div>
+
                 <div id="view-emp-history" class="view-section px-5 py-6">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-lg font-bold text-gray-800 dark:text-white">ประวัติส่วนตัว</h2>
                         <select id="month-filter" onchange="renderHistory()" class="bg-white dark:bg-darkCard border text-xs rounded-lg px-2 py-1"></select>
                     </div>
-                    <div class="grid grid-cols-3 gap-2 mb-5">
-                        <div class="bg-white dark:bg-darkCard p-2 rounded-xl shadow-sm border text-center"><p class="text-[10px] text-gray-500 mb-1">ทำงาน</p><h4 class="text-xl font-bold text-primary" id="stat-total-days">0</h4></div>
-                        <div class="bg-white dark:bg-darkCard p-2 rounded-xl shadow-sm border text-center"><p class="text-[10px] text-gray-500 mb-1">สาย</p><h4 class="text-xl font-bold text-danger" id="stat-late-days">0</h4></div>
-                        <div class="bg-white dark:bg-darkCard p-2 rounded-xl shadow-sm border text-center"><p class="text-[10px] text-gray-500 mb-1">ลา/หมายเหตุ</p><h4 class="text-xl font-bold text-warning" id="stat-leave-days">0</h4></div>
+                    <div class="grid grid-cols-2 gap-2 mb-5">
+                        <div class="bg-white dark:bg-darkCard p-2 rounded-xl border text-center"><p class="text-[10px] text-gray-500 mb-1">วันทำงาน</p><h4 class="text-xl font-bold text-primary" id="stat-total-days">0</h4></div>
+                        <div class="bg-white dark:bg-darkCard p-2 rounded-xl border text-center"><p class="text-[10px] text-gray-500 mb-1">มาสาย</p><h4 class="text-xl font-bold text-danger" id="stat-late-days">0</h4></div>
                     </div>
                     <div id="history-list" class="space-y-3"></div>
                 </div>
@@ -180,147 +179,121 @@
                 <div id="view-emp-profile" class="view-section px-5 py-6">
                     <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-5">โปรไฟล์ส่วนตัว</h2>
                     <form id="emp-settings-form" class="space-y-4">
-                        <div class="bg-white dark:bg-darkCard p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-darkBorder">
-                            <div class="flex justify-center mb-4">
-                                <img id="profile-large-avatar" src="" class="w-20 h-20 rounded-full border-4 border-indigo-50 dark:border-indigo-900/30">
-                            </div>
+                        <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border shadow-sm">
+                            <div class="flex justify-center mb-4"><img id="profile-large-avatar" src="" class="w-20 h-20 rounded-full border-4 border-indigo-50 dark:border-indigo-900/30"></div>
                             <div class="space-y-3">
-                                <div><label class="block text-xs text-gray-500 mb-1">รหัสพนักงาน (ID)</label><input type="text" id="emp-set-id" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm font-mono uppercase" required></div>
+                                <div><label class="block text-xs text-gray-500 mb-1">รหัสพนักงาน</label><input type="text" id="emp-set-id" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm font-mono uppercase" required></div>
                                 <div><label class="block text-xs text-gray-500 mb-1">ชื่อ-นามสกุล</label><input type="text" id="emp-set-name" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm" required></div>
+                                <div><label class="block text-xs text-gray-500 mb-1">สาขา / แผนก</label><input type="text" id="emp-set-branch" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm" placeholder="เช่น IT, Marketing" required></div>
                             </div>
                         </div>
                         <button type="submit" class="w-full bg-primary text-white font-semibold rounded-xl p-3 shadow-md active:scale-95 transition"><i class="fas fa-save mr-2"></i> บันทึกโปรไฟล์</button>
                     </form>
                 </div>
 
-                <!-- --------------------------------------- -->
-                <!-- HR VIEWS                                -->
-                <!-- --------------------------------------- -->
+                <!-- HR VIEWS -->
                 <div id="view-hr-dashboard" class="view-section px-5 py-6">
-                    <div class="grid grid-cols-2 gap-3 mb-5">
-                        <div class="bg-white dark:bg-darkCard p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center">
-                            <i class="fas fa-users text-hrPrimary dark:text-slate-400 text-2xl mb-2"></i>
-                            <h4 class="text-3xl font-bold text-gray-800 dark:text-white" id="hr-stat-in">0</h4>
-                            <p class="text-[10px] text-gray-500">ลงเวลาเข้างานแล้ว</p>
-                        </div>
-                        <div class="bg-white dark:bg-darkCard p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center justify-center">
-                            <i class="fas fa-clock text-orange-500 text-2xl mb-2"></i>
-                            <h4 class="text-3xl font-bold text-orange-500" id="hr-stat-late">0</h4>
-                            <p class="text-[10px] text-gray-500">สาย / ลางาน</p>
-                        </div>
-                    </div>
+                    <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">ภาพรวมวันนี้</h2>
                     
-                    <div id="hr-cloud-warning" class="hidden mb-4 p-3 bg-red-50 border-red-100 rounded-xl text-xs text-danger flex gap-2 items-start">
-                        <i class="fas fa-exclamation-triangle mt-0.5"></i> <span>ระบบคลาวด์ปิดอยู่ จะแสดงเฉพาะข้อมูลที่บันทึกในเครื่องนี้เท่านั้น กรุณาเปิดซิงก์คลาวด์ในการตั้งค่าระบบ</span>
+                    <!-- Fixed: Added missing hr-cloud-warning -->
+                    <div id="hr-cloud-warning" class="hidden mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/50 rounded-xl text-xs text-danger flex gap-2 items-start">
+                        <i class="fas fa-exclamation-triangle mt-0.5"></i> <span>ระบบคลาวด์ปิดอยู่ ข้อมูลจะไม่ถูกซิงก์แบบเรียลไทม์</span>
                     </div>
 
-                    <div class="flex justify-between items-center mb-3">
-                        <h3 class="font-bold text-gray-800 dark:text-white text-sm">อัปเดตล่าสุดวันนี้</h3>
-                        <input type="date" id="hr-date-filter" onchange="renderHRList()" class="bg-white dark:bg-darkCard border text-xs rounded-lg px-2 py-1">
+                    <div class="grid grid-cols-2 gap-3 mb-5">
+                        <div class="bg-white dark:bg-darkCard p-4 rounded-xl border shadow-sm flex flex-col items-center"><h4 class="text-3xl font-bold text-gray-800 dark:text-white" id="hr-stat-in">0</h4><p class="text-[10px] text-gray-500 mt-1">มาทำงาน</p></div>
+                        <div class="bg-white dark:bg-darkCard p-4 rounded-xl border shadow-sm flex flex-col items-center"><h4 class="text-3xl font-bold text-orange-500" id="hr-stat-late">0</h4><p class="text-[10px] text-gray-500 mt-1">มาสาย</p></div>
                     </div>
-                    <div id="hr-preview-list" class="space-y-2"></div>
-                    <button onclick="switchTab('hr-list')" class="w-full mt-3 text-xs text-hrPrimary dark:text-slate-400 font-medium py-2 hover:underline">ดูรายชื่อทั้งหมด <i class="fas fa-arrow-right"></i></button>
+                    <div class="bg-white dark:bg-darkCard p-4 rounded-xl border shadow-sm mb-5">
+                        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 text-center">สถิติวันนี้</h3>
+                        <div class="relative h-48 w-full"><canvas id="hrPieChart"></canvas></div>
+                    </div>
                 </div>
 
                 <div id="view-hr-list" class="view-section px-5 py-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-lg font-bold text-gray-800 dark:text-white">รายชื่อลงเวลา</h2>
-                        <button onclick="exportCSV(true)" class="text-xs bg-green-50 text-green-600 px-2 py-1 rounded border border-green-100 hover:bg-green-100 transition"><i class="fas fa-file-excel mr-1"></i> Export (เดือนนี้)</button>
+                    <div class="flex justify-between items-center mb-4"><h2 class="text-lg font-bold text-gray-800 dark:text-white">รายการข้อมูล</h2><input type="date" id="hr-date-filter" onchange="renderHRData()" class="bg-white dark:bg-darkCard border text-xs rounded-lg px-2 py-1"></div>
+                    <div class="flex border-b border-gray-200 dark:border-gray-700 mb-4 overflow-x-auto no-scrollbar">
+                        <button onclick="toggleHRListTab('logs')" id="tab-hr-logs" class="hr-sub-tab active px-3 py-2 text-xs whitespace-nowrap">ประวัติลงเวลา</button>
+                        <button onclick="toggleHRListTab('leaves')" id="tab-hr-leaves" class="hr-sub-tab px-3 py-2 text-xs whitespace-nowrap">คำขอลางาน <span id="badge-leave" class="ml-1 bg-danger text-white px-1.5 py-0.5 rounded-full text-[8px] hidden">0</span></button>
+                        <button onclick="toggleHRListTab('ots')" id="tab-hr-ots" class="hr-sub-tab px-3 py-2 text-xs whitespace-nowrap">คำขอโอที <span id="badge-ot" class="ml-1 bg-orange-500 text-white px-1.5 py-0.5 rounded-full text-[8px] hidden">0</span></button>
                     </div>
-                    <div id="hr-full-list" class="space-y-3 pb-4"></div>
+                    <div id="hr-list-filter-area" class="mb-3 flex justify-end gap-2">
+                        <select id="hr-branch-filter" onchange="renderHRData()" class="bg-white dark:bg-darkCard border text-xs rounded-lg px-2 py-1 max-w-[120px]"><option value="ALL">ทุกสาขา</option></select>
+                        <button onclick="exportCSV(true)" class="text-xs bg-green-50 text-green-600 px-2 py-1 rounded border border-green-100"><i class="fas fa-file-excel"></i></button>
+                    </div>
+                    <div id="hr-data-container" class="space-y-3 pb-4"></div>
+                </div>
+
+                <!-- HR USERS MANAGEMENT (IMPROVED) -->
+                <div id="view-hr-users" class="view-section px-5 py-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-gray-800 dark:text-white">จัดการพนักงาน</h2>
+                        <button onclick="manualAddUser()" class="bg-primary text-white text-[10px] px-3 py-1.5 rounded-lg shadow-sm active:scale-95 transition"><i class="fas fa-plus mr-1"></i> เพิ่มพนักงาน</button>
+                    </div>
+                    
+                    <div class="relative mb-4">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400"><i class="fas fa-search text-xs"></i></span>
+                        <input type="text" id="hr-user-search" oninput="renderHRUsers()" placeholder="ค้นหาชื่อหรือรหัสพนักงาน..." class="w-full bg-white dark:bg-darkCard border rounded-xl pl-9 pr-4 py-2 text-xs focus:ring-1 focus:ring-primary outline-none">
+                    </div>
+
+                    <div class="flex justify-between items-center mb-3">
+                        <p class="text-[10px] text-gray-500" id="hr-user-count">แสดง 0 รายการ</p>
+                        <select id="hr-user-branch-filter" onchange="renderHRUsers()" class="bg-white dark:bg-darkCard border text-[10px] rounded-lg px-2 py-1"><option value="ALL">ทุกสาขา</option></select>
+                    </div>
+
+                    <div id="hr-users-list" class="space-y-3 pb-4"></div>
                 </div>
 
                 <div id="view-hr-settings" class="view-section px-5 py-6">
-                    <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-5">ตั้งค่าระบบส่วนกลาง (HR)</h2>
+                    <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-5">ตั้งค่าระบบ</h2>
                     <form id="hr-settings-form" class="space-y-4 pb-10">
-                        <div class="bg-white dark:bg-darkCard p-4 rounded-2xl shadow-sm border">
-                            <h3 class="text-sm font-semibold text-hrPrimary dark:text-slate-300 mb-3"><i class="fas fa-building mr-1"></i> ข้อมูลองค์กร</h3>
-                            <div><label class="block text-xs text-gray-500 mb-1">ชื่อบริษัท / องค์กร</label><input type="text" id="hr-set-company" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm" required></div>
+                        <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border">
+                            <h3 class="text-sm font-semibold mb-3"><i class="fas fa-building mr-1"></i> ข้อมูลองค์กร</h3>
+                            <div><label class="block text-xs text-gray-500 mb-1">ชื่อบริษัท</label><input type="text" id="hr-set-company" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm" required></div>
                         </div>
-
-                        <div class="bg-white dark:bg-darkCard p-4 rounded-2xl shadow-sm border">
-                            <h3 class="text-sm font-semibold text-hrPrimary dark:text-slate-300 mb-3"><i class="fas fa-clock mr-1"></i> กฎเวลาทำงาน</h3>
+                        <div class="bg-white dark:bg-darkCard p-4 rounded-2xl border">
+                            <h3 class="text-sm font-semibold mb-3"><i class="fas fa-clock mr-1"></i> กฎเวลาทำงาน</h3>
                             <div class="grid grid-cols-2 gap-3 mb-3">
-                                <div><label class="block text-xs text-gray-500 mb-1">เวลาเข้างาน</label><input type="time" id="hr-set-time-in" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm" required></div>
-                                <div><label class="block text-xs text-gray-500 mb-1">เวลาออกงาน</label><input type="time" id="hr-set-time-out" class="w-full bg-gray-50 dark:bg-gray-800 border rounded-lg px-3 py-2 text-sm" required></div>
-                            </div>
-                            <div class="flex justify-between items-center pt-2 border-t border-gray-50 dark:border-gray-800">
-                                <h4 class="text-sm font-medium">เปิดปุ่ม "ลางาน/หมายเหตุ"</h4>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="hr-set-notes" class="sr-only peer">
-                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-hrPrimary"></div>
-                                </label>
+                                <div><label class="block text-xs text-gray-500 mb-1">เวลาเข้างาน</label><input type="time" id="hr-set-time-in" class="w-full border rounded-lg px-3 py-2 text-sm" required></div>
+                                <div><label class="block text-xs text-gray-500 mb-1">เวลาออกงาน</label><input type="time" id="hr-set-time-out" class="w-full border rounded-lg px-3 py-2 text-sm" required></div>
                             </div>
                         </div>
-
-                        <div class="bg-white dark:bg-darkCard p-4 rounded-2xl shadow-sm border space-y-4">
-                            <h3 class="text-sm font-semibold text-hrPrimary dark:text-slate-300 mb-1"><i class="fas fa-shield-alt mr-1"></i> การควบคุมพื้นที่ & รูปถ่าย</h3>
-                            <div class="flex justify-between items-center pb-3 border-b">
-                                <h4 class="text-sm font-medium">บังคับเซลฟี่ก่อนลงเวลา</h4>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="hr-set-photo" class="sr-only peer">
-                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-hrPrimary"></div>
-                                </label>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <h4 class="text-sm font-medium">เช็คพิกัด GPS รัศมี</h4>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="hr-set-gps" class="sr-only peer">
-                                    <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-hrPrimary"></div>
-                                </label>
-                            </div>
-                            <div id="hr-gps-box" class="space-y-3 bg-gray-50 dark:bg-gray-800 p-3 rounded-xl border opacity-50 pointer-events-none transition-opacity">
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div><label class="block text-xs text-gray-500 mb-1">Lat</label><input type="number" step="any" id="hr-set-lat" class="w-full border rounded-lg px-2 py-1 text-xs"></div>
-                                    <div><label class="block text-xs text-gray-500 mb-1">Lng</label><input type="number" step="any" id="hr-set-lng" class="w-full border rounded-lg px-2 py-1 text-xs"></div>
-                                </div>
-                                <button type="button" onclick="getCurrentLocationForSettings()" class="w-full bg-slate-200 text-slate-700 text-xs py-2 rounded-lg"><i class="fas fa-crosshairs"></i> ดึงพิกัดปัจจุบัน</button>
-                                <div><label class="block text-xs text-gray-500 mb-1">รัศมีที่อนุญาต (เมตร)</label><input type="number" id="hr-set-rad" class="w-full border rounded-lg px-2 py-1 text-xs"></div>
-                            </div>
-                        </div>
-
-                        <div class="bg-gray-800 dark:bg-gray-950 p-4 rounded-2xl shadow-sm border border-gray-700">
-                            <h3 class="text-sm font-semibold text-white mb-3"><i class="fas fa-cloud mr-1"></i> คลาวด์ & ความปลอดภัย</h3>
+                        <div class="bg-gray-800 dark:bg-gray-950 p-4 rounded-2xl border border-gray-700">
+                            <h3 class="text-sm font-semibold text-white mb-3"><i class="fas fa-cloud mr-1"></i> คลาวด์</h3>
                             <div class="flex justify-between items-center pb-3 border-b border-gray-700 mb-3">
-                                <div><h4 class="text-sm font-medium text-white">ซิงก์ Firebase Cloud</h4><p class="text-[10px] text-gray-400">ดึงข้อมูลพนักงานทั้งหมดมาแสดง</p></div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="hr-set-cloud" class="sr-only peer">
-                                    <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-secondary"></div>
-                                </label>
+                                <h4 class="text-sm font-medium text-white">ซิงก์ Cloud</h4>
+                                <label class="relative inline-flex items-center cursor-pointer"><input type="checkbox" id="hr-set-cloud" class="sr-only peer"><div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:bg-secondary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full"></div></label>
                             </div>
-                            <div><label class="block text-xs text-gray-300 mb-1">รหัส PIN ฝ่ายบุคคล (HR PIN)</label><input type="password" id="hr-set-pin" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm tracking-widest" required></div>
+                            <div><label class="block text-xs text-gray-300 mb-1">PIN HR</label><input type="password" id="hr-set-pin" class="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 text-sm tracking-widest" required></div>
                         </div>
-
-                        <button type="submit" class="w-full bg-hrPrimary text-white font-semibold rounded-xl p-3 shadow-md active:scale-95 transition mt-4"><i class="fas fa-save mr-2"></i> บันทึกการตั้งค่าระบบ</button>
+                        <button type="submit" class="w-full bg-hrPrimary text-white font-semibold rounded-xl p-3 shadow-md active:scale-95 transition mt-4"><i class="fas fa-save mr-2"></i> บันทึก</button>
                     </form>
                 </div>
-
             </main>
 
-            <!-- Bottom Navigation: EMPLOYEE -->
-            <nav id="nav-employee" class="nav-emp absolute bottom-0 w-full bg-white dark:bg-darkCard border-t border-gray-100 dark:border-gray-800 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 pb-safe transition-colors hidden">
-                <ul class="flex justify-between items-center px-6 py-2">
-                    <li class="flex-1"><button onclick="switchTab('emp-home')" class="nav-item active w-full flex flex-col items-center py-2 text-gray-400" data-target="emp-home"><i class="fas fa-home text-xl mb-1"></i><span class="text-[10px] font-medium">หน้าแรก</span></button></li>
-                    <li class="flex-1"><button onclick="switchTab('emp-history')" class="nav-item w-full flex flex-col items-center py-2 text-gray-400" data-target="emp-history"><i class="fas fa-history text-xl mb-1"></i><span class="text-[10px] font-medium">ประวัติ</span></button></li>
-                    <li class="flex-1"><button onclick="switchTab('emp-profile')" class="nav-item w-full flex flex-col items-center py-2 text-gray-400" data-target="emp-profile"><i class="fas fa-user-circle text-xl mb-1"></i><span class="text-[10px] font-medium">โปรไฟล์</span></button></li>
+            <nav id="nav-employee" class="nav-emp absolute bottom-0 w-full bg-white dark:bg-darkCard border-t rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 pb-safe hidden">
+                <ul class="flex justify-between items-center px-4 py-2">
+                    <li class="flex-1"><button onclick="switchTab('emp-home')" class="nav-item active w-full flex flex-col items-center py-2 text-gray-400" data-target="emp-home"><i class="fas fa-home text-xl mb-1"></i><span class="text-[10px]">หน้าแรก</span></button></li>
+                    <li class="flex-1"><button onclick="switchTab('emp-req')" class="nav-item w-full flex flex-col items-center py-2 text-gray-400" data-target="emp-req"><i class="fas fa-envelope-open-text text-xl mb-1"></i><span class="text-[10px]">คำร้อง</span></button></li>
+                    <li class="flex-1"><button onclick="switchTab('emp-history')" class="nav-item w-full flex flex-col items-center py-2 text-gray-400" data-target="emp-history"><i class="fas fa-history text-xl mb-1"></i><span class="text-[10px]">ประวัติ</span></button></li>
+                    <li class="flex-1"><button onclick="switchTab('emp-profile')" class="nav-item w-full flex flex-col items-center py-2 text-gray-400" data-target="emp-profile"><i class="fas fa-user-circle text-xl mb-1"></i><span class="text-[10px]">โปรไฟล์</span></button></li>
                 </ul>
             </nav>
 
-            <!-- Bottom Navigation: HR -->
-            <nav id="nav-hr" class="nav-hr absolute bottom-0 w-full bg-slate-50 dark:bg-gray-800 border-t border-slate-200 dark:border-gray-700 rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 pb-safe transition-colors hidden">
-                <ul class="flex justify-between items-center px-6 py-2">
-                    <li class="flex-1"><button onclick="switchTab('hr-dashboard')" class="nav-item active w-full flex flex-col items-center py-2 text-slate-400" data-target="hr-dashboard"><i class="fas fa-chart-pie text-xl mb-1"></i><span class="text-[10px] font-medium">ภาพรวม</span></button></li>
-                    <li class="flex-1"><button onclick="switchTab('hr-list')" class="nav-item w-full flex flex-col items-center py-2 text-slate-400" data-target="hr-list"><i class="fas fa-list-alt text-xl mb-1"></i><span class="text-[10px] font-medium">รายชื่อ</span></button></li>
-                    <li class="flex-1"><button onclick="switchTab('hr-settings')" class="nav-item w-full flex flex-col items-center py-2 text-slate-400" data-target="hr-settings"><i class="fas fa-cogs text-xl mb-1"></i><span class="text-[10px] font-medium">ตั้งค่าระบบ</span></button></li>
+            <nav id="nav-hr" class="nav-hr absolute bottom-0 w-full bg-slate-50 dark:bg-gray-800 border-t rounded-t-3xl shadow-lg z-20 pb-safe hidden">
+                <ul class="flex justify-between items-center px-4 py-2">
+                    <li class="flex-1"><button onclick="switchTab('hr-dashboard')" class="nav-item active w-full flex flex-col items-center py-2 text-slate-400" data-target="hr-dashboard"><i class="fas fa-chart-pie text-xl mb-1"></i><span class="text-[10px]">ภาพรวม</span></button></li>
+                    <li class="flex-1"><button onclick="switchTab('hr-list')" class="nav-item w-full flex flex-col items-center py-2 text-slate-400" data-target="hr-list"><i class="fas fa-list-alt text-xl mb-1"></i><span class="text-[10px]">รายการ</span></button></li>
+                    <li class="flex-1"><button onclick="switchTab('hr-users')" class="nav-item w-full flex flex-col items-center py-2 text-slate-400" data-target="hr-users"><i class="fas fa-users-cog text-xl mb-1"></i><span class="text-[10px]">พนักงาน</span></button></li>
+                    <li class="flex-1"><button onclick="switchTab('hr-settings')" class="nav-item w-full flex flex-col items-center py-2 text-slate-400" data-target="hr-settings"><i class="fas fa-cogs text-xl mb-1"></i><span class="text-[10px]">ตั้งค่า</span></button></li>
                 </ul>
             </nav>
-            
         </div>
 
         <!-- CAMERA MODAL -->
         <div id="camera-modal" class="absolute inset-0 bg-black/90 z-50 hidden flex-col items-center justify-center">
             <div class="relative w-full max-w-sm px-4">
-                <h3 class="text-white text-center font-semibold mb-4 text-lg">ถ่ายเซลฟี่ยืนยันตัวตน</h3>
+                <h3 class="text-white text-center font-semibold mb-4 text-lg">สแกนใบหน้า</h3>
                 <div class="relative rounded-2xl overflow-hidden bg-gray-800 aspect-[3/4] border-2 border-gray-600"><video id="camera-video" class="w-full h-full object-cover" autoplay playsinline></video></div>
                 <div class="flex justify-center mt-8 gap-8">
                     <button onclick="closeCamera()" class="w-12 h-12 bg-gray-700 text-white rounded-full flex items-center justify-center"><i class="fas fa-times text-xl"></i></button>
@@ -332,136 +305,93 @@
         </div>
     </div>
 
-    <!-- MAIN LOGIC -->
+    <!-- SCRIPT -->
     <script>
         const DEFAULT_SETTINGS = {
-            companyName: 'บริษัท ตัวอย่าง จำกัด',
-            empId: 'EMP-001', userName: 'พนักงาน ทั่วไป',
-            timeIn: '09:00', timeOut: '18:00',
-            checkLocation: false, requirePhoto: false, enableNotes: true, enableCloud: false,
+            companyName: 'บริษัท ตัวอย่าง จำกัด', empId: 'EMP-001', userName: 'พนักงาน ทั่วไป', branch: 'สำนักงานใหญ่',
+            timeIn: '09:00', timeOut: '18:00', checkLocation: false, requirePhoto: false, enableCloud: false,
             adminPin: '1234', lat: '', lng: '', radius: 100, darkMode: false
         };
 
-        let appData = { settings: { ...DEFAULT_SETTINGS }, logs: [], currentLocation: null };
-        let cloudData = []; 
-        let currentMode = ''; // 'employee' or 'hr'
+        let appData = { settings: { ...DEFAULT_SETTINGS }, logs: [], leaveReqs: [], otReqs: [], users: [], currentLocation: null };
+        let cloudData = { logs: [], leaveReqs: [], otReqs: [], users: [] }; 
+        let currentMode = ''; let currentEmpReqTab = 'leave'; let currentHRListTab = 'logs';
         let cameraStream = null, pendingCheckType = null, selectedMonth = '';
+        let hrPieChartInstance = null;
 
-        // Expose functions to window
-        window.enterMode = enterMode; window.logoutToGateway = logoutToGateway;
-        window.switchTab = switchTab; window.toggleDarkMode = toggleDarkMode;
-        window.initiateCheck = initiateCheck; window.openNoteModal = openNoteModal;
-        window.renderHistory = renderHistory; window.renderHRList = renderHRList;
-        window.exportCSV = exportCSV; window.getCurrentLocationForSettings = getCurrentLocationForSettings;
-        window.closeCamera = closeCamera; window.takePhoto = takePhoto;
-        window.syncLocalToCloud = null;
-
+        // --- Init & Theme ---
         function initApp() {
-            const saved = localStorage.getItem('timeAttendanceDataV5');
-            if (saved) { appData = JSON.parse(saved); appData.settings = { ...DEFAULT_SETTINGS, ...appData.settings }; }
+            const saved = localStorage.getItem('timeAttendanceDataV6.1');
+            if (saved) { 
+                const parsed = JSON.parse(saved);
+                appData = { ...appData, ...parsed, settings: { ...DEFAULT_SETTINGS, ...parsed.settings } };
+            }
             applyTheme(appData.settings.darkMode);
-            
             const now = new Date(); selectedMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
             document.getElementById('hr-date-filter').value = getTodayString();
-            
             updateClock(); setInterval(updateClock, 1000); startLocationTracking();
         }
-
         function toggleDarkMode() { appData.settings.darkMode = !appData.settings.darkMode; applyTheme(appData.settings.darkMode); saveData(); }
-        function applyTheme(isDark) {
-            document.documentElement.classList.toggle('dark', isDark);
-            document.getElementById('theme-icon-gateway').className = isDark ? 'fas fa-sun text-yellow-300' : 'fas fa-moon';
-        }
+        function applyTheme(isDark) { document.documentElement.classList.toggle('dark', isDark); const icon = document.getElementById('theme-icon-gateway'); if(icon) icon.className = isDark ? 'fas fa-sun text-yellow-300' : 'fas fa-moon'; }
+        function saveData() { localStorage.setItem('timeAttendanceDataV6.1', JSON.stringify(appData)); }
 
-        // --- Role & Navigation ---
+        // --- Role & Nav ---
         async function enterMode(mode) {
             if (mode === 'hr') {
-                const { value: pin } = await Swal.fire({ title: 'ยืนยันตัวตน HR', input: 'password', inputPlaceholder: 'ใส่รหัส PIN (เริ่มต้น: 1234)', showCancelButton: true });
+                const { value: pin } = await Swal.fire({ title: 'ยืนยัน PIN HR', input: 'password', inputPlaceholder: 'ใส่รหัส PIN', showCancelButton: true });
                 if (!pin) return;
                 if (pin !== appData.settings.adminPin) return Swal.fire('รหัสไม่ถูกต้อง', '', 'error');
             }
-            
             currentMode = mode;
             document.getElementById('gateway-screen').classList.add('hidden');
-            document.getElementById('app-interface').classList.remove('hidden');
-            document.getElementById('app-interface').classList.add('flex');
-
-            const header = document.getElementById('app-header');
+            document.getElementById('app-interface').classList.remove('hidden'); document.getElementById('app-interface').classList.add('flex');
+            const h = document.getElementById('app-header');
             if (mode === 'employee') {
-                header.className = 'bg-gradient-to-r from-primary to-indigo-500 dark:from-indigo-900 dark:to-gray-800 text-white p-5 rounded-b-3xl shadow-lg z-10 relative shrink-0 transition-colors duration-500';
+                h.className = 'bg-gradient-to-r from-primary to-indigo-500 dark:from-indigo-900 dark:to-gray-800 text-white p-5 rounded-b-3xl shadow-lg z-10 relative shrink-0 transition-colors';
                 document.getElementById('header-title').textContent = appData.settings.companyName;
                 document.getElementById('header-subtitle').innerHTML = `<span class="font-mono bg-white/20 px-1.5 py-0.5 rounded mr-1">${appData.settings.empId}</span> ${appData.settings.userName}`;
                 document.getElementById('header-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(appData.settings.userName)}&background=random&color=fff`;
                 document.getElementById('header-avatar').classList.remove('hidden'); document.getElementById('header-hr-icon').classList.add('hidden');
-                
                 document.getElementById('nav-employee').classList.remove('hidden'); document.getElementById('nav-hr').classList.add('hidden');
-                
-                // Form sync
-                document.getElementById('emp-set-id').value = appData.settings.empId;
-                document.getElementById('emp-set-name').value = appData.settings.userName;
+                document.getElementById('emp-set-id').value = appData.settings.empId; document.getElementById('emp-set-name').value = appData.settings.userName; document.getElementById('emp-set-branch').value = appData.settings.branch;
                 document.getElementById('profile-large-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(appData.settings.userName)}&background=random&color=fff&size=128`;
-                document.getElementById('btn-note').style.display = appData.settings.enableNotes ? 'flex' : 'none';
-
-                renderTodayStatus(); populateMonthFilter(); renderHistory();
-                switchTab('emp-home');
+                renderTodayStatus(); populateMonthFilter(); renderHistory(); renderEmpReqs(); switchTab('emp-home');
+                if(typeof window.syncUserToCloud === 'function') window.syncUserToCloud();
             } else {
-                header.className = 'bg-gradient-to-r from-hrPrimary to-slate-700 dark:from-slate-800 dark:to-slate-900 text-white p-5 rounded-b-3xl shadow-lg z-10 relative shrink-0 transition-colors duration-500';
+                h.className = 'bg-gradient-to-r from-hrPrimary to-slate-700 dark:from-slate-800 dark:to-slate-900 text-white p-5 rounded-b-3xl shadow-lg z-10 relative shrink-0 transition-colors';
                 document.getElementById('header-title').textContent = appData.settings.companyName;
-                document.getElementById('header-subtitle').textContent = 'ระบบจัดการฝ่ายบุคคล (HR Dashboard)';
+                document.getElementById('header-subtitle').textContent = 'Dashboard ฝ่ายบุคคล';
                 document.getElementById('header-avatar').classList.add('hidden'); document.getElementById('header-hr-icon').classList.remove('hidden');
-                
                 document.getElementById('nav-employee').classList.add('hidden'); document.getElementById('nav-hr').classList.remove('hidden');
-                
-                // Form Sync
-                document.getElementById('hr-set-company').value = appData.settings.companyName; document.getElementById('hr-set-time-in').value = appData.settings.timeIn;
-                document.getElementById('hr-set-time-out').value = appData.settings.timeOut; document.getElementById('hr-set-notes').checked = appData.settings.enableNotes;
-                document.getElementById('hr-set-photo').checked = appData.settings.requirePhoto; document.getElementById('hr-set-gps').checked = appData.settings.checkLocation;
-                document.getElementById('hr-set-lat').value = appData.settings.lat; document.getElementById('hr-set-lng').value = appData.settings.lng; document.getElementById('hr-set-rad').value = appData.settings.radius;
+                document.getElementById('hr-set-company').value = appData.settings.companyName; document.getElementById('hr-set-time-in').value = appData.settings.timeIn; document.getElementById('hr-set-time-out').value = appData.settings.timeOut;
                 document.getElementById('hr-set-cloud').checked = appData.settings.enableCloud; document.getElementById('hr-set-pin').value = appData.settings.adminPin;
-                document.getElementById('hr-gps-box').classList.toggle('opacity-50', !appData.settings.checkLocation); document.getElementById('hr-gps-box').classList.toggle('pointer-events-none', !appData.settings.checkLocation);
-                
-                renderHRList();
-                switchTab('hr-dashboard');
+                updateBranchFilterDropdowns(); renderHRData(); renderHRDashboard(); renderHRUsers(); switchTab('hr-dashboard');
             }
         }
-
-        function logoutToGateway() {
-            document.getElementById('app-interface').classList.add('hidden');
-            document.getElementById('app-interface').classList.remove('flex');
-            document.getElementById('gateway-screen').classList.remove('hidden');
-            currentMode = '';
-        }
-
+        function logoutToGateway() { document.getElementById('app-interface').classList.add('hidden'); document.getElementById('app-interface').classList.remove('flex'); document.getElementById('gateway-screen').classList.remove('hidden'); currentMode = ''; }
         function switchTab(tabId) {
-            const navClass = currentMode === 'employee' ? '.nav-emp' : '.nav-hr';
-            document.querySelectorAll(`${navClass} .nav-item`).forEach(btn => {
-                btn.classList.remove('active', 'text-primary', 'dark:text-indigo-400', 'text-hrPrimary');
-                if (btn.dataset.target === tabId) btn.classList.add('active');
+            const nav = currentMode === 'employee' ? '.nav-emp' : '.nav-hr';
+            document.querySelectorAll(`${nav} .nav-item`).forEach(b => {
+                b.classList.remove('active', 'text-primary', 'dark:text-indigo-400', 'text-hrPrimary');
+                if (b.dataset.target === tabId) b.classList.add('active');
             });
-            document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
             document.getElementById(`view-${tabId}`).classList.add('active');
+            if(tabId === 'hr-dashboard') setTimeout(renderHRDashboard, 100);
         }
 
         // --- Core Utils ---
         function updateClock() {
-            const now = new Date();
-            if(document.getElementById('current-time')) {
-                document.getElementById('current-time').innerHTML = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}<span class="text-2xl ml-1">${String(now.getSeconds()).padStart(2, '0')}</span>`;
+            const now = new Date(); const el = document.getElementById('current-time');
+            if(el) {
+                el.innerHTML = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}<span class="text-2xl ml-1">${String(now.getSeconds()).padStart(2, '0')}</span>`;
                 document.getElementById('current-date').innerText = now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
             }
         }
         function getTodayString() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
         function formatTimeShort(d) { return d ? `${String(new Date(d).getHours()).padStart(2,'0')}:${String(new Date(d).getMinutes()).padStart(2,'0')}` : '--:--'; }
-        function saveData() { localStorage.setItem('timeAttendanceDataV5', JSON.stringify(appData)); }
-        function saveAndSync() {
-            saveData();
-            if(appData.settings.enableCloud && typeof window.syncLocalToCloud === 'function') {
-                const log = appData.logs.find(l => l.date === getTodayString());
-                if(log) window.syncLocalToCloud(log);
-            }
-        }
 
-        // GPS
+        // --- GPS & Camera ---
         function startLocationTracking() {
             if (!navigator.geolocation) return;
             navigator.geolocation.watchPosition((pos) => { appData.currentLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude }; 
@@ -469,13 +399,10 @@
             }, (err) => {}, { enableHighAccuracy: true });
         }
         function getCurrentLocationForSettings() {
-            if(!appData.currentLocation) return Swal.fire({icon: 'warning', title: 'ไม่พบตำแหน่ง'});
+            if(!appData.currentLocation) return Swal.fire({icon: 'warning', title: 'ไม่พบพิกัด'});
             document.getElementById('hr-set-lat').value = appData.currentLocation.lat; document.getElementById('hr-set-lng').value = appData.currentLocation.lng;
             Swal.fire({icon: 'success', timer: 1500, showConfirmButton: false});
         }
-        function calcDist(lat1, lon1, lat2, lon2) { const R=6371e3, p1=lat1*Math.PI/180, p2=lat2*Math.PI/180, a=Math.sin((lat2-lat1)*Math.PI/360)**2 + Math.cos(p1)*Math.cos(p2)*Math.sin((lon2-lon1)*Math.PI/360)**2; return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); }
-
-        // Camera
         async function openCamera() {
             try { cameraStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"user"}}); document.getElementById('camera-video').srcObject = cameraStream; document.getElementById('camera-modal').classList.remove('hidden'); document.getElementById('camera-modal').classList.add('flex'); } 
             catch(e) { Swal.fire('Error', 'เข้าถึงกล้องไม่ได้', 'error'); pendingCheckType = null; }
@@ -483,200 +410,299 @@
         function closeCamera() { if(cameraStream){ cameraStream.getTracks().forEach(t=>t.stop()); cameraStream=null; } document.getElementById('camera-modal').classList.add('hidden'); document.getElementById('camera-modal').classList.remove('flex'); pendingCheckType=null; }
         function takePhoto() {
             const v=document.getElementById('camera-video'), c=document.getElementById('camera-canvas'), ctx=c.getContext('2d'); c.width=240; c.height=320;
-            const vr=v.videoWidth/v.videoHeight, cr=c.width/c.height; let dw=v.videoWidth, dh=v.videoHeight, sx=0, sy=0;
-            if(vr>cr){ dw=v.videoHeight*cr; sx=(v.videoWidth-dw)/2; } else { dh=v.videoWidth/cr; sy=(v.videoHeight-dh)/2; }
-            ctx.drawImage(v, sx, sy, dw, dh, 0, 0, c.width, c.height); closeCamera(); finalizeCheck(pendingCheckType, c.toDataURL('image/jpeg', 0.4));
+            ctx.drawImage(v, 0, 0, c.width, c.height); closeCamera(); finalizeCheck(pendingCheckType, c.toDataURL('image/jpeg', 0.4));
         }
 
-        // Check In/Out
-        async function openNoteModal() {
-            const td=getTodayString(), log=appData.logs.find(l=>l.date===td);
-            const {value: v} = await Swal.fire({ title: 'ลางาน/หมายเหตุ', html: `<select id="nt" class="swal2-input w-[80%] mx-auto text-sm"><option value="ลาป่วย">ลาป่วย</option><option value="ลากิจ">ลากิจ</option><option value="WFH">WFH</option><option value="พบลูกค้า">ออกไปพบลูกค้า</option></select><textarea id="nd" class="swal2-textarea w-[80%] mx-auto text-sm mt-2" placeholder="รายละเอียด...">${log?.noteDetail||''}</textarea>`, focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก', preConfirm: ()=>({t:document.getElementById('nt').value, d:document.getElementById('nd').value}) });
-            if(v){ let idx=appData.logs.findIndex(l=>l.date===td); const nd={noteType:v.t, noteDetail:v.d}; if(idx>-1) appData.logs[idx]={...appData.logs[idx], ...nd}; else appData.logs.unshift({date:td, ...nd}); saveAndSync(); renderTodayStatus(); Swal.fire({icon:'success', timer:1500, showConfirmButton:false}); }
-        }
-
+        // --- Attendance Logic ---
         function initiateCheck(type) {
             const s = appData.settings;
-            if(s.checkLocation && s.lat && s.lng) { if(!appData.currentLocation) return Swal.fire('Error', 'ไม่พบตำแหน่ง GPS', 'error'); if(calcDist(s.lat, s.lng, appData.currentLocation.lat, appData.currentLocation.lng) > s.radius) return Swal.fire('Error', 'อยู่นอกพื้นที่', 'error'); }
+            if(s.checkLocation && s.lat && s.lng) { if(!appData.currentLocation) return Swal.fire('Error', 'กรุณาเปิด GPS'); if(calcDist(s.lat, s.lng, appData.currentLocation.lat, appData.currentLocation.lng) > s.radius) return Swal.fire('Error', 'อยู่นอกพื้นที่'); }
             if(s.requirePhoto) { pendingCheckType = type; openCamera(); } else finalizeCheck(type, null);
         }
-
         function finalizeCheck(type, photo) {
             const s=appData.settings, now=new Date(), td=getTodayString(), tm=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
             let idx=appData.logs.findIndex(l=>l.date===td);
             if(type==='in') {
-                if(idx>-1 && appData.logs[idx].timeIn) return Swal.fire('info', 'ลงเวลาไปแล้ว');
-                const log = { date: td, timeIn: now.toISOString(), statusIn: (tm > s.timeIn ? 'สาย' : 'ปกติ'), photoIn: photo };
+                if(idx>-1 && appData.logs[idx].timeIn) return Swal.fire('info', 'ลงเข้างานไปแล้ว');
+                const log = { date: td, timeIn: now.toISOString(), statusIn: (tm > s.timeIn ? 'สาย' : 'ปกติ'), photoIn: photo, branch: s.branch };
                 if(idx>-1) appData.logs[idx]={...appData.logs[idx], ...log}; else appData.logs.unshift(log);
-                Swal.fire({icon:'success', title:'เข้างาน', text:`${tm} น.`, timer:1500, showConfirmButton:false});
             } else {
-                if(idx===-1 || !appData.logs[idx].timeIn) return Swal.fire({title:'ยังไม่ลงเข้างาน', text:"บันทึกออกงานเลย?", showCancelButton:true}).then(r=>r.isConfirmed && procOut(now, tm, s, idx, td, photo));
-                procOut(now, tm, s, idx, td, photo);
+                let st = tm < s.timeOut ? 'ออกก่อนเวลา' : 'ปกติ';
+                if(idx>-1){ appData.logs[idx].timeOut=now.toISOString(); appData.logs[idx].statusOut=st; if(photo) appData.logs[idx].photoOut=photo; } 
+                else appData.logs.unshift({date:td, timeOut:now.toISOString(), statusOut:st, photoOut:photo, branch: s.branch});
             }
-            saveAndSync(); renderTodayStatus();
+            saveData(); if(appData.settings.enableCloud && typeof window.syncCloudData === 'function') { const log = appData.logs.find(l=>l.date===td); if(log) window.syncCloudData('logs', log); }
+            renderTodayStatus(); Swal.fire({icon:'success', title: type==='in'?'เข้างานสำเร็จ':'ออกงานสำเร็จ', timer:1500, showConfirmButton:false});
         }
-        function procOut(now, tm, s, idx, td, photo) {
-            let st = tm < s.timeOut ? 'ออกก่อนเวลา' : 'ปกติ';
-            if(idx>-1){ appData.logs[idx].timeOut=now.toISOString(); appData.logs[idx].statusOut=st; if(photo) appData.logs[idx].photoOut=photo; } else appData.logs.unshift({date:td, timeOut:now.toISOString(), statusOut:st, photoOut:photo});
-            Swal.fire({icon:'success', title:'ออกงาน', text:`${tm} น.`, timer:1500, showConfirmButton:false});
-            saveAndSync(); renderTodayStatus();
-        }
+        function calcDist(lat1, lon1, lat2, lon2) { const R=6371e3, p1=lat1*Math.PI/180, p2=lat2*Math.PI/180, a=Math.sin((lat2-lat1)*Math.PI/360)**2 + Math.cos(p1)*Math.cos(p2)*Math.sin((lon2-lon1)*Math.PI/360)**2; return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); }
 
-        // Employee Rendering
-        function renderTodayStatus() {
-            const log=appData.logs.find(l=>l.date===getTodayString()), nc=document.getElementById('today-note-container'), inEl=document.getElementById('today-in'), outEl=document.getElementById('today-out'), inImg=document.getElementById('today-in-img'), outImg=document.getElementById('today-out-img');
-            if(log && log.noteType) { document.getElementById('today-note-type').textContent=log.noteType; document.getElementById('today-note-text').textContent=log.noteDetail||'-'; nc.classList.remove('hidden'); } else nc.classList.add('hidden');
-            if(log && log.timeIn) { inEl.innerHTML=`${formatTimeShort(log.timeIn)} <span class="text-[10px] ml-1 px-2 py-0.5 rounded-full ${log.statusIn==='สาย'?'bg-red-100 text-danger':'bg-green-100 text-secondary'}">${log.statusIn}</span>`; if(log.photoIn){inImg.src=log.photoIn; inImg.classList.remove('hidden');}else inImg.classList.add('hidden'); } else { inEl.textContent='--:--'; inImg.classList.add('hidden'); }
-            if(log && log.timeOut) { outEl.innerHTML=`${formatTimeShort(log.timeOut)} <span class="text-[10px] ml-1 px-2 py-0.5 rounded-full ${log.statusOut==='ออกก่อนเวลา'?'bg-orange-100 text-orange-600':'bg-green-100 text-secondary'}">${log.statusOut}</span>`; if(log.photoOut){outImg.src=log.photoOut; outImg.classList.remove('hidden');}else outImg.classList.add('hidden'); } else { outEl.textContent='--:--'; outImg.classList.add('hidden'); }
-        }
-        function populateMonthFilter() {
-            const sel=document.getElementById('month-filter'), ms=new Set([`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`]);
-            appData.logs.forEach(l=>ms.add(l.date.substring(0,7))); sel.innerHTML='';
-            Array.from(ms).sort().reverse().forEach(m => { const opt=document.createElement('option'); opt.value=m; opt.textContent=new Date(m.split('-')[0], parseInt(m.split('-')[1])-1, 1).toLocaleDateString('th-TH', {month:'short', year:'numeric'}); if(m===selectedMonth) opt.selected=true; sel.appendChild(opt); });
-        }
-        function renderHistory() {
-            selectedMonth=document.getElementById('month-filter').value; const c=document.getElementById('history-list'), f=appData.logs.filter(l=>l.date.startsWith(selectedMonth)); c.innerHTML='';
-            let w=0, l=0, n=0; f.forEach(x=>{ if(x.timeIn){ w++; if(x.statusIn==='สาย') l++; } if(x.noteType) n++; });
-            document.getElementById('stat-total-days').textContent=w; document.getElementById('stat-late-days').textContent=l; document.getElementById('stat-leave-days').textContent=n;
-            if(!f.length) return c.innerHTML='<div class="text-center text-gray-400 py-10">ไม่มีประวัติ</div>';
-            f.forEach(x=>{
-                let p = (x.photoIn||x.photoOut) ? `<div class="flex gap-1 ml-auto">${x.photoIn?`<img src="${x.photoIn}" class="w-6 h-6 rounded border">`:''}${x.photoOut?`<img src="${x.photoOut}" class="w-6 h-6 rounded border">`:''}</div>` : '';
-                c.innerHTML+=`<div class="bg-white dark:bg-darkCard rounded-xl p-3 shadow-sm border mb-2"><div class="flex justify-between border-b pb-1 mb-1 text-sm"><p><i class="far fa-calendar-alt text-primary mr-2"></i>${new Date(x.date).toLocaleDateString('th-TH',{day:'numeric',month:'short'})}</p>${p}</div><div class="flex justify-between text-xs px-1"><div><span class="w-2 h-2 rounded-full bg-secondary inline-block mr-1"></span>เข้า: <strong>${formatTimeShort(x.timeIn)}</strong> ${x.statusIn==='สาย'?'<span class="text-danger">(สาย)</span>':''}</div><div><span class="w-2 h-2 rounded-full bg-orange-400 inline-block mr-1"></span>ออก: <strong>${formatTimeShort(x.timeOut)}</strong></div></div>${x.noteType?`<div class="mt-2 text-[10px] bg-yellow-50 text-warning px-2 py-1 rounded"><b>${x.noteType}</b>: ${x.noteDetail||'-'}</div>`:''}</div>`;
+        // --- Manage HR Users (NEW & IMPROVED) ---
+        function renderHRUsers() {
+            const searchInput = document.getElementById('hr-user-search');
+            const search = searchInput ? searchInput.value.toLowerCase() : '';
+            const branchFilter = document.getElementById('hr-user-branch-filter');
+            const branch = branchFilter ? branchFilter.value : 'ALL';
+            const c = document.getElementById('hr-users-list'); if(!c) return;
+            c.innerHTML='';
+            
+            let src = appData.settings.enableCloud && window.cloudIsReady ? cloudData.users : [{empId: appData.settings.empId, empName: appData.settings.userName, branch: appData.settings.branch, lastLogin: new Date().toISOString()}];
+            
+            // Filtering
+            let filtered = src.filter(u => {
+                const matchesSearch = u.empName.toLowerCase().includes(search) || u.empId.toLowerCase().includes(search);
+                const matchesBranch = branch === 'ALL' || u.branch === branch;
+                return matchesSearch && matchesBranch;
+            });
+
+            const countEl = document.getElementById('hr-user-count');
+            if(countEl) countEl.textContent = `แสดง ${filtered.length} รายการ`;
+
+            if(!filtered.length) return c.innerHTML='<div class="text-center text-xs text-gray-400 py-4">ไม่พบข้อมูลพนักงาน</div>';
+            
+            filtered.forEach(u => {
+                const lastLog = u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('th-TH', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'ไม่มีประวัติ';
+                c.innerHTML += `<div class="bg-white dark:bg-darkCard p-3 rounded-xl shadow-sm border flex items-center justify-between"><div class="flex items-center gap-3"><div class="bg-primary/10 text-primary w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs"><i class="fas fa-user"></i></div><div class="flex-1"><p class="text-sm font-bold">${u.empName}</p><p class="text-[10px] text-gray-500">ID: <span class="font-mono">${u.empId}</span> | สาขา: ${u.branch||'-'}</p><p class="text-[8px] text-gray-400 mt-0.5">ใช้งานล่าสุด: ${lastLog}</p></div></div><div class="flex gap-1"><button class="text-[10px] text-white bg-blue-500 px-2 py-1 rounded-md" onclick="editEmployee('${u.empId}')"><i class="fas fa-edit"></i></button><button class="text-[10px] text-white bg-red-500 px-2 py-1 rounded-md" onclick="deleteEmployee('${u.empId}')"><i class="fas fa-trash"></i></button></div></div>`;
             });
         }
 
-        // HR Rendering
-        function renderHRList() {
-            const fd = document.getElementById('hr-date-filter').value, c1 = document.getElementById('hr-preview-list'), c2 = document.getElementById('hr-full-list');
-            c1.innerHTML=''; c2.innerHTML='';
-            let src = appData.settings.enableCloud && typeof window.cloudIsReady !== 'undefined' && window.cloudIsReady ? cloudData : appData.logs.map(l=>({...l, empId:appData.settings.empId, empName:appData.settings.userName}));
-            document.getElementById('hr-cloud-warning').classList.toggle('hidden', appData.settings.enableCloud);
-            const todayLogs = src.filter(l=>l.date===fd);
-            
-            let inC=0, lC=0; todayLogs.forEach(l=>{ if(l.timeIn) inC++; if(l.statusIn==='สาย'||l.noteType) lC++; });
-            document.getElementById('hr-stat-in').textContent=inC; document.getElementById('hr-stat-late').textContent=lC;
+        async function editEmployee(id) {
+            let src = appData.settings.enableCloud && window.cloudIsReady ? cloudData.users : [ {empId: appData.settings.empId, empName: appData.settings.userName, branch: appData.settings.branch} ];
+            let user = src.find(u => u.empId === id);
+            if(!user) return;
 
-            if(!todayLogs.length) { c1.innerHTML='<div class="text-center text-xs text-gray-400 py-4">ไม่มีข้อมูล</div>'; c2.innerHTML='<div class="text-center text-gray-400 py-10">ไม่มีข้อมูล</div>'; return; }
+            const { value: formValues } = await Swal.fire({
+                title: 'แก้ไขข้อมูลพนักงาน',
+                html: `<div class="text-left space-y-3"><label class="text-xs text-gray-400">ชื่อ-นามสกุล</label><input id="swal-name" class="swal2-input m-0 w-full" value="${user.empName}"><label class="text-xs text-gray-400">สาขา/แผนก</label><input id="swal-branch" class="swal2-input m-0 w-full" value="${user.branch || ''}"></div>`,
+                focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึก',
+                preConfirm: () => { return { name: document.getElementById('swal-name').value, branch: document.getElementById('swal-branch').value } }
+            });
+
+            if (formValues) {
+                const updated = { ...user, empName: formValues.name, branch: formValues.branch };
+                if (appData.settings.enableCloud && typeof window.syncUserRaw === 'function') {
+                    await window.syncUserRaw(updated);
+                    Swal.fire({icon:'success', title:'แก้ไขสำเร็จ', timer:1000, showConfirmButton:false});
+                } else if(id === appData.settings.empId) {
+                    appData.settings.userName = formValues.name; appData.settings.branch = formValues.branch; saveData(); renderHRUsers();
+                }
+            }
+        }
+
+        async function deleteEmployee(id) {
+            const { isConfirmed } = await Swal.fire({ title: 'ยืนยันการลบ?', text: `ลบพนักงานรหัส ${id} ออกจากระบบ`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#EF4444', confirmButtonText: 'ลบเลย', cancelButtonText: 'ยกเลิก' });
+            if (isConfirmed) {
+                if (appData.settings.enableCloud && typeof window.deleteUserCloud === 'function') {
+                    await window.deleteUserCloud(id);
+                    Swal.fire({icon:'success', title:'ลบเรียบร้อย', timer:1000, showConfirmButton:false});
+                } else {
+                    Swal.fire('Error', 'กรุณาเปิดระบบคลาวด์เพื่อจัดการพนักงาน', 'error');
+                }
+            }
+        }
+
+        async function manualAddUser() {
+            const { value: formValues } = await Swal.fire({
+                title: 'เพิ่มพนักงานใหม่',
+                html: `<div class="text-left space-y-3"><label class="text-xs text-gray-400">รหัสพนักงาน</label><input id="swal-id" class="swal2-input m-0 w-full" placeholder="เช่น EMP-002"><label class="text-xs text-gray-400">ชื่อ-นามสกุล</label><input id="swal-name" class="swal2-input m-0 w-full" placeholder="ระบุชื่อ"><label class="text-xs text-gray-400">สาขา/แผนก</label><input id="swal-branch" class="swal2-input m-0 w-full" placeholder="ระบุสาขา"></div>`,
+                focusConfirm: false, showCancelButton: true, confirmButtonText: 'เพิ่มรายชื่อ',
+                preConfirm: () => { return { id: document.getElementById('swal-id').value.toUpperCase(), name: document.getElementById('swal-name').value, branch: document.getElementById('swal-branch').value } }
+            });
+
+            if (formValues && formValues.id && formValues.name) {
+                const newUser = { empId: formValues.id, empName: formValues.name, branch: formValues.branch, lastLogin: null };
+                if (appData.settings.enableCloud && typeof window.syncUserRaw === 'function') {
+                    await window.syncUserRaw(newUser);
+                    Swal.fire({icon:'success', title:'เพิ่มสำเร็จ', timer:1000, showConfirmButton:false});
+                } else {
+                    Swal.fire('Error', 'กรุณาเปิดระบบคลาวด์เพื่อเพิ่มพนักงาน', 'error');
+                }
+            }
+        }
+
+        function updateBranchFilterDropdowns() {
+            const f1 = document.getElementById('hr-branch-filter');
+            const f2 = document.getElementById('hr-user-branch-filter');
+            const branches = new Set();
+            let src = appData.settings.enableCloud && window.cloudIsReady ? cloudData.users : [appData.settings];
+            src.forEach(u => { if(u.branch) branches.add(u.branch); });
+            const html = '<option value="ALL">ทุกสาขา</option>' + Array.from(branches).map(b => `<option value="${b}">${b}</option>`).join('');
+            if(f1) f1.innerHTML = html; if(f2) f2.innerHTML = html;
+        }
+
+        // --- Other HR Displays ---
+        function renderHRDashboard() {
+            if(currentMode !== 'hr') return;
             
-            todayLogs.forEach((log, i) => {
-                let badge = log.statusIn === 'สาย' ? '<span class="bg-red-100 text-danger text-[10px] px-2 py-0.5 rounded-full ml-2">สาย</span>' : '<span class="bg-green-100 text-secondary text-[10px] px-2 py-0.5 rounded-full ml-2">ปกติ</span>';
-                let html = `<div class="bg-white dark:bg-darkCard rounded-xl p-3 border shadow-sm flex items-center gap-3"><div class="bg-slate-100 dark:bg-slate-800 text-hrPrimary dark:text-slate-300 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs">${(log.empId||'EMP').substring(0,3)}</div><div class="flex-1"><p class="font-bold text-sm">${log.empName||'พนักงาน'} ${badge}</p><div class="text-xs text-gray-500 mt-1 flex gap-3"><span><i class="fas fa-sign-in-alt text-secondary"></i> ${formatTimeShort(log.timeIn)}</span><span><i class="fas fa-sign-out-alt text-orange-400"></i> ${formatTimeShort(log.timeOut)}</span></div>${log.noteType?`<p class="text-[10px] text-warning mt-1"><i class="fas fa-info-circle"></i> ${log.noteType}</p>`:''}</div></div>`;
-                if(i < 3) c1.innerHTML += html; // Preview shows max 3
-                c2.innerHTML += html; // Full shows all
+            // Fixed: Added null check
+            const warningEl = document.getElementById('hr-cloud-warning');
+            if(warningEl) warningEl.classList.toggle('hidden', appData.settings.enableCloud);
+            
+            const fd = document.getElementById('hr-date-filter').value;
+            let srcLogs = appData.settings.enableCloud && window.cloudIsReady ? cloudData.logs : appData.logs.map(l=>({...l, empId:appData.settings.empId, empName:appData.settings.userName}));
+            const todayLogs = srcLogs.filter(l=>l.date===fd);
+            let onTime = 0, late = 0; todayLogs.forEach(l => { if(l.statusIn==='สาย') late++; else if(l.timeIn) onTime++; });
+            
+            const inEl = document.getElementById('hr-stat-in');
+            const lateEl = document.getElementById('hr-stat-late');
+            if(inEl) inEl.textContent = (onTime + late); 
+            if(lateEl) lateEl.textContent = late;
+
+            const chartEl = document.getElementById('hrPieChart');
+            if(!chartEl) return;
+            const ctx = chartEl.getContext('2d');
+            if(hrPieChartInstance) hrPieChartInstance.destroy();
+            hrPieChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: ['ปกติ', 'สาย'], datasets: [{ data: [onTime, late], backgroundColor: ['#10B981', '#F59E0B'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '70%' } });
+        }
+        function renderHRData() {
+            const fd = document.getElementById('hr-date-filter').value; const bf = document.getElementById('hr-branch-filter').value;
+            const c = document.getElementById('hr-data-container'); if(!c) return;
+            c.innerHTML='';
+            let srcLogs = appData.settings.enableCloud && window.cloudIsReady ? cloudData.logs : appData.logs.map(l=>({...l, empId:appData.settings.empId, empName:appData.settings.userName, branch:appData.settings.branch}));
+            let srcLeaves = appData.settings.enableCloud && window.cloudIsReady ? cloudData.leaveReqs : appData.leaveReqs;
+            let srcOts = appData.settings.enableCloud && window.cloudIsReady ? cloudData.otReqs : appData.otReqs;
+            
+            const badgeL = document.getElementById('badge-leave');
+            const badgeO = document.getElementById('badge-ot');
+            if(badgeL) {
+                const count = srcLeaves.filter(r=>r.status==='รออนุมัติ').length;
+                badgeL.textContent = count;
+                badgeL.style.display = count > 0 ? 'inline-block' : 'none';
+            }
+            if(badgeO) {
+                const count = srcOts.filter(r=>r.status==='รออนุมัติ').length;
+                badgeO.textContent = count;
+                badgeO.style.display = count > 0 ? 'inline-block' : 'none';
+            }
+
+            if(currentHRListTab === 'logs') {
+                let filtered = srcLogs.filter(l=>l.date===fd); if(bf !== 'ALL') filtered = filtered.filter(l=>l.branch === bf);
+                if(!filtered.length) return c.innerHTML='<div class="text-center text-xs text-gray-400 py-10">ไม่มีข้อมูล</div>';
+                filtered.forEach(log => {
+                    let badge = log.statusIn === 'สาย' ? '<span class="bg-red-100 text-danger text-[10px] px-2 py-0.5 rounded-full ml-2">สาย</span>' : '<span class="bg-green-100 text-secondary text-[10px] px-2 py-0.5 rounded-full ml-2">ปกติ</span>';
+                    c.innerHTML += `<div class="bg-white dark:bg-darkCard rounded-xl p-3 border shadow-sm flex items-center gap-3"><div class="bg-slate-100 text-hrPrimary w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs">${(log.empId||'').substring(0,3)}</div><div class="flex-1"><p class="font-bold text-sm">${log.empName||'พนักงาน'} ${badge}</p><p class="text-[10px] text-gray-400">${log.branch||'-'}</p><div class="text-xs text-gray-500 mt-1 flex gap-3"><span><i class="fas fa-sign-in-alt text-secondary"></i> ${formatTimeShort(log.timeIn)}</span><span><i class="fas fa-sign-out-alt text-orange-400"></i> ${formatTimeShort(log.timeOut)}</span></div></div></div>`;
+                });
+            } else if(currentHRListTab === 'leaves') {
+                srcLeaves.forEach(r => {
+                    c.innerHTML += `<div class="bg-white dark:bg-darkCard rounded-xl p-3 border shadow-sm mb-2"><div class="flex justify-between font-bold text-sm"><span>${r.empName}</span><span class="text-[10px] px-2 py-0.5 rounded-full border">${r.status}</span></div><p class="text-xs text-gray-500 mt-1">${r.type}: ${r.startDate} ถึง ${r.endDate}</p>${r.status==='รออนุมัติ'?`<div class="flex gap-2 mt-2"><button onclick="updateRequestStatus('leaveReqs','${r.id}','อนุมัติ')" class="flex-1 bg-green-500 text-white text-xs py-1 rounded">อนุมัติ</button><button onclick="updateRequestStatus('leaveReqs','${r.id}','ปฏิเสธ')" class="flex-1 bg-red-500 text-white text-xs py-1 rounded">ปฏิเสธ</button></div>`:''}</div>`;
+                });
+            } else {
+                srcOts.forEach(r => {
+                    c.innerHTML += `<div class="bg-white dark:bg-darkCard rounded-xl p-3 border shadow-sm mb-2"><div class="flex justify-between font-bold text-sm"><span>${r.empName}</span><span class="text-[10px] px-2 py-0.5 rounded-full border">${r.status}</span></div><p class="text-xs text-gray-500 mt-1">OT: ${r.date} (${r.startTime}-${r.endTime})</p>${r.status==='รออนุมัติ'?`<div class="flex gap-2 mt-2"><button onclick="updateRequestStatus('otReqs','${r.id}','อนุมัติ')" class="flex-1 bg-green-500 text-white text-xs py-1 rounded">อนุมัติ</button><button onclick="updateRequestStatus('otReqs','${r.id}','ปฏิเสธ')" class="flex-1 bg-red-500 text-white text-xs py-1 rounded">ปฏิเสธ</button></div>`:''}</div>`;
+                });
+            }
+        }
+
+        async function updateRequestStatus(type, id, status) {
+            if(appData.settings.enableCloud && typeof window.syncCloudData === 'function') {
+                let req = cloudData[type].find(r=>r.id===id); if(req) { req.status = status; await window.syncCloudData(type, req); }
+            } else {
+                let idx = appData[type].findIndex(r=>r.id===id); if(idx>-1) { appData[type][idx].status = status; saveData(); renderHRData(); }
+            }
+        }
+
+        function toggleHRListTab(tab) { currentHRListTab = tab; document.querySelectorAll('.hr-sub-tab').forEach(e => e.classList.toggle('active', e.id === `tab-hr-${tab}`)); document.getElementById('hr-list-filter-area').classList.toggle('hidden', tab!=='logs'); renderHRData(); }
+        function toggleEmpReqTab(tab) { currentEmpReqTab = tab; document.getElementById('tab-emp-leave').classList.toggle('active', tab==='leave'); document.getElementById('tab-emp-ot').classList.toggle('active', tab==='ot'); document.getElementById('form-leave').classList.toggle('hidden', tab!=='leave'); document.getElementById('form-ot').classList.toggle('hidden', tab!=='ot'); }
+        
+        function renderTodayStatus() { 
+            const log = appData.logs.find(l=>l.date===getTodayString()); 
+            const inEl = document.getElementById('today-in');
+            const outEl = document.getElementById('today-out');
+            if(inEl) inEl.textContent = log?.timeIn ? formatTimeShort(log.timeIn) : '--:--'; 
+            if(outEl) outEl.textContent = log?.timeOut ? formatTimeShort(log.timeOut) : '--:--'; 
+        }
+
+        function populateMonthFilter() {
+            const sel = document.getElementById('month-filter'); if(!sel) return;
+            const ms = new Set([`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`]);
+            appData.logs.forEach(l=>ms.add(l.date.substring(0,7))); sel.innerHTML='';
+            Array.from(ms).sort().reverse().forEach(m => { const opt=document.createElement('option'); opt.value=m; opt.textContent=new Date(m.split('-')[0], parseInt(m.split('-')[1])-1, 1).toLocaleDateString('th-TH', {month:'short', year:'numeric'}); if(m===selectedMonth) opt.selected=true; sel.appendChild(opt); });
+        }
+
+        function renderHistory() {
+            const filterEl = document.getElementById('month-filter');
+            if(!filterEl) return;
+            selectedMonth = filterEl.value; 
+            const c = document.getElementById('history-list'); if(!c) return;
+            const f = appData.logs.filter(l=>l.date.startsWith(selectedMonth)); c.innerHTML='';
+            let w=0, l=0; f.forEach(x=>{ if(x.timeIn){ w++; if(x.statusIn==='สาย') l++; } });
+            const totalDaysEl = document.getElementById('stat-total-days');
+            const lateDaysEl = document.getElementById('stat-late-days');
+            if(totalDaysEl) totalDaysEl.textContent = w; 
+            if(lateDaysEl) lateDaysEl.textContent = l;
+            if(!f.length) return c.innerHTML='<div class="text-center text-gray-400 py-10 text-xs">ไม่มีประวัติ</div>';
+            f.forEach(x=>{
+                c.innerHTML+=`<div class="bg-white dark:bg-darkCard rounded-xl p-3 shadow-sm border mb-2"><div class="flex justify-between border-b pb-1 mb-1 text-sm font-medium"><p><i class="far fa-calendar-alt text-primary mr-2"></i>${new Date(x.date).toLocaleDateString('th-TH',{day:'numeric',month:'short'})}</p></div><div class="flex justify-between text-xs px-1"><div><span class="w-2 h-2 rounded-full bg-secondary inline-block mr-1"></span>เข้า: <strong>${formatTimeShort(x.timeIn)}</strong> ${x.statusIn==='สาย'?'<span class="text-danger">(สาย)</span>':''}</div><div><span class="w-2 h-2 rounded-full bg-orange-400 inline-block mr-1"></span>ออก: <strong>${formatTimeShort(x.timeOut)}</strong></div></div></div>`;
+            });
+        }
+
+        function renderEmpReqs() {
+            const c = document.getElementById('emp-req-list'); if(!c) return;
+            c.innerHTML='';
+            let src = appData.settings.enableCloud && window.cloudIsReady ? [...cloudData.leaveReqs.filter(r=>r.empId===appData.settings.empId), ...cloudData.otReqs.filter(r=>r.empId===appData.settings.empId)] : [...appData.leaveReqs, ...appData.otReqs];
+            src.sort((a,b) => new Date(b.submittedAt) - new Date(a.submittedAt));
+            if(!src.length) return c.innerHTML='<div class="text-center text-xs text-gray-400 py-4">ยังไม่มีคำร้อง</div>';
+            src.forEach(r => {
+                const isLeave = r.id.startsWith('LV');
+                let stClass = r.status === 'อนุมัติ' ? 'text-secondary bg-green-50 border-green-100' : (r.status === 'ปฏิเสธ' ? 'text-danger bg-red-50 border-red-100' : 'text-warning bg-yellow-50 border-yellow-100');
+                c.innerHTML += `<div class="bg-white dark:bg-darkCard rounded-xl p-3 shadow-sm border mb-2 text-sm"><div class="flex justify-between items-center mb-1"><span class="font-bold ${isLeave?'text-blue-600 dark:text-blue-400':'text-orange-500'}"><i class="${isLeave?'fas fa-calendar-minus':'fas fa-clock'} mr-1"></i>${isLeave?r.type:'ขอ OT'}</span><span class="text-[10px] px-2 py-0.5 rounded-full border ${stClass}">${r.status}</span></div><p class="text-xs text-gray-600 dark:text-gray-400 mb-1">${isLeave?`วันที่ ${r.startDate} ถึง ${r.endDate}`:`วันที่ ${r.date} เวลา ${r.startTime}-${r.endTime}`}</p><p class="text-[10px] text-gray-500 bg-gray-50 dark:bg-gray-800 p-1.5 rounded">เหตุผล: ${r.reason}</p></div>`;
             });
         }
 
         function exportCSV(isHR) {
-            let data = isHR && appData.settings.enableCloud ? cloudData : appData.logs.filter(l=>l.date.startsWith(selectedMonth));
+            let data = isHR && appData.settings.enableCloud ? cloudData.logs : appData.logs.filter(l=>l.date.startsWith(selectedMonth));
             if(!data.length) return Swal.fire('ไม่มีข้อมูล','','info');
-            let csv="\uFEFFรหัส,ชื่อ,วันที่,เวลาเข้า,สถานะเข้า,เวลาออก,สถานะออก,ลางาน,รายละเอียด\n";
-            data.forEach(l=>{ csv+=`${isHR?(l.empId||'-'):appData.settings.empId},${isHR?(l.empName||'-'):appData.settings.userName},${l.date},${formatTimeShort(l.timeIn)},${l.statusIn||'-'},${formatTimeShort(l.timeOut)},${l.statusOut||'-'},${l.noteType||'-'},${l.noteDetail||'-'}\n`; });
+            let csv="\uFEFFรหัส,ชื่อ,สาขา,วันที่,เวลาเข้า,สถานะเข้า,เวลาออก,สถานะออก\n";
+            data.forEach(l=>{ csv+=`${isHR?(l.empId||'-'):appData.settings.empId},${isHR?(l.empName||'-'):appData.settings.userName},${isHR?(l.branch||'-'):appData.settings.branch},${l.date},${formatTimeShort(l.timeIn)},${l.statusIn||'-'},${formatTimeShort(l.timeOut)},${l.statusOut||'-'}\n`; });
             const link=document.createElement("a"); link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'})); link.download=`Attendance_${isHR?'HR':'Emp'}.csv`; link.click();
         }
 
-        // Form Submit Listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            initApp();
-            
-            // Emp Settings
-            document.getElementById('emp-settings-form').addEventListener('submit', (e) => {
-                e.preventDefault();
-                appData.settings.empId = document.getElementById('emp-set-id').value.toUpperCase();
-                appData.settings.userName = document.getElementById('emp-set-name').value;
-                saveData(); enterMode('employee'); Swal.fire({icon:'success', title:'บันทึกโปรไฟล์สำเร็จ', timer:1500, showConfirmButton:false});
-            });
-
-            // HR Settings
-            document.getElementById('hr-set-gps').addEventListener('change', e => {
-                document.getElementById('hr-gps-box').classList.toggle('opacity-50', !e.target.checked); document.getElementById('hr-gps-box').classList.toggle('pointer-events-none', !e.target.checked);
-            });
-            document.getElementById('hr-settings-form').addEventListener('submit', (e) => {
-                e.preventDefault(); const cOn = appData.settings.enableCloud;
-                appData.settings = { ...appData.settings,
-                    companyName: document.getElementById('hr-set-company').value, timeIn: document.getElementById('hr-set-time-in').value, timeOut: document.getElementById('hr-set-time-out').value,
-                    enableNotes: document.getElementById('hr-set-notes').checked, requirePhoto: document.getElementById('hr-set-photo').checked, checkLocation: document.getElementById('hr-set-gps').checked,
-                    lat: document.getElementById('hr-set-lat').value, lng: document.getElementById('hr-set-lng').value, radius: parseInt(document.getElementById('hr-set-rad').value)||100,
-                    enableCloud: document.getElementById('hr-set-cloud').checked, adminPin: document.getElementById('hr-set-pin').value||'1234'
-                };
-                saveData(); enterMode('hr');
-                if(!cOn && appData.settings.enableCloud && typeof window.initializeFirebase === 'function') window.initializeFirebase();
-                Swal.fire({icon:'success', title:'บันทึกระบบสำเร็จ', timer:1500, showConfirmButton:false});
-            });
-        });
+        document.addEventListener('DOMContentLoaded', initApp);
     </script>
 
-    <!-- FIREBASE CLOUD (HR SYSTEM) -->
+    <!-- FIREBASE CLOUD -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, setDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        let db, auth, currentUser, appId;
-        window.cloudIsReady = false;
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyAgTWrI1G1t3GYVz4-SPM7btrsixSe0el8",
-            authDomain: "time-tracker-46283.firebaseapp.com",
-            projectId: "time-tracker-46283",
-            storageBucket: "time-tracker-46283.firebasestorage.app",
-            messagingSenderId: "882533547295",
-            appId: "1:882533547295:web:4b78bfc84322c58a50042a",
-            measurementId: "G-5DPBNCSWFW"
+            apiKey: "AIzaSyAgTWrI1G1t3GYVz4-SPM7btrsixSe0el8", authDomain: "time-tracker-46283.firebaseapp.com",
+            projectId: "time-tracker-46283", storageBucket: "time-tracker-46283.firebasestorage.app",
+            messagingSenderId: "882533547295", appId: "1:882533547295:web:4b78bfc84322c58a50042a"
         };
+
+        let db, auth, appId; window.cloudIsReady = false;
 
         window.initializeFirebase = async () => {
             if(!appData.settings.enableCloud) return;
             try {
-                const app = initializeApp(firebaseConfig); 
-                auth = getAuth(app); 
-                db = getFirestore(app); 
+                const app = initializeApp(firebaseConfig); auth = getAuth(app); db = getFirestore(app);
                 appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
-                
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token); 
-                } else {
-                    await signInAnonymously(auth);
-                }
-                
-                onAuthStateChanged(auth, (user) => {
-                    if (user) { 
-                        currentUser = user; 
+                await signInAnonymously(auth);
+                onAuthStateChanged(auth, (u) => { 
+                    if(u) { 
                         window.cloudIsReady = true; 
-                        document.getElementById('cloud-indicator').classList.remove('hidden'); 
-                        document.getElementById('cloud-indicator').classList.add('flex'); 
-                        setupCloud(); 
-                    } else { 
-                        document.getElementById('cloud-indicator').classList.add('hidden'); 
-                        document.getElementById('cloud-indicator').classList.remove('flex'); 
-                    }
+                        setupCloudListeners(); 
+                        const ind = document.getElementById('cloud-indicator');
+                        if(ind) ind.classList.remove('hidden'); 
+                    } 
                 });
-            } catch (err) {
-                console.error("Firebase Init Error:", err);
-            }
+            } catch(e) { console.error(e); }
         };
 
-        function setupCloud() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'attendance_logs'), (snap) => {
-                const newData = []; snap.forEach(d => newData.push(d.data()));
-                newData.sort((a,b) => new Date(b.timeIn||b.timeOut) - new Date(a.timeIn||a.timeOut));
-                cloudData = newData;
-                if(currentMode === 'hr') window.renderHRList();
-            }, (e) => {
-                console.error("Firebase Snapshot Error:", e);
-            });
+        function setupCloudListeners() {
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'attendance_logs'), (s) => { cloudData.logs = s.docs.map(d=>d.data()); if(currentMode==='hr') renderHRData(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'leave_requests'), (s) => { cloudData.leaveReqs = s.docs.map(d=>d.data()); if(currentMode==='hr') renderHRData(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'ot_requests'), (s) => { cloudData.otReqs = s.docs.map(d=>d.data()); if(currentMode==='hr') renderHRData(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (s) => { cloudData.users = s.docs.map(d=>d.data()); if(currentMode==='hr') { renderHRUsers(); updateBranchFilterDropdowns(); } });
         }
 
-        window.syncLocalToCloud = async (logObj) => {
-            if(!window.cloudIsReady || !currentUser) return;
-            try {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance_logs', `${appData.settings.empId}_${logObj.date}`), 
-                    {...logObj, empId: appData.settings.empId, empName: appData.settings.userName, updatedAt: new Date().toISOString()}, { merge: true });
-                const ind = document.getElementById('cloud-indicator'); ind.style.color = '#4ade80'; setTimeout(() => ind.style.color = '', 1000);
-            } catch (err) {
-                console.error("Firebase Sync Error:", err);
-            }
-        };
-        setTimeout(() => { if(appData.settings.enableCloud) window.initializeFirebase(); }, 500);
+        window.syncCloudData = async (t, obj) => { if(!window.cloudIsReady) return; const col = t==='logs'?'attendance_logs':(t==='leaveReqs'?'leave_requests':'ot_requests'); await setDoc(doc(db, 'artifacts', appId, 'public', 'data', col, t==='logs'?`${appData.settings.empId}_${obj.date}`:obj.id), {...obj, empId:appData.settings.empId, empName:appData.settings.userName}, {merge:true}); };
+        window.syncUserToCloud = async () => { if(!window.cloudIsReady) return; await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', appData.settings.empId), { empId:appData.settings.empId, empName:appData.settings.userName, branch:appData.settings.branch, lastLogin:new Date().toISOString() }, {merge:true}); };
+        window.syncUserRaw = async (user) => { if(!window.cloudIsReady) return; await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', user.empId), user, {merge:true}); };
+        window.deleteUserCloud = async (id) => { if(!window.cloudIsReady) return; await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', id)); };
+
+        if(appData.settings.enableCloud) window.initializeFirebase();
     </script>
 </body>
 </html>
