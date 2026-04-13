@@ -93,6 +93,26 @@
             <div class="max-w-md mx-auto space-y-6">
                 <!-- Section: บันทึกเวลา -->
                 <div id="section-emp-time" class="space-y-6">
+                    
+                    <!-- แดชบอร์ดส่วนตัวพนักงาน -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold text-gray-700 mb-3"><i class="fa-solid fa-chart-simple text-blue-500 mr-2"></i>สรุปงานเดือนนี้ (<span id="emp-month-label">...</span>)</h3>
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="bg-blue-50 p-2 rounded-lg">
+                                <p class="text-xs text-gray-500">มาทำงาน</p>
+                                <p class="text-lg font-bold text-blue-600" id="emp-stat-days">0<span class="text-xs font-normal text-gray-500"> วัน</span></p>
+                            </div>
+                            <div class="bg-rose-50 p-2 rounded-lg">
+                                <p class="text-xs text-gray-500">มาสาย</p>
+                                <p class="text-lg font-bold text-rose-600" id="emp-stat-late">0<span class="text-xs font-normal text-gray-500"> วัน</span></p>
+                            </div>
+                            <div class="bg-orange-50 p-2 rounded-lg">
+                                <p class="text-xs text-gray-500">OT รวม</p>
+                                <p class="text-lg font-bold text-orange-600" id="emp-stat-ot">0<span class="text-xs font-normal text-gray-500"> ชม.</span></p>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
                         <div class="flex justify-between items-center mb-3">
                             <h3 class="font-bold text-gray-700"><i class="fa-solid fa-camera text-blue-500 mr-2"></i>ถ่ายรูปยืนยันตัวตน</h3>
@@ -272,10 +292,11 @@
                                         <th class="p-4">ประเภท/หมายเหตุ</th>
                                         <th class="p-4">รูปถ่าย</th>
                                         <th class="p-4">พิกัด GPS</th>
+                                        <th class="p-4 text-center">จัดการ</th>
                                     </tr>
                                 </thead>
                                 <tbody id="admin-table-body" class="divide-y divide-gray-100">
-                                    <tr><td colspan="5" class="p-8 text-center text-gray-400">กำลังโหลด...</td></tr>
+                                    <tr><td colspan="6" class="p-8 text-center text-gray-400">กำลังโหลด...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -591,7 +612,7 @@
         }
 
         async function saveTimeLog(type) {
-            const remark = document.getElementById('log-remark').value.trim(); // ดึงค่าหมายเหตุ
+            const remark = document.getElementById('log-remark').value.trim();
             Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             try {
                 await addDoc(collection(db, "timelogs"), {
@@ -601,11 +622,11 @@
                     timestamp: serverTimestamp(),
                     lat: currentLat, lng: currentLng,
                     photoBase64: capturedPhotoData,
-                    remark: remark // เซฟลงฐานข้อมูล
+                    remark: remark 
                 });
                 Swal.fire({ icon: 'success', title: `บันทึกเวลา${type === 'in' ? 'เข้า' : 'ออก'}สำเร็จ!`, timer: 1500 });
                 btnRetake.click(); 
-                document.getElementById('log-remark').value = ''; // ล้างช่องพิมพ์
+                document.getElementById('log-remark').value = ''; 
             } catch (error) { Swal.fire({ icon: 'error', title: 'ผิดพลาด', text: error.message }); }
         }
         document.getElementById('btn-checkin').addEventListener('click', () => saveTimeLog('in'));
@@ -617,6 +638,56 @@
                 const logs = []; snapshot.forEach(doc => logs.push({ id: doc.id, ...doc.data() }));
                 logs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
                 
+                // คำนวณแดชบอร์ดส่วนตัวของเดือนปัจจุบัน
+                const now = new Date();
+                const currYear = now.getFullYear();
+                const currMonth = now.getMonth();
+                document.getElementById('emp-month-label').textContent = now.toLocaleDateString('th-TH', { month: 'short', year: 'numeric' });
+
+                const monthlyLogs = logs.filter(l => {
+                    if(!l.timestamp) return false;
+                    const d = l.timestamp.toDate();
+                    return d.getFullYear() === currYear && d.getMonth() === currMonth;
+                });
+
+                const dailyData = {};
+                monthlyLogs.forEach(log => {
+                    const dateStr = log.timestamp.toDate().toISOString().split('T')[0];
+                    if (!dailyData[dateStr]) dailyData[dateStr] = { in: null, out: null };
+                    const t = log.timestamp.toDate();
+                    if (log.type === 'in') { if (!dailyData[dateStr].in || t < dailyData[dateStr].in) dailyData[dateStr].in = t; }
+                    else { if (!dailyData[dateStr].out || t > dailyData[dateStr].out) dailyData[dateStr].out = t; }
+                });
+
+                let totalDays = 0, lateDays = 0, totalOT = 0;
+                const stdHrs = Number(systemSettings.workHours) || 8;
+                let coreDateCheck = null;
+                if(systemSettings.coreTime) {
+                    const [cH, cM] = systemSettings.coreTime.split(':');
+                    coreDateCheck = { h: cH, m: cM };
+                }
+
+                Object.values(dailyData).forEach(day => {
+                    if (day.in) {
+                        totalDays++;
+                        if (coreDateCheck) {
+                            const coreDate = new Date(day.in);
+                            coreDate.setHours(coreDateCheck.h, coreDateCheck.m, 0, 0);
+                            if (day.in > coreDate) lateDays++;
+                        }
+                        if (day.out) {
+                            const hrs = (day.out - day.in) / (1000 * 60 * 60);
+                            if (hrs > stdHrs) totalOT += (hrs - stdHrs);
+                        }
+                    }
+                });
+
+                document.getElementById('emp-stat-days').innerHTML = `${totalDays}<span class="text-xs font-normal text-gray-500"> วัน</span>`;
+                document.getElementById('emp-stat-late').innerHTML = `${lateDays}<span class="text-xs font-normal text-gray-500"> วัน</span>`;
+                document.getElementById('emp-stat-ot').innerHTML = `${totalOT.toFixed(1)}<span class="text-xs font-normal text-gray-500"> ชม.</span>`;
+
+
+                // แสดงรายการประวัติล่าสุด (10 รายการ)
                 const container = document.getElementById('emp-personal-history');
                 if (logs.length === 0) container.innerHTML = '<div class="text-center text-sm text-gray-400 py-4">ยังไม่มีประวัติการบันทึกเวลา</div>';
                 else {
@@ -728,7 +799,6 @@
                         let inStr = u.firstIn ? u.firstIn.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '-';
                         let outStr = u.lastOut ? u.lastOut.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) : '-';
                         
-                        // ระบบเช็คสาย (Late Detection)
                         let lateBadge = '';
                         if (u.firstIn && systemSettings.coreTime) {
                             const [coreH, coreM] = systemSettings.coreTime.split(':');
@@ -781,9 +851,8 @@
             });
         }
 
-        // --- ระบบรายงานรายบุคคล (Payroll Prep) ---
         window.viewEmployeeReport = async (userId, name) => {
-            const currentMonthStr = new Date().toISOString().slice(0, 7); // YYYY-MM
+            const currentMonthStr = new Date().toISOString().slice(0, 7); 
             const { value: monthRaw } = await Swal.fire({
                 title: `สรุปรายงาน: ${name}`,
                 html: `<p class="mb-2 text-sm text-gray-600">เลือกเดือนที่ต้องการสรุปข้อมูล</p><input type="month" id="swal-month-input" value="${currentMonthStr}" class="w-[80%] p-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-center">`,
@@ -793,14 +862,11 @@
 
             if (monthRaw) {
                 const [year, m] = monthRaw.split('-');
-                
-                // คัดกรอง log เฉพาะของคนนี้ และเดือนนี้
                 const userLogs = allLogsRaw.filter(l => {
                     if (l.userId !== userId || !l.timestamp) return false;
                     const d = l.timestamp.toDate(); return d.getFullYear() == year && (d.getMonth() + 1) == m;
                 });
 
-                // จัดกลุ่มตามวัน
                 const dailyData = {};
                 userLogs.forEach(log => {
                     const dateStr = log.timestamp.toDate().toISOString().split('T')[0];
@@ -816,13 +882,11 @@
                 Object.values(dailyData).forEach(day => {
                     if (day.in) {
                         totalDays++;
-                        // เช็คสาย
                         if (systemSettings.coreTime) {
                             const [cH, cM] = systemSettings.coreTime.split(':');
                             const coreDate = new Date(day.in); coreDate.setHours(cH, cM, 0, 0);
                             if (day.in > coreDate) lateDays++;
                         }
-                        // เช็คชั่วโมง & OT
                         if (day.out) {
                             const hrs = (day.out - day.in) / (1000 * 60 * 60);
                             totalWorkHrs += hrs;
@@ -831,7 +895,6 @@
                     }
                 });
 
-                // แสดงผลสรุปแบบสวยงาม
                 Swal.fire({
                     title: `รายงานของ ${name}`,
                     html: `
@@ -874,6 +937,19 @@
             .then(async (result) => { if (result.isConfirmed) { await deleteDoc(doc(db, "employees", docId)); Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', timer: 1000, showConfirmButton: false }); } });
         };
 
+        // แอดมิน: ฟังก์ชันลบประวัติการเข้า-ออกงาน (Timelog)
+        window.deleteTimelog = (docId) => {
+            Swal.fire({ title: 'ลบรายการนี้?', text: "เมื่อลบแล้วจะไม่สามารถกู้คืนได้ และอาจส่งผลต่อสรุปชั่วโมงทำงาน", icon: 'warning', showCancelButton: true, confirmButtonColor: '#e11d48', confirmButtonText: 'ใช่, ลบทิ้ง' })
+            .then(async (result) => { 
+                if (result.isConfirmed) { 
+                    try {
+                        await deleteDoc(doc(db, "timelogs", docId)); 
+                        Swal.fire({ icon: 'success', title: 'ลบสำเร็จ', timer: 1000, showConfirmButton: false }); 
+                    } catch (error) { Swal.fire('ผิดพลาด', error.message, 'error'); }
+                } 
+            });
+        };
+
         document.getElementById('btn-export-csv').addEventListener('click', () => {
             if (allLogsForExport.length === 0) return Swal.fire('ไม่มีข้อมูล', 'ไม่มีข้อมูลในเดือนที่เลือก', 'info');
             let csvContent = "data:text/csv;charset=utf-8,\uFEFFDate_Time,Employee,Type,Remark,Latitude,Longitude\n";
@@ -907,7 +983,6 @@
                 const isCheckIn = data.type === 'in', empName = data.name || 'ไม่ทราบชื่อ';
                 const typeBadge = isCheckIn ? '<span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold">เข้างาน</span>' : '<span class="bg-rose-100 text-rose-700 px-2 py-1 rounded text-xs font-bold">ออกงาน</span>';
                 
-                // เช็คว่ามีหมายเหตุไหม ถ้ามีให้แสดงไว้ใต้ประเภท (สำหรับ Admin)
                 const remarkBadge = data.remark ? `<div class="mt-1 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded inline-block"><i class="fa-regular fa-comment-dots"></i> ${data.remark}</div>` : '';
                 const remarkExport = data.remark ? data.remark : '-';
 
@@ -920,9 +995,14 @@
                         <td class="p-3">${typeBadge}<br>${remarkBadge}</td>
                         <td class="p-3"><img src="${data.photoBase64}" class="w-10 h-10 rounded-lg object-cover border cursor-pointer hover:scale-[2] transition-transform origin-left" alt="Selfie"></td>
                         <td class="p-3 text-xs"><a href="https://www.google.com/maps/search/?api=1&query=${data.lat},${data.lng}" target="_blank" class="text-blue-600 hover:underline"><i class="fa-solid fa-map-location-dot"></i> ดูแผนที่</a></td>
+                        <td class="p-3 text-center">
+                            <button onclick="window.deleteTimelog('${data.id}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2 py-1 rounded transition text-xs shadow-sm" title="ลบรายการนี้">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
                     </tr>`;
             });
-            tbodyLogs.innerHTML = logHtml || '<tr><td colspan="5" class="p-8 text-center text-gray-400">ไม่มีข้อมูลตามเงื่อนไข</td></tr>';
+            tbodyLogs.innerHTML = logHtml || '<tr><td colspan="6" class="p-8 text-center text-gray-400">ไม่มีข้อมูลตามเงื่อนไข</td></tr>';
         }
 
         document.getElementById('filter-timelog-month').addEventListener('change', renderTimelogsTable);
