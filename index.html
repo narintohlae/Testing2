@@ -195,7 +195,6 @@
                 <div id="view-hr-dashboard" class="view-section px-5 py-6">
                     <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">ภาพรวมวันนี้</h2>
                     
-                    <!-- Fixed: Added missing hr-cloud-warning -->
                     <div id="hr-cloud-warning" class="hidden mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/50 rounded-xl text-xs text-danger flex gap-2 items-start">
                         <i class="fas fa-exclamation-triangle mt-0.5"></i> <span>ระบบคลาวด์ปิดอยู่ ข้อมูลจะไม่ถูกซิงก์แบบเรียลไทม์</span>
                     </div>
@@ -224,7 +223,7 @@
                     <div id="hr-data-container" class="space-y-3 pb-4"></div>
                 </div>
 
-                <!-- HR USERS MANAGEMENT (IMPROVED) -->
+                <!-- HR USERS MANAGEMENT -->
                 <div id="view-hr-users" class="view-section px-5 py-6">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="text-lg font-bold text-gray-800 dark:text-white">จัดการพนักงาน</h2>
@@ -326,6 +325,7 @@
                 const parsed = JSON.parse(saved);
                 appData = { ...appData, ...parsed, settings: { ...DEFAULT_SETTINGS, ...parsed.settings } };
             }
+            if(!appData.users) appData.users = [];
             applyTheme(appData.settings.darkMode);
             const now = new Date(); selectedMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
             document.getElementById('hr-date-filter').value = getTodayString();
@@ -436,7 +436,7 @@
         }
         function calcDist(lat1, lon1, lat2, lon2) { const R=6371e3, p1=lat1*Math.PI/180, p2=lat2*Math.PI/180, a=Math.sin((lat2-lat1)*Math.PI/360)**2 + Math.cos(p1)*Math.cos(p2)*Math.sin((lon2-lon1)*Math.PI/360)**2; return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); }
 
-        // --- Manage HR Users (NEW & IMPROVED) ---
+        // --- Manage HR Users (IMPROVED) ---
         function renderHRUsers() {
             const searchInput = document.getElementById('hr-user-search');
             const search = searchInput ? searchInput.value.toLowerCase() : '';
@@ -445,11 +445,17 @@
             const c = document.getElementById('hr-users-list'); if(!c) return;
             c.innerHTML='';
             
-            let src = appData.settings.enableCloud && window.cloudIsReady ? cloudData.users : [{empId: appData.settings.empId, empName: appData.settings.userName, branch: appData.settings.branch, lastLogin: new Date().toISOString()}];
+            // Get source from Cloud OR Local
+            let src = (appData.settings.enableCloud && window.cloudIsReady) ? cloudData.users : (appData.users || []);
+            
+            // At least include current user if list is empty
+            if(src.length === 0) {
+                src = [{empId: appData.settings.empId, empName: appData.settings.userName, branch: appData.settings.branch, lastLogin: new Date().toISOString()}];
+            }
             
             // Filtering
             let filtered = src.filter(u => {
-                const matchesSearch = u.empName.toLowerCase().includes(search) || u.empId.toLowerCase().includes(search);
+                const matchesSearch = (u.empName || '').toLowerCase().includes(search) || (u.empId || '').toLowerCase().includes(search);
                 const matchesBranch = branch === 'ALL' || u.branch === branch;
                 return matchesSearch && matchesBranch;
             });
@@ -466,8 +472,13 @@
         }
 
         async function editEmployee(id) {
-            let src = appData.settings.enableCloud && window.cloudIsReady ? cloudData.users : [ {empId: appData.settings.empId, empName: appData.settings.userName, branch: appData.settings.branch} ];
+            let src = (appData.settings.enableCloud && window.cloudIsReady) ? cloudData.users : (appData.users || []);
             let user = src.find(u => u.empId === id);
+            
+            // Fallback for self if not in list
+            if(!user && id === appData.settings.empId) {
+                user = {empId: appData.settings.empId, empName: appData.settings.userName, branch: appData.settings.branch};
+            }
             if(!user) return;
 
             const { value: formValues } = await Swal.fire({
@@ -479,11 +490,20 @@
 
             if (formValues) {
                 const updated = { ...user, empName: formValues.name, branch: formValues.branch };
-                if (appData.settings.enableCloud && typeof window.syncUserRaw === 'function') {
+                if (appData.settings.enableCloud && window.cloudIsReady && typeof window.syncUserRaw === 'function') {
                     await window.syncUserRaw(updated);
-                    Swal.fire({icon:'success', title:'แก้ไขสำเร็จ', timer:1000, showConfirmButton:false});
-                } else if(id === appData.settings.empId) {
-                    appData.settings.userName = formValues.name; appData.settings.branch = formValues.branch; saveData(); renderHRUsers();
+                    Swal.fire({icon:'success', title:'แก้ไขสำเร็จ (Cloud)', timer:1000, showConfirmButton:false});
+                } else {
+                    // Update Local
+                    const idx = appData.users.findIndex(u => u.empId === id);
+                    if(idx > -1) appData.users[idx] = updated;
+                    else appData.users.push(updated);
+                    
+                    if(id === appData.settings.empId) {
+                        appData.settings.userName = formValues.name; appData.settings.branch = formValues.branch;
+                    }
+                    saveData(); renderHRUsers(); updateBranchFilterDropdowns();
+                    Swal.fire({icon:'success', title:'แก้ไขสำเร็จ (เครื่อง)', timer:1000, showConfirmButton:false});
                 }
             }
         }
@@ -491,11 +511,13 @@
         async function deleteEmployee(id) {
             const { isConfirmed } = await Swal.fire({ title: 'ยืนยันการลบ?', text: `ลบพนักงานรหัส ${id} ออกจากระบบ`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#EF4444', confirmButtonText: 'ลบเลย', cancelButtonText: 'ยกเลิก' });
             if (isConfirmed) {
-                if (appData.settings.enableCloud && typeof window.deleteUserCloud === 'function') {
+                if (appData.settings.enableCloud && window.cloudIsReady && typeof window.deleteUserCloud === 'function') {
                     await window.deleteUserCloud(id);
-                    Swal.fire({icon:'success', title:'ลบเรียบร้อย', timer:1000, showConfirmButton:false});
+                    Swal.fire({icon:'success', title:'ลบเรียบร้อย (Cloud)', timer:1000, showConfirmButton:false});
                 } else {
-                    Swal.fire('Error', 'กรุณาเปิดระบบคลาวด์เพื่อจัดการพนักงาน', 'error');
+                    appData.users = appData.users.filter(u => u.empId !== id);
+                    saveData(); renderHRUsers(); updateBranchFilterDropdowns();
+                    Swal.fire({icon:'success', title:'ลบเรียบร้อย (เครื่อง)', timer:1000, showConfirmButton:false});
                 }
             }
         }
@@ -510,11 +532,17 @@
 
             if (formValues && formValues.id && formValues.name) {
                 const newUser = { empId: formValues.id, empName: formValues.name, branch: formValues.branch, lastLogin: null };
-                if (appData.settings.enableCloud && typeof window.syncUserRaw === 'function') {
+                if (appData.settings.enableCloud && window.cloudIsReady && typeof window.syncUserRaw === 'function') {
                     await window.syncUserRaw(newUser);
-                    Swal.fire({icon:'success', title:'เพิ่มสำเร็จ', timer:1000, showConfirmButton:false});
+                    Swal.fire({icon:'success', title:'เพิ่มสำเร็จ (Cloud)', timer:1000, showConfirmButton:false});
                 } else {
-                    Swal.fire('Error', 'กรุณาเปิดระบบคลาวด์เพื่อเพิ่มพนักงาน', 'error');
+                    // Local Storage Fallback
+                    if(!appData.users) appData.users = [];
+                    const exists = appData.users.findIndex(u => u.empId === newUser.empId);
+                    if(exists > -1) appData.users[exists] = newUser;
+                    else appData.users.push(newUser);
+                    saveData(); renderHRUsers(); updateBranchFilterDropdowns();
+                    Swal.fire({icon:'success', title:'เพิ่มสำเร็จ (ในเครื่อง)', timer:1000, showConfirmButton:false});
                 }
             }
         }
@@ -523,32 +551,27 @@
             const f1 = document.getElementById('hr-branch-filter');
             const f2 = document.getElementById('hr-user-branch-filter');
             const branches = new Set();
-            let src = appData.settings.enableCloud && window.cloudIsReady ? cloudData.users : [appData.settings];
+            
+            let src = (appData.settings.enableCloud && window.cloudIsReady) ? cloudData.users : (appData.users || []);
+            if(src.length === 0) src = [appData.settings];
+            
             src.forEach(u => { if(u.branch) branches.add(u.branch); });
-            const html = '<option value="ALL">ทุกสาขา</option>' + Array.from(branches).map(b => `<option value="${b}">${b}</option>`).join('');
+            const html = '<option value="ALL">ทุกสาขา</option>' + Array.from(branches).sort().map(b => `<option value="${b}">${b}</option>`).join('');
             if(f1) f1.innerHTML = html; if(f2) f2.innerHTML = html;
         }
 
         // --- Other HR Displays ---
         function renderHRDashboard() {
             if(currentMode !== 'hr') return;
-            
-            // Fixed: Added null check
             const warningEl = document.getElementById('hr-cloud-warning');
             if(warningEl) warningEl.classList.toggle('hidden', appData.settings.enableCloud);
-            
             const fd = document.getElementById('hr-date-filter').value;
-            let srcLogs = appData.settings.enableCloud && window.cloudIsReady ? cloudData.logs : appData.logs.map(l=>({...l, empId:appData.settings.empId, empName:appData.settings.userName}));
+            let srcLogs = (appData.settings.enableCloud && window.cloudIsReady) ? cloudData.logs : appData.logs.map(l=>({...l, empId:appData.settings.empId, empName:appData.settings.userName}));
             const todayLogs = srcLogs.filter(l=>l.date===fd);
             let onTime = 0, late = 0; todayLogs.forEach(l => { if(l.statusIn==='สาย') late++; else if(l.timeIn) onTime++; });
-            
-            const inEl = document.getElementById('hr-stat-in');
-            const lateEl = document.getElementById('hr-stat-late');
-            if(inEl) inEl.textContent = (onTime + late); 
-            if(lateEl) lateEl.textContent = late;
-
-            const chartEl = document.getElementById('hrPieChart');
-            if(!chartEl) return;
+            const inEl = document.getElementById('hr-stat-in'); const lateEl = document.getElementById('hr-stat-late');
+            if(inEl) inEl.textContent = (onTime + late); if(lateEl) lateEl.textContent = late;
+            const chartEl = document.getElementById('hrPieChart'); if(!chartEl) return;
             const ctx = chartEl.getContext('2d');
             if(hrPieChartInstance) hrPieChartInstance.destroy();
             hrPieChartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: ['ปกติ', 'สาย'], datasets: [{ data: [onTime, late], backgroundColor: ['#10B981', '#F59E0B'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, cutout: '70%' } });
@@ -557,23 +580,12 @@
             const fd = document.getElementById('hr-date-filter').value; const bf = document.getElementById('hr-branch-filter').value;
             const c = document.getElementById('hr-data-container'); if(!c) return;
             c.innerHTML='';
-            let srcLogs = appData.settings.enableCloud && window.cloudIsReady ? cloudData.logs : appData.logs.map(l=>({...l, empId:appData.settings.empId, empName:appData.settings.userName, branch:appData.settings.branch}));
-            let srcLeaves = appData.settings.enableCloud && window.cloudIsReady ? cloudData.leaveReqs : appData.leaveReqs;
-            let srcOts = appData.settings.enableCloud && window.cloudIsReady ? cloudData.otReqs : appData.otReqs;
-            
-            const badgeL = document.getElementById('badge-leave');
-            const badgeO = document.getElementById('badge-ot');
-            if(badgeL) {
-                const count = srcLeaves.filter(r=>r.status==='รออนุมัติ').length;
-                badgeL.textContent = count;
-                badgeL.style.display = count > 0 ? 'inline-block' : 'none';
-            }
-            if(badgeO) {
-                const count = srcOts.filter(r=>r.status==='รออนุมัติ').length;
-                badgeO.textContent = count;
-                badgeO.style.display = count > 0 ? 'inline-block' : 'none';
-            }
-
+            let srcLogs = (appData.settings.enableCloud && window.cloudIsReady) ? cloudData.logs : appData.logs.map(l=>({...l, empId:appData.settings.empId, empName:appData.settings.userName, branch:appData.settings.branch}));
+            let srcLeaves = (appData.settings.enableCloud && window.cloudIsReady) ? cloudData.leaveReqs : appData.leaveReqs;
+            let srcOts = (appData.settings.enableCloud && window.cloudIsReady) ? cloudData.otReqs : appData.otReqs;
+            const badgeL = document.getElementById('badge-leave'); const badgeO = document.getElementById('badge-ot');
+            if(badgeL) { const count = srcLeaves.filter(r=>r.status==='รออนุมัติ').length; badgeL.textContent = count; badgeL.style.display = count > 0 ? 'inline-block' : 'none'; }
+            if(badgeO) { const count = srcOts.filter(r=>r.status==='รออนุมัติ').length; badgeO.textContent = count; badgeO.style.display = count > 0 ? 'inline-block' : 'none'; }
             if(currentHRListTab === 'logs') {
                 let filtered = srcLogs.filter(l=>l.date===fd); if(bf !== 'ALL') filtered = filtered.filter(l=>l.branch === bf);
                 if(!filtered.length) return c.innerHTML='<div class="text-center text-xs text-gray-400 py-10">ไม่มีข้อมูล</div>';
@@ -593,7 +605,7 @@
         }
 
         async function updateRequestStatus(type, id, status) {
-            if(appData.settings.enableCloud && typeof window.syncCloudData === 'function') {
+            if(appData.settings.enableCloud && window.cloudIsReady && typeof window.syncCloudData === 'function') {
                 let req = cloudData[type].find(r=>r.id===id); if(req) { req.status = status; await window.syncCloudData(type, req); }
             } else {
                 let idx = appData[type].findIndex(r=>r.id===id); if(idx>-1) { appData[type][idx].status = status; saveData(); renderHRData(); }
@@ -602,59 +614,11 @@
 
         function toggleHRListTab(tab) { currentHRListTab = tab; document.querySelectorAll('.hr-sub-tab').forEach(e => e.classList.toggle('active', e.id === `tab-hr-${tab}`)); document.getElementById('hr-list-filter-area').classList.toggle('hidden', tab!=='logs'); renderHRData(); }
         function toggleEmpReqTab(tab) { currentEmpReqTab = tab; document.getElementById('tab-emp-leave').classList.toggle('active', tab==='leave'); document.getElementById('tab-emp-ot').classList.toggle('active', tab==='ot'); document.getElementById('form-leave').classList.toggle('hidden', tab!=='leave'); document.getElementById('form-ot').classList.toggle('hidden', tab!=='ot'); }
-        
-        function renderTodayStatus() { 
-            const log = appData.logs.find(l=>l.date===getTodayString()); 
-            const inEl = document.getElementById('today-in');
-            const outEl = document.getElementById('today-out');
-            if(inEl) inEl.textContent = log?.timeIn ? formatTimeShort(log.timeIn) : '--:--'; 
-            if(outEl) outEl.textContent = log?.timeOut ? formatTimeShort(log.timeOut) : '--:--'; 
-        }
-
-        function populateMonthFilter() {
-            const sel = document.getElementById('month-filter'); if(!sel) return;
-            const ms = new Set([`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`]);
-            appData.logs.forEach(l=>ms.add(l.date.substring(0,7))); sel.innerHTML='';
-            Array.from(ms).sort().reverse().forEach(m => { const opt=document.createElement('option'); opt.value=m; opt.textContent=new Date(m.split('-')[0], parseInt(m.split('-')[1])-1, 1).toLocaleDateString('th-TH', {month:'short', year:'numeric'}); if(m===selectedMonth) opt.selected=true; sel.appendChild(opt); });
-        }
-
-        function renderHistory() {
-            const filterEl = document.getElementById('month-filter');
-            if(!filterEl) return;
-            selectedMonth = filterEl.value; 
-            const c = document.getElementById('history-list'); if(!c) return;
-            const f = appData.logs.filter(l=>l.date.startsWith(selectedMonth)); c.innerHTML='';
-            let w=0, l=0; f.forEach(x=>{ if(x.timeIn){ w++; if(x.statusIn==='สาย') l++; } });
-            const totalDaysEl = document.getElementById('stat-total-days');
-            const lateDaysEl = document.getElementById('stat-late-days');
-            if(totalDaysEl) totalDaysEl.textContent = w; 
-            if(lateDaysEl) lateDaysEl.textContent = l;
-            if(!f.length) return c.innerHTML='<div class="text-center text-gray-400 py-10 text-xs">ไม่มีประวัติ</div>';
-            f.forEach(x=>{
-                c.innerHTML+=`<div class="bg-white dark:bg-darkCard rounded-xl p-3 shadow-sm border mb-2"><div class="flex justify-between border-b pb-1 mb-1 text-sm font-medium"><p><i class="far fa-calendar-alt text-primary mr-2"></i>${new Date(x.date).toLocaleDateString('th-TH',{day:'numeric',month:'short'})}</p></div><div class="flex justify-between text-xs px-1"><div><span class="w-2 h-2 rounded-full bg-secondary inline-block mr-1"></span>เข้า: <strong>${formatTimeShort(x.timeIn)}</strong> ${x.statusIn==='สาย'?'<span class="text-danger">(สาย)</span>':''}</div><div><span class="w-2 h-2 rounded-full bg-orange-400 inline-block mr-1"></span>ออก: <strong>${formatTimeShort(x.timeOut)}</strong></div></div></div>`;
-            });
-        }
-
-        function renderEmpReqs() {
-            const c = document.getElementById('emp-req-list'); if(!c) return;
-            c.innerHTML='';
-            let src = appData.settings.enableCloud && window.cloudIsReady ? [...cloudData.leaveReqs.filter(r=>r.empId===appData.settings.empId), ...cloudData.otReqs.filter(r=>r.empId===appData.settings.empId)] : [...appData.leaveReqs, ...appData.otReqs];
-            src.sort((a,b) => new Date(b.submittedAt) - new Date(a.submittedAt));
-            if(!src.length) return c.innerHTML='<div class="text-center text-xs text-gray-400 py-4">ยังไม่มีคำร้อง</div>';
-            src.forEach(r => {
-                const isLeave = r.id.startsWith('LV');
-                let stClass = r.status === 'อนุมัติ' ? 'text-secondary bg-green-50 border-green-100' : (r.status === 'ปฏิเสธ' ? 'text-danger bg-red-50 border-red-100' : 'text-warning bg-yellow-50 border-yellow-100');
-                c.innerHTML += `<div class="bg-white dark:bg-darkCard rounded-xl p-3 shadow-sm border mb-2 text-sm"><div class="flex justify-between items-center mb-1"><span class="font-bold ${isLeave?'text-blue-600 dark:text-blue-400':'text-orange-500'}"><i class="${isLeave?'fas fa-calendar-minus':'fas fa-clock'} mr-1"></i>${isLeave?r.type:'ขอ OT'}</span><span class="text-[10px] px-2 py-0.5 rounded-full border ${stClass}">${r.status}</span></div><p class="text-xs text-gray-600 dark:text-gray-400 mb-1">${isLeave?`วันที่ ${r.startDate} ถึง ${r.endDate}`:`วันที่ ${r.date} เวลา ${r.startTime}-${r.endTime}`}</p><p class="text-[10px] text-gray-500 bg-gray-50 dark:bg-gray-800 p-1.5 rounded">เหตุผล: ${r.reason}</p></div>`;
-            });
-        }
-
-        function exportCSV(isHR) {
-            let data = isHR && appData.settings.enableCloud ? cloudData.logs : appData.logs.filter(l=>l.date.startsWith(selectedMonth));
-            if(!data.length) return Swal.fire('ไม่มีข้อมูล','','info');
-            let csv="\uFEFFรหัส,ชื่อ,สาขา,วันที่,เวลาเข้า,สถานะเข้า,เวลาออก,สถานะออก\n";
-            data.forEach(l=>{ csv+=`${isHR?(l.empId||'-'):appData.settings.empId},${isHR?(l.empName||'-'):appData.settings.userName},${isHR?(l.branch||'-'):appData.settings.branch},${l.date},${formatTimeShort(l.timeIn)},${l.statusIn||'-'},${formatTimeShort(l.timeOut)},${l.statusOut||'-'}\n`; });
-            const link=document.createElement("a"); link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'})); link.download=`Attendance_${isHR?'HR':'Emp'}.csv`; link.click();
-        }
+        function renderTodayStatus() { const log = appData.logs.find(l=>l.date===getTodayString()); const inEl = document.getElementById('today-in'); const outEl = document.getElementById('today-out'); if(inEl) inEl.textContent = log?.timeIn ? formatTimeShort(log.timeIn) : '--:--'; if(outEl) outEl.textContent = log?.timeOut ? formatTimeShort(log.timeOut) : '--:--'; }
+        function populateMonthFilter() { const sel = document.getElementById('month-filter'); if(!sel) return; const ms = new Set([`${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}`]); appData.logs.forEach(l=>ms.add(l.date.substring(0,7))); sel.innerHTML=''; Array.from(ms).sort().reverse().forEach(m => { const opt=document.createElement('option'); opt.value=m; opt.textContent=new Date(m.split('-')[0], parseInt(m.split('-')[1])-1, 1).toLocaleDateString('th-TH', {month:'short', year:'numeric'}); if(m===selectedMonth) opt.selected=true; sel.appendChild(opt); }); }
+        function renderHistory() { const filterEl = document.getElementById('month-filter'); if(!filterEl) return; selectedMonth = filterEl.value; const c = document.getElementById('history-list'); if(!c) return; const f = appData.logs.filter(l=>l.date.startsWith(selectedMonth)); c.innerHTML=''; let w=0, l=0; f.forEach(x=>{ if(x.timeIn){ w++; if(x.statusIn==='สาย') l++; } }); const totalDaysEl = document.getElementById('stat-total-days'); const lateDaysEl = document.getElementById('stat-late-days'); if(totalDaysEl) totalDaysEl.textContent = w; if(lateDaysEl) lateDaysEl.textContent = l; if(!f.length) return c.innerHTML='<div class="text-center text-gray-400 py-10 text-xs">ไม่มีประวัติ</div>'; f.forEach(x=>{ c.innerHTML+=`<div class="bg-white dark:bg-darkCard rounded-xl p-3 shadow-sm border mb-2"><div class="flex justify-between border-b pb-1 mb-1 text-sm font-medium"><p><i class="far fa-calendar-alt text-primary mr-2"></i>${new Date(x.date).toLocaleDateString('th-TH',{day:'numeric',month:'short'})}</p></div><div class="flex justify-between text-xs px-1"><div><span class="w-2 h-2 rounded-full bg-secondary inline-block mr-1"></span>เข้า: <strong>${formatTimeShort(x.timeIn)}</strong> ${x.statusIn==='สาย'?'<span class="text-danger">(สาย)</span>':''}</div><div><span class="w-2 h-2 rounded-full bg-orange-400 inline-block mr-1"></span>ออก: <strong>${formatTimeShort(x.timeOut)}</strong></div></div></div>`; }); }
+        function renderEmpReqs() { const c = document.getElementById('emp-req-list'); if(!c) return; c.innerHTML=''; let src = (appData.settings.enableCloud && window.cloudIsReady) ? [...cloudData.leaveReqs.filter(r=>r.empId===appData.settings.empId), ...cloudData.otReqs.filter(r=>r.empId===appData.settings.empId)] : [...appData.leaveReqs, ...appData.otReqs]; src.sort((a,b) => new Date(b.submittedAt) - new Date(a.submittedAt)); if(!src.length) return c.innerHTML='<div class="text-center text-xs text-gray-400 py-4">ยังไม่มีคำร้อง</div>'; src.forEach(r => { const isLeave = r.id.startsWith('LV'); let stClass = r.status === 'อนุมัติ' ? 'text-secondary bg-green-50 border-green-100' : (r.status === 'ปฏิเสธ' ? 'text-danger bg-red-50 border-red-100' : 'text-warning bg-yellow-50 border-yellow-100'); c.innerHTML += `<div class="bg-white dark:bg-darkCard rounded-xl p-3 shadow-sm border mb-2 text-sm"><div class="flex justify-between items-center mb-1"><span class="font-bold ${isLeave?'text-blue-600 dark:text-blue-400':'text-orange-500'}"><i class="${isLeave?'fas fa-calendar-minus':'fas fa-clock'} mr-1"></i>${isLeave?r.type:'ขอ OT'}</span><span class="text-[10px] px-2 py-0.5 rounded-full border ${stClass}">${r.status}</span></div><p class="text-xs text-gray-600 dark:text-gray-400 mb-1">${isLeave?`วันที่ ${r.startDate} ถึง ${r.endDate}`:`วันที่ ${r.date} เวลา ${r.startTime}-${r.endTime}`}</p><p class="text-[10px] text-gray-500 bg-gray-50 dark:bg-gray-800 p-1.5 rounded">เหตุผล: ${r.reason}</p></div>`; }); }
+        function exportCSV(isHR) { let data = isHR && appData.settings.enableCloud ? cloudData.logs : appData.logs.filter(l=>l.date.startsWith(selectedMonth)); if(!data.length) return Swal.fire('ไม่มีข้อมูล','','info'); let csv="\uFEFFรหัส,ชื่อ,สาขา,วันที่,เวลาเข้า,สถานะเข้า,เวลาออก,สถานะออก\n"; data.forEach(l=>{ csv+=`${isHR?(l.empId||'-'):appData.settings.empId},${isHR?(l.empName||'-'):appData.settings.userName},${isHR?(l.branch||'-'):appData.settings.branch},${l.date},${formatTimeShort(l.timeIn)},${l.statusIn||'-'},${formatTimeShort(l.timeOut)},${l.statusOut||'-'}\n`; }); const link=document.createElement("a"); link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'})); link.download=`Attendance_${isHR?'HR':'Emp'}.csv`; link.click(); }
 
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
