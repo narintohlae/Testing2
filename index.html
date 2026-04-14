@@ -1159,7 +1159,20 @@
                 penaltyPay, ssoDeduction, totalNet, dailyRate, otRate, penaltyRate
             };
         }
-
+function populateSettingsForm() {
+    if (!systemSettings) return;
+    
+    document.getElementById('setting-announcement').value = systemSettings.announcement || '';
+    document.getElementById('setting-ot-normal').value = systemSettings.otNormal || 1.5;
+    document.getElementById('setting-ot-weekend').value = systemSettings.otWeekend || 2;
+    document.getElementById('setting-ot-holiday').value = systemSettings.otHoliday || 3;
+    document.getElementById('setting-sso-percent').value = systemSettings.ssoPercent || 5;
+    document.getElementById('setting-sso-max').value = systemSettings.ssoMax || 750;
+    document.getElementById('setting-workhours').value = systemSettings.workHours || 8;
+    document.getElementById('setting-coretime').value = systemSettings.coreTime || "09:00";
+    
+    // หมายเหตุ: โค้ดนี้จะดึงค่าจากฐานข้อมูลมาแสดงในกล่อง Input ในหน้าตั้งค่าแอดมิน
+}
         function showView(viewName) {
             Object.values(views).forEach(v => v.classList.add('hide'));
             views[viewName].classList.remove('hide');
@@ -1657,7 +1670,54 @@
                 }, errHandler);
             }, errHandler);
         }
+        function renderTimelogsTable() {
+    const tbody = document.getElementById('admin-table-body');
+    if (!tbody) return;
+
+    let logs = [...allLogsRaw];
+    // เรียงจากล่าสุดไปเก่าสุด
+    logs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+    // ระบบค้นหาเบื้องต้น (ถ้ามีการพิมพ์ในช่องค้นหา)
+    const searchInput = document.getElementById('search-timelog')?.value.toLowerCase();
+    if (searchInput) {
+        logs = logs.filter(l => l.name.toLowerCase().includes(searchInput) || (l.remark && l.remark.toLowerCase().includes(searchInput)));
+    }
+
+    if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400">ไม่พบข้อมูลบันทึกเวลา</td></tr>';
+        return;
+    }
+
+    let html = '';
+    logs.slice(0, 100).forEach(log => { // แสดงแค่ 100 รายการล่าสุดเพื่อไม่ให้ค้าง
+        const timeStr = log.timestamp ? log.timestamp.toDate().toLocaleString('th-TH') : '-';
+        const typeBadge = log.type === 'in' 
+            ? '<span class="text-emerald-600 bg-emerald-100 px-2 py-1 rounded text-xs font-bold">เข้างาน</span>' 
+            : '<span class="text-rose-600 bg-rose-100 px-2 py-1 rounded text-xs font-bold">ออกงาน</span>';
         
+        const branch = log.branchName ? `<i class="fa-solid fa-location-dot text-gray-400 mr-1"></i>${log.branchName}` : '-';
+        const remark = log.remark || '-';
+        const photoBtn = log.photoBase64 ? `<button class="text-blue-500 hover:underline text-xs"><i class="fa-solid fa-image"></i> ดูรูป</button>` : '-';
+
+        html += `
+            <tr class="border-b hover:bg-gray-50">
+                <td class="p-4 text-sm text-gray-600">${timeStr}</td>
+                <td class="p-4 text-sm font-bold text-gray-800">${log.name}</td>
+                <td class="p-4 text-sm">${typeBadge} <span class="text-xs text-gray-500 ml-2">${remark}</span></td>
+                <td class="p-4 text-center">${photoBtn}</td>
+                <td class="p-4 text-sm text-gray-500">${branch}</td>
+                <td class="p-4 text-center">
+                    <button onclick="window.deleteTimelog('${log.id}')" class="text-rose-500 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded transition text-xs"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = html;
+}
+
+// ตรวจจับการพิมพ์ค้นหา
+document.getElementById('search-timelog')?.addEventListener('input', renderTimelogsTable);
         function renderEmployeesTable(todayIsoStr) {
             const tbodyEmp = document.getElementById('employees-table-body');
             const searchEl = document.getElementById('search-employee');
