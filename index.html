@@ -1264,6 +1264,47 @@ function populateSettingsForm() {
         }
     });
 });
+        document.getElementById('btn-logout').addEventListener('click', () => {
+    Swal.fire({
+        title: 'ออกจากระบบ?',
+        text: "คุณต้องการออกจากระบบใช่หรือไม่?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e11d48',
+        cancelButtonColor: '#9ca3af',
+        confirmButtonText: '<i class="fa-solid fa-right-from-bracket"></i> ใช่, ออกจากระบบ',
+        cancelButtonText: 'ยกเลิก'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                // 1. ล็อกเอาท์ออกจาก Firebase Auth
+                await signOut(auth);
+                
+                // 2. ล้างข้อมูลที่บันทึกไว้ในเครื่อง
+                localStorage.removeItem('currentEmployeeData');
+                sessionStorage.removeItem('currentEmployeeData');
+                sessionStorage.removeItem('currentAdminData');
+                
+                // 3. รีเซ็ตตัวแปรในระบบ
+                currentEmployee = null;
+                currentAdmin = null;
+                expectedAction = 'in';
+                
+                // 4. เปลี่ยนหน้าจอไปที่หน้า Login
+                showView('login');
+                
+                Swal.fire({ 
+                    icon: 'success', 
+                    title: 'ออกจากระบบแล้ว', 
+                    timer: 1500, 
+                    showConfirmButton: false 
+                });
+            } catch (error) {
+                Swal.fire('ผิดพลาด', 'ไม่สามารถออกจากระบบได้: ' + error.message, 'error');
+            }
+        }
+    });
+});
 
         // Mandatory Firebase Auth Initializer
         const initAuth = async () => {
