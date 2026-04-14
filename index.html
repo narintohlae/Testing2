@@ -1300,27 +1300,52 @@ function populateSettingsForm() {
         
         initAuth();
 
-        document.getElementById('btn-login-pin').addEventListener('click', async () => {
-            if (!firebaseUser) return;
-            const pin = document.getElementById('login-pin').value;
-            const btn = document.getElementById('btn-login-pin');
-            if (!pin || pin.length !== 6) return Swal.fire({ icon: 'warning', title: 'รหัสไม่ถูกต้อง', text: 'กรุณากรอกรหัส PIN ให้ครบ 6 หลัก' });
+document.getElementById('btn-login-pin').addEventListener('click', async () => {
+    // 1. หาก Session หลุด (เช่น เพิ่งกด Logout มา) ให้เชื่อมต่อแบบ Anonymous ใหม่
+    if (!firebaseUser) {
+        try {
+            await signInAnonymously(auth);
+        } catch (e) {
+            console.warn("เชื่อมต่อ Auth ไม่สำเร็จ แต่จะพยายามค้นหา PIN ต่อ");
+        }
+    }
 
-            btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังตรวจสอบ...';
-            try {
-                const q = query(getDbCollection("employees"), where("pin", "==", pin));
-                const querySnapshot = await getDocs(q);
-                if (!querySnapshot.empty) {
-                    currentEmployee = { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
-                    if (document.getElementById('remember-me').checked) localStorage.setItem('currentEmployeeData', JSON.stringify(currentEmployee));
-                    else sessionStorage.setItem('currentEmployeeData', JSON.stringify(currentEmployee));
-                    Swal.fire({ icon: 'success', title: `ยินดีต้อนรับ`, text: currentEmployee.name, timer: 1500, showConfirmButton: false });
-                    document.getElementById('login-pin').value = '';
-                    showView('employee');
-                } else Swal.fire({ icon: 'error', title: 'ล้มเหลว', text: 'รหัส PIN ไม่ถูกต้อง' });
-            } catch (error) { Swal.fire({ icon: 'error', title: 'เชื่อมต่อฐานข้อมูลล้มเหลว', text: error.message }); } 
-            finally { btn.disabled = false; btn.innerHTML = 'เข้าสู่ระบบด้วย PIN'; }
-        });
+    const pin = document.getElementById('login-pin').value;
+    const btn = document.getElementById('btn-login-pin');
+    
+    if (!pin || pin.length !== 6) {
+        return Swal.fire({ icon: 'warning', title: 'รหัสไม่ถูกต้อง', text: 'กรุณากรอกรหัส PIN ให้ครบ 6 หลัก' });
+    }
+
+    btn.disabled = true; 
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังตรวจสอบ...';
+    
+    try {
+        const q = query(getDbCollection("employees"), where("pin", "==", pin));
+        const querySnapshot = await getDocs(q);
+        
+        if (!querySnapshot.empty) {
+            currentEmployee = { id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() };
+            
+            if (document.getElementById('remember-me').checked) {
+                localStorage.setItem('currentEmployeeData', JSON.stringify(currentEmployee));
+            } else {
+                sessionStorage.setItem('currentEmployeeData', JSON.stringify(currentEmployee));
+            }
+            
+            Swal.fire({ icon: 'success', title: `ยินดีต้อนรับ`, text: currentEmployee.name, timer: 1500, showConfirmButton: false });
+            document.getElementById('login-pin').value = '';
+            showView('employee');
+        } else {
+            Swal.fire({ icon: 'error', title: 'ล้มเหลว', text: 'รหัส PIN ไม่ถูกต้อง หรือยังไม่ได้เพิ่มพนักงานนี้' });
+        }
+    } catch (error) { 
+        Swal.fire({ icon: 'error', title: 'เชื่อมต่อฐานข้อมูลล้มเหลว', text: error.message }); 
+    } finally { 
+        btn.disabled = false; 
+        btn.innerHTML = 'เข้าสู่ระบบด้วย PIN'; 
+    }
+});
 
         document.getElementById('btn-login').addEventListener('click', async () => {
             const email = document.getElementById('login-email').value;
