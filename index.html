@@ -2409,6 +2409,41 @@ document.getElementById('btn-save-settings')?.addEventListener('click', async ()
         Swal.fire('ผิดพลาด', 'ไม่สามารถบันทึกการตั้งค่าได้: ' + error.message, 'error');
     }
 });
+        // ฟังก์ชันสำหรับแสดงวันที่และเวลาแบบ Real-time ในหน้าพนักงาน
+window.startRealtimeClock = function() {
+    // ล้าง Timer เก่าทิ้งก่อน (ถ้ามี) เพื่อป้องกันนาฬิกาวิ่งซ้อนกัน
+    if (clockInterval) clearInterval(clockInterval);
+    
+    const dateEl = document.getElementById('realtime-date');
+    const clockEl = document.getElementById('realtime-clock');
+    
+    const updateClock = () => {
+        const now = new Date();
+        
+        // 1. จัดรูปแบบวันที่ (เช่น วันจันทร์ที่ 1 มกราคม 2024)
+        const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        if (dateEl) {
+            dateEl.textContent = now.toLocaleDateString('th-TH', dateOptions);
+        }
+        
+        // 2. จัดรูปแบบเวลา (ชั่วโมง:นาที และวินาทีตัวเล็ก)
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+        
+        if (clockEl) {
+            clockEl.innerHTML = `${hh}:${mm}<span class="text-2xl text-blue-200 ml-1">${ss}</span>`;
+        }
+    };
+    
+    updateClock(); // เรียกใช้ครั้งแรกทันทีจะได้ไม่ต้องรอ 1 วินาที
+    clockInterval = setInterval(updateClock, 1000); // อัปเดตทุกๆ 1 วินาที
+};
+
+// ตรวจสอบให้แน่ใจว่าฟังก์ชันถูกเรียกใช้ได้อย่างถูกต้อง โดยประกาศเป็น Global แบบธรรมดาด้วย
+function startRealtimeClock() {
+    window.startRealtimeClock();
+}
     </script>
 </body>
 </html>
