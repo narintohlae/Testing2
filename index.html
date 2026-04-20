@@ -1135,6 +1135,13 @@
                 }).join('');
             }
         }
+        function updateOwnerBadge() { 
+    const p = requests.filter(l => l.status === 'pending').length; 
+    document.getElementById('badge-pending').innerText = p; 
+    const d = document.getElementById('dot-pending-leave'); 
+    if(p > 0) d.classList.remove('hidden'); 
+    else d.classList.add('hidden'); 
+}
 
         function updateSalaryUnit() { const type = document.getElementById('emp-salary-type').value; const label = document.getElementById('salary-unit-text'); const input = document.getElementById('emp-base-rate'); if(type === 'monthly') { label.innerText = '(฿/เดือน)'; input.placeholder = 'เช่น 15000'; } else if(type === 'weekly') { label.innerText = '(฿/สัปดาห์)'; input.placeholder = 'เช่น 3500'; } else if(type === 'daily') { label.innerText = '(฿/วัน)'; input.placeholder = 'เช่น 500'; } else if(type === 'hourly') { label.innerText = '(฿/ชม.)'; input.placeholder = 'เช่น 60'; } }
 
