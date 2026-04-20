@@ -3,154 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Time Tracking App</title>
+    <title>ระบบลงเวลาเข้า-ออกงาน</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* สไตล์แบบ Flat 2010s & ไอโซเมตริก (เงาแข็ง) */
+        /* ป้องกันการคลุมดำข้อความบนมือถือเพื่อให้รู้สึกเหมือนแอป */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #F4F4F0; /* สีพื้นหลังสไตล์กระดาษ/มินิมอล */
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            box-sizing: border-box;
-        }
-
-        .header {
-            margin-top: 40px;
-            margin-bottom: 40px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            color: #333;
-            margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* ปุ่มกดสไตล์ Isometric Flat */
-        .btn {
-            width: 100%;
-            max-width: 300px;
-            padding: 20px;
-            margin-bottom: 20px;
-            font-size: 20px;
-            font-weight: bold;
-            text-align: center;
-            text-transform: uppercase;
-            border: 3px solid #222;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.1s ease;
+            -webkit-user-select: none;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
-
-        /* สีและเงาปุ่มเข้างาน */
-        .btn-checkin {
-            background-color: #A8E6CF; /* สีเขียวพาสเทล Flat */
-            color: #222;
-            box-shadow: 6px 6px 0px #222; /* เงาแข็งแบบ Isometric */
-        }
-
-        /* สีและเงาปุ่มออกงาน */
-        .btn-checkout {
-            background-color: #FF8B94; /* สีแดง/ชมพูพาสเทล Flat */
-            color: #222;
-            box-shadow: 6px 6px 0px #222;
-        }
-
-        /* แอนิเมชันตอนกด (ยุบตัวลงไปหาเงา) */
-        .btn:active {
-            transform: translate(6px, 6px);
-            box-shadow: 0px 0px 0px #222;
-        }
-
-        /* กล่องแสดงสถานะ */
-        .status-box {
-            width: 100%;
-            max-width: 300px;
-            margin-top: 30px;
-            padding: 15px;
-            background-color: #fff;
-            border: 3px solid #222;
-            box-shadow: 4px 4px 0px #222;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 14px;
-            font-weight: bold;
-            color: #555;
-            box-sizing: border-box;
-        }
     </style>
 </head>
-<body>
+<body class="bg-gray-100 h-screen flex flex-col items-center p-4 font-sans">
 
-    <div class="header">
-        <h1>WORK LOG</h1>
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-sm p-6 mt-4 text-center">
+        <h1 class="text-2xl font-bold text-gray-800">ระบบลงเวลาทำงาน</h1>
+        <p class="text-gray-500 mt-1" id="currentDate">กำลังโหลดวันที่...</p>
+        <div class="text-5xl font-mono font-bold text-blue-600 mt-4" id="currentTime">00:00:00</div>
     </div>
 
-    <button class="btn btn-checkin" id="btn-in">Check In</button>
-    <button class="btn btn-checkout" id="btn-out">Check Out</button>
-
-    <div class="status-box" id="status-display">
-        สถานะ: รอการบันทึกเวลา
+    <div class="w-full max-w-md mt-6 flex flex-col items-center">
+        <button id="actionBtn" onclick="handleAction()" 
+            class="w-48 h-48 rounded-full text-white text-3xl font-bold shadow-lg transition-transform transform active:scale-95 flex flex-col items-center justify-center bg-green-500 hover:bg-green-600">
+            <span id="btnText">เข้างาน</span>
+            <span id="btnSubText" class="text-sm font-normal mt-2 opacity-80">กดเพื่อบันทึกเวลา</span>
+        </button>
+        
+        <p id="locationStatus" class="mt-6 text-sm text-gray-500 bg-white px-4 py-2 rounded-full shadow-sm">
+            📍 กำลังตรวจสอบตำแหน่ง...
+        </p>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    <div class="w-full max-w-md mt-8 bg-white rounded-2xl shadow-sm p-6 flex-grow mb-4 overflow-hidden flex flex-col">
+        <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">ประวัติการลงเวลา 5 วันล่าสุด</h2>
+        <div id="logHistory" class="overflow-y-auto flex-grow space-y-3">
+            </div>
+    </div>
 
-        // 1. นำ Config จาก Firebase Console มาใส่ตรงนี้
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
+    <script>
+        // ตัวแปรสถานะ
+        let isCheckedIn = false;
+        let logs = JSON.parse(localStorage.getItem('timeLogs')) || [];
 
-        // 2. เริ่มต้นระบบ Firebase และ Firestore
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        // 1. ระบบนาฬิกาเรียลไทม์
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('th-TH', { hour12: false });
+            const dateString = now.toLocaleDateString('th-TH', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+            });
+            document.getElementById('currentTime').innerText = timeString;
+            document.getElementById('currentDate').innerText = dateString;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
 
-        const statusDisplay = document.getElementById('status-display');
+        // 2. ตรวจสอบสถานะเริ่มต้น (ดึงจาก LocalStorage)
+        function initApp() {
+            if (logs.length > 0) {
+                // เช็คว่ารายการล่าสุดคือการ "เข้างาน" (ยังไม่ออก) หรือไม่
+                const lastLog = logs[0];
+                if (lastLog.type === 'เข้างาน') {
+                    isCheckedIn = true;
+                }
+            }
+            updateButtonUI();
+            renderLogs();
+            checkLocation();
+        }
 
-        // ฟังก์ชันบันทึกข้อมูล
-        async function logTime(type) {
-            statusDisplay.innerText = "กำลังบันทึกข้อมูล...";
-            try {
-                // จำลองชื่อพนักงาน (ของจริงอาจดึงจากระบบ Login)
-                const employeeName = "พนักงาน 01"; 
-                
-                // บันทึกลง Firestore ในคอลเล็กชันชื่อ "time_logs"
-                await addDoc(collection(db, "time_logs"), {
-                    employee: employeeName,
-                    action: type,
-                    timestamp: serverTimestamp() // ใช้เวลาจากเซิร์ฟเวอร์ Firebase ตรงๆ
-                });
-
-                const timeNow = new Date().toLocaleTimeString('th-TH');
-                statusDisplay.innerText = `บันทึก "${type}" สำเร็จ!\nเวลา: ${timeNow}`;
-                statusDisplay.style.color = "#4CAF50";
-
-            } catch (error) {
-                console.error("Error adding document: ", error);
-                statusDisplay.innerText = "เกิดข้อผิดพลาดในการบันทึก";
-                statusDisplay.style.color = "red";
+        // 3. ระบบเช็คพิกัด GPS (Geofencing แบบจำลอง)
+        function checkLocation() {
+            const statusText = document.getElementById('locationStatus');
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        // ในระบบจริง จะเอา position.coords.latitude/longitude ไปเทียบพิกัดออฟฟิศ
+                        statusText.innerText = "📍 อยู่ในพื้นที่ทำงาน (พร้อมลงเวลา)";
+                        statusText.classList.replace('text-gray-500', 'text-green-600');
+                    },
+                    (error) => {
+                        statusText.innerText = "⚠️ ไม่สามารถระบุตำแหน่งได้";
+                        statusText.classList.replace('text-gray-500', 'text-red-500');
+                    }
+                );
+            } else {
+                statusText.innerText = "❌ อุปกรณ์ไม่รองรับ GPS";
             }
         }
 
-        // จับเหตุการณ์การกดปุ่ม
-        document.getElementById('btn-in').addEventListener('click', () => logTime("เข้างาน"));
-        document.getElementById('btn-out').addEventListener('click', () => logTime("ออกงาน"));
+        // 4. จัดการเมื่อกดปุ่ม (เข้างาน / ออกงาน)
+        function handleAction() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            const dateString = now.toLocaleDateString('th-TH');
+
+            const newLog = {
+                id: Date.now(),
+                date: dateString,
+                time: timeString,
+                type: isCheckedIn ? 'ออกงาน' : 'เข้างาน'
+            };
+
+            // บันทึกข้อมูลลง Array และ LocalStorage
+            logs.unshift(newLog); // เพิ่มข้อมูลใหม่ไปบนสุด
+            localStorage.setItem('timeLogs', JSON.stringify(logs));
+
+            // สลับสถานะ
+            isCheckedIn = !isCheckedIn;
+            
+            updateButtonUI();
+            renderLogs();
+        }
+
+        // 5. อัปเดตหน้าตาปุ่ม (Dynamic Button)
+        function updateButtonUI() {
+            const btn = document.getElementById('actionBtn');
+            const btnText = document.getElementById('btnText');
+            
+            if (isCheckedIn) {
+                // เปลี่ยนเป็นปุ่มออกงาน (สีแดง)
+                btn.classList.replace('bg-green-500', 'bg-red-500');
+                btn.classList.replace('hover:bg-green-600', 'hover:bg-red-600');
+                btnText.innerText = 'ออกงาน';
+            } else {
+                // เปลี่ยนเป็นปุ่มเข้างาน (สีเขียว)
+                btn.classList.replace('bg-red-500', 'bg-green-500');
+                btn.classList.replace('hover:bg-red-600', 'hover:bg-green-600');
+                btnText.innerText = 'เข้างาน';
+            }
+        }
+
+        // 6. แสดงผลประวัติ (Quick Dashboard)
+        function renderLogs() {
+            const logContainer = document.getElementById('logHistory');
+            logContainer.innerHTML = ''; // ล้างค่าเก่า
+
+            if (logs.length === 0) {
+                logContainer.innerHTML = '<p class="text-center text-gray-400 mt-4">ยังไม่มีประวัติการลงเวลา</p>';
+                return;
+            }
+
+            // แสดงแค่ 10 รายการล่าสุด
+            const displayLogs = logs.slice(0, 10);
+
+            displayLogs.forEach(log => {
+                const colorClass = log.type === 'เข้างาน' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50';
+                
+                const logItem = `
+                    <div class="flex justify-between items-center p-3 rounded-lg border border-gray-100 ${colorClass}">
+                        <div class="flex flex-col">
+                            <span class="font-bold">${log.type}</span>
+                            <span class="text-xs text-gray-500">${log.date}</span>
+                        </div>
+                        <div class="font-mono font-bold text-lg">
+                            ${log.time}
+                        </div>
+                    </div>
+                `;
+                logContainer.innerHTML += logItem;
+            });
+        }
+
+        // เริ่มต้นแอป
+        initApp();
     </script>
 </body>
 </html>
