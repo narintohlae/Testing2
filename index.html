@@ -12,7 +12,7 @@
     
     <link id="manifest-link" rel="manifest" href="">
 
-    <title>TimeTrack - Balanced UI</title>
+    <title>TimeTrack - Balanced UI (Firebase Edition)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -78,14 +78,14 @@
 </head>
 <body class="h-screen w-screen overflow-hidden flex justify-center items-center bg-gray-300 md:p-6 lg:p-10">
 
-    <!-- Responsive Main Container: มือถือเต็มจอ, Desktop เป็นกล่องตรงกลาง -->
+    <!-- Responsive Main Container -->
     <div class="w-full h-full md:h-[95vh] md:max-w-4xl lg:max-w-6xl md:rounded-[2rem] bg-[#f4f4f5] relative overflow-hidden flex flex-col md:flex-row shadow-2xl md:border-[3px] border-[#111827]">
         
         <!-- ================= หน้าจอโหลดข้อมูล ================= -->
         <div id="loading-overlay" class="absolute inset-0 z-[100] bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center hidden transition-opacity md:rounded-[2rem]">
             <i class="fa-solid fa-circle-notch fa-spin text-5xl text-[#111827] mb-4"></i>
-            <h2 class="text-xl font-extrabold text-[#111827]">กำลังซิงค์ข้อมูล...</h2>
-            <p class="text-xs font-bold text-gray-500 mt-2">Connecting to Cloud</p>
+            <h2 class="text-xl font-extrabold text-[#111827]">กำลังซิงค์ข้อมูล (Firebase)...</h2>
+            <p class="text-xs font-bold text-gray-500 mt-2">Connecting to Realtime Cloud</p>
         </div>
 
         <!-- ================= Screen 1: เลือกบทบาท ================= -->
@@ -95,7 +95,7 @@
                     <i class="fa-solid fa-clock text-6xl text-[#111827]"></i>
                 </div>
                 <h1 class="text-5xl font-extrabold text-[#111827] tracking-tight mb-2">TimeTrack</h1>
-                <span class="bg-[#111827] text-white px-3 py-1 rounded-full text-sm font-bold shadow-md">Pro Edition</span>
+                <span class="bg-[#111827] text-white px-3 py-1 rounded-full text-sm font-bold shadow-md"><i class="fa-solid fa-bolt text-yellow-400 mr-1"></i> Realtime Edition</span>
             </div>
             <div class="w-full max-w-xs md:max-w-sm space-y-5 mb-8">
                 <button onclick="gotoSelectEmployee()" class="w-full bg-[#38bdf8] text-[#111827] font-bold text-xl md:text-2xl py-4 md:py-5 rounded-xl neo-border neo-shadow flex items-center justify-center gap-3 active:translate-y-1 hover:bg-[#7dd3fc] transition-all">
@@ -179,7 +179,7 @@
                         </div>
                     </div>
                     <div class="flex flex-col lg:flex-row items-center justify-center p-6 md:px-10 md:mt-12 shrink-0 gap-8">
-                        <div class="relative shrink-0"><button id="btn-punch" onclick="attemptPunch()" class="w-52 h-52 md:w-64 md:h-64 rounded-full bg-[#4ade80] text-[#111827] font-bold text-3xl md:text-4xl neo-border neo-shadow hover:neo-shadow-sm flex flex-col items-center justify-center gap-3 active:scale-95 transition-all"><i id="punch-icon" class="fa-solid fa-sign-in-alt text-6xl md:text-7xl"></i><span id="punch-text">เข้างาน</span></button></div>
+                        <div class="relative shrink-0"><button id="btn-punch" onclick="attemptPunch()" class="w-52 h-52 md:w-64 md:h-64 rounded-full bg-[#4ade80] text-[#111827] font-bold text-3xl md:text-4xl neo-border shadow-[6px_6px_0px_#111827] md:shadow-[8px_8px_0px_#111827] active:shadow-none flex flex-col items-center justify-center gap-3 active:translate-y-2 transition-all"><i id="punch-icon" class="fa-solid fa-sign-in-alt text-6xl md:text-7xl"></i><span id="punch-text">เข้างาน</span></button></div>
                         <div class="flex flex-col gap-4 w-full max-w-sm">
                             <div class="bg-gray-200 px-6 py-4 rounded-xl md:rounded-2xl neo-border text-center">
                                 <p id="punch-status-text" class="text-[#111827] font-bold text-sm md:text-base">กดปุ่มเพื่อบันทึกเวลา</p>
@@ -517,7 +517,18 @@
     </div>
 
     <!-- Core Logic -->
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // ตั้งค่า Firebase และ App ID
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'timetrack-default-app';
+
         document.addEventListener('touchmove', function(event) { if (event.scale !== 1 && event.scale !== undefined) { event.preventDefault(); } }, { passive: false });
 
         const manifest = { "name": "TimeTrack", "short_name": "TimeTrack", "display": "standalone", "start_url": "./", "background_color": "#f4f4f5", "theme_color": "#111827", "icons": [{"src": "https://api.dicebear.com/7.x/shapes/svg?seed=TT&backgroundColor=111827", "sizes": "192x192", "type": "image/svg+xml"}]};
@@ -525,10 +536,15 @@
 
         const MASTER_OWNER_PIN = "9999";
         
-        // --- ตั้งค่า Google Sheets API ---
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbxMWYYmGC57tJJLHHm3uUpY1COndFrjUIjCxzyal9FXyG-XfKpsUfIlnhW3E_AsuOL_/exec"; 
-        
         let employees = [], timeLogs = [], requests = [], paySlips = []; 
+        let isFirstLoad = true;
+        let currentUserId = null, currentRole = null, pinTargetRole = null, pinTargetEmpId = null, enteredPin = "", clockInterval;
+        let editingWorkDays = []; 
+        let empIdToDelete = null;
+        let empNameToDelete = null;
+        let selectedReqIdForReview = null;
+        let reqIdToCancel = null;
+        let isPunchCooldown = false;
 
         function showLoading(show) {
             const el = document.getElementById('loading-overlay');
@@ -536,35 +552,77 @@
             else el.classList.add('hidden');
         }
 
-        async function loadData() {
-            showLoading(true);
+        // 1. Initialise Firebase Auth
+        const initAuth = async () => {
             try {
-                if (!GAS_URL || !GAS_URL.startsWith("http")) {
-                    loadLocalData();
-                    return;
-                }
-
-                // ดึงข้อมูลจาก Google Sheets
-                const response = await fetch(GAS_URL);
-                const data = await response.json();
-                
-                if (data.tt_emps_v10) {
-                    employees = JSON.parse(data.tt_emps_v10);
-                    timeLogs = data.tt_logs_v10 ? JSON.parse(data.tt_logs_v10) : [];
-                    requests = data.tt_reqs_v10 ? JSON.parse(data.tt_reqs_v10) : [];
-                    paySlips = data.tt_slips_v10 ? JSON.parse(data.tt_slips_v10) : [];
-                    saveLocalData(); // Backup
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
-                    initDefaultData();
+                    await signInAnonymously(auth);
                 }
-            } catch (error) {
-                console.error("Cloud load error:", error);
-                showToast("ใช้ข้อมูลสำรองในเครื่อง (Offline Mode)", "info");
-                loadLocalData();
-            } finally {
-                showLoading(false);
-                showScreen('screen-role'); 
+            } catch (err) {
+                console.error("Auth init failed:", err);
+                fallbackToLocal();
             }
+        };
+
+        // 2. Realtime listener using Firebase Firestore onSnapshot
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setupRealtimeSync();
+            }
+        });
+
+        function setupRealtimeSync() {
+            // ใช้โครงสร้าง Path ตามกฏ (Rule 1): /artifacts/{appId}/public/data/{collectionName}/{documentId}
+            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'timetrack_state', 'main');
+            
+            onSnapshot(docRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    let hasChanges = false;
+                    
+                    // ป้องกันลูปการดึงข้อมูลที่เพิ่งส่งไปเอง
+                    if (data.tt_emps_v10 && localStorage.getItem('tt_emps_v10') !== data.tt_emps_v10) {
+                        employees = JSON.parse(data.tt_emps_v10); hasChanges = true;
+                    }
+                    if (data.tt_logs_v10 && localStorage.getItem('tt_logs_v10') !== data.tt_logs_v10) {
+                        timeLogs = JSON.parse(data.tt_logs_v10); hasChanges = true;
+                    }
+                    if (data.tt_reqs_v10 && localStorage.getItem('tt_reqs_v10') !== data.tt_reqs_v10) {
+                        requests = JSON.parse(data.tt_reqs_v10); hasChanges = true;
+                    }
+                    if (data.tt_slips_v10 && localStorage.getItem('tt_slips_v10') !== data.tt_slips_v10) {
+                        paySlips = JSON.parse(data.tt_slips_v10); hasChanges = true;
+                    }
+
+                    if (hasChanges) {
+                        saveLocalData();
+                        refreshCurrentUI();
+                    }
+                } else {
+                    if (isFirstLoad) {
+                        initDefaultData();
+                    }
+                }
+                
+                if (isFirstLoad) {
+                    isFirstLoad = false;
+                    showLoading(false);
+                    showScreen('screen-role');
+                }
+            }, (error) => {
+                console.error("Firestore sync error:", error);
+                if (isFirstLoad) fallbackToLocal();
+            });
+        }
+
+        function fallbackToLocal() {
+            showToast("ใช้งานโหมดข้อมูลในเครื่อง (Offline Mode)", "info");
+            loadLocalData();
+            isFirstLoad = false;
+            showLoading(false);
+            showScreen('screen-role');
         }
 
         function loadLocalData() {
@@ -595,28 +653,24 @@
         }
 
         async function saveData() { 
-            saveLocalData(); // บันทึกลงเครื่องทันที
+            saveLocalData(); 
 
-            if (!GAS_URL || !GAS_URL.startsWith("http")) return;
+            if (!auth.currentUser) return;
 
             const payload = {
                 tt_emps_v10: JSON.stringify(employees),
                 tt_logs_v10: JSON.stringify(timeLogs),
                 tt_reqs_v10: JSON.stringify(requests),
-                tt_slips_v10: JSON.stringify(paySlips)
+                tt_slips_v10: JSON.stringify(paySlips),
+                updatedAt: Date.now()
             };
 
             try {
-                fetch(GAS_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(payload),
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
-                }).then(() => {
-                    console.log("Data sync request sent");
-                }).catch(err => console.error(err));
+                // บันทึกผ่าน Firestore (รอการตรวจสอบเพื่อซิงค์ไปยังเครื่องอื่น)
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'timetrack_state', 'main');
+                await setDoc(docRef, payload);
             } catch (error) {
-                console.error("Cloud Save Failed:", error);
+                console.error("Firebase Cloud Save Failed:", error);
             }
         }
         
@@ -637,7 +691,6 @@
             } 
         }
 
-        let currentUserId = null, currentRole = null, pinTargetRole = null, pinTargetEmpId = null, enteredPin = "", clockInterval, syncInterval;
         function getLocalISODate(d = new Date()) { const date = new Date(d); date.setMinutes(date.getMinutes() - date.getTimezoneOffset()); return date.toISOString().split('T')[0]; }
         function formatDate(dateStr) { return new Date(dateStr).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }); }
         function formatMoney(num) { return Number(num).toLocaleString('th-TH', {minimumFractionDigits: 0, maximumFractionDigits: 2}); }
@@ -728,6 +781,7 @@
         function pressPin(num) { if(enteredPin.length<4){ enteredPin+=num; updatePinDots(); if(enteredPin.length===4) setTimeout(verifyPin, 100); } }
         function deletePin() { if(enteredPin.length>0){ enteredPin=enteredPin.slice(0,-1); updatePinDots(); } }
         function updatePinDots() { const dots=document.getElementById('pin-dots').children; for(let i=0;i<4;i++) dots[i].className=i<enteredPin.length?"w-5 h-5 rounded-full border-[3px] border-white bg-white shadow-sm":"w-5 h-5 rounded-full border-[3px] border-gray-600 bg-gray-800"; }
+        
         function verifyPin() { 
             let success = pinTargetRole==='owner' ? enteredPin===MASTER_OWNER_PIN : enteredPin===employees.find(e=>e.id===pinTargetEmpId).pin; 
             if(success){ 
@@ -737,8 +791,6 @@
                 } else { 
                     switchOwnerTab('dashboard'); initOwnerScreen(); showScreen('screen-owner'); 
                 } 
-                // เริ่มดึงข้อมูลเบื้องหลังอัตโนมัติทุกๆ 15 วินาที
-                syncInterval = setInterval(syncDataSilently, 15000);
                 showToast('เข้าสู่ระบบสำเร็จ', 'success'); 
             } else { 
                 document.getElementById('pin-dots').classList.add('shake'); 
@@ -747,39 +799,7 @@
                 setTimeout(()=>{ document.getElementById('pin-dots').classList.remove('shake'); enteredPin=""; updatePinDots(); },400); 
             } 
         }
-        function logout() { currentRole=null; currentUserId=null; clearInterval(clockInterval); clearInterval(syncInterval); showScreen('screen-role'); showToast('ออกจากระบบเรียบร้อย', 'info'); }
-
-        // --- ฟังก์ชันดึงข้อมูลแบบ Real-time (ซ่อนการทำงานเบื้องหลัง) ---
-        async function syncDataSilently() {
-            if (!GAS_URL || !GAS_URL.startsWith("http")) return;
-            try {
-                const response = await fetch(GAS_URL);
-                const data = await response.json();
-                
-                let hasChanges = false;
-                // ตรวจสอบว่ามีข้อมูลใหม่ที่ต่างจากในเครื่องหรือไม่
-                if (data.tt_emps_v10 && localStorage.getItem('tt_emps_v10') !== data.tt_emps_v10) {
-                    employees = JSON.parse(data.tt_emps_v10); hasChanges = true;
-                }
-                if (data.tt_logs_v10 && localStorage.getItem('tt_logs_v10') !== data.tt_logs_v10) {
-                    timeLogs = JSON.parse(data.tt_logs_v10); hasChanges = true;
-                }
-                if (data.tt_reqs_v10 && localStorage.getItem('tt_reqs_v10') !== data.tt_reqs_v10) {
-                    requests = JSON.parse(data.tt_reqs_v10); hasChanges = true;
-                }
-                if (data.tt_slips_v10 && localStorage.getItem('tt_slips_v10') !== data.tt_slips_v10) {
-                    paySlips = JSON.parse(data.tt_slips_v10); hasChanges = true;
-                }
-
-                // ถ้าพบว่ามีข้อมูลเปลี่ยน ให้อัปเดตตัวแปรและวาดหน้าจอใหม่ทันที
-                if (hasChanges) {
-                    saveLocalData();
-                    refreshCurrentUI();
-                }
-            } catch (error) {
-                console.log("Silent sync failed, will retry later.");
-            }
-        }
+        function logout() { currentRole=null; currentUserId=null; clearInterval(clockInterval); showScreen('screen-role'); showToast('ออกจากระบบเรียบร้อย', 'info'); }
 
         function refreshCurrentUI() {
             if (currentRole === 'employee') {
@@ -796,7 +816,6 @@
                 renderOwnerPayroll();
             }
         }
-        // ----------------------------------------------------
 
         function switchEmpTab(tab) {
             ['emp-tab-time', 'emp-tab-leave', 'emp-tab-payroll'].forEach(id=>document.getElementById(id).classList.add('hidden'));
@@ -838,7 +857,6 @@
         function analyzePunchStatus() { const logs = timeLogs.filter(l => l.empId === currentUserId).sort((a,b) => b.timestamp - a.timestamp); if (logs.length === 0) return { action: 'in', warning: null }; const lastLog = logs[0], todayStr = new Date().toDateString(), logDateStr = new Date(lastLog.timestamp).toDateString(); if (lastLog.type === 'in') { if (logDateStr === todayStr) return { action: 'out', warning: null }; else return { action: 'in', warning: 'ระบบขึ้นรอบใหม่ (คุณลืมกดออกงานรอบที่แล้ว)' }; } else return { action: 'in', warning: null }; }
         function updatePunchButtonState() { const s = analyzePunchStatus(), btn=document.getElementById('btn-punch'), icon=document.getElementById('punch-icon'), text=document.getElementById('punch-text'), st=document.getElementById('punch-status-text'); if(s.action === 'in') { btn.className="w-52 h-52 md:w-64 md:h-64 rounded-full bg-[#4ade80] text-[#111827] font-bold text-3xl md:text-4xl neo-border shadow-[6px_6px_0px_#111827] md:shadow-[8px_8px_0px_#111827] active:shadow-none flex flex-col items-center justify-center gap-3 active:translate-y-2 transition-all"; icon.className="fa-solid fa-sign-in-alt text-6xl md:text-7xl"; text.innerText="เข้างาน"; st.innerHTML='<span class="text-green-600"><i class="fa-solid fa-check-circle"></i> พร้อมบันทึกเวลาเข้างาน</span>'; } else { btn.className="w-52 h-52 md:w-64 md:h-64 rounded-full bg-[#f87171] text-white font-bold text-3xl md:text-4xl neo-border shadow-[6px_6px_0px_#111827] md:shadow-[8px_8px_0px_#111827] active:shadow-none flex flex-col items-center justify-center gap-3 active:translate-y-2 transition-all"; icon.className="fa-solid fa-sign-out-alt text-6xl md:text-7xl"; text.innerText="ออกงาน"; st.innerHTML='<span class="text-red-500"><i class="fa-solid fa-circle-dot animate-pulse"></i> กำลังปฏิบัติงาน...</span>'; } }
 
-        let isPunchCooldown = false;
         function attemptPunch() { 
             if(isPunchCooldown) return; 
             const s = analyzePunchStatus(); 
@@ -967,7 +985,6 @@
             }).join(''); 
         }
 
-        let reqIdToCancel = null;
         function confirmCancelRequest(reqId) { 
             reqIdToCancel = reqId; 
             showConfirm("ยกเลิกคำขอ", "คุณแน่ใจหรือไม่ว่าต้องการยกเลิกคำขอนี้?", "danger", "ยืนยันยกเลิก", executeCancelRequest);
@@ -1184,47 +1201,6 @@
             empNameToDelete = null;
         }
 
-        let selectedReqIdForReview = null;
-        function updateOwnerBadge() { const p=requests.filter(l=>l.status==='pending').length; document.getElementById('badge-pending').innerText=p; const d=document.getElementById('dot-pending-leave'); if(p>0)d.classList.remove('hidden'); else d.classList.add('hidden'); }
-        function renderOwnerInboxList() { 
-            const c = document.getElementById('owner-leave-list'); 
-            const s = [...requests].sort((a,b) => {
-                if(a.status === 'pending' && b.status !== 'pending') return -1; 
-                if(a.status !== 'pending' && b.status === 'pending') return 1; 
-                return b.timestamp - a.timestamp;
-            }); 
-
-            if(s.length === 0){ c.innerHTML = '<div class="col-span-full text-center font-bold text-gray-400 py-8 bg-white rounded-2xl border-[3px] border-dashed border-gray-300">ไม่มีคำขอในระบบ</div>'; return; } 
-
-            c.innerHTML = s.map(req => { 
-                const emp = employees.find(e => e.id === req.empId) || {name: 'ไม่ทราบชื่อ', avatar: ''}; 
-                let ui = req.status === 'pending' ? '<span class="bg-yellow-300 text-[#111827] text-[10px] md:text-xs px-2 py-1 rounded font-bold border-2 border-[#111827] shrink-0">รอตรวจสอบ</span>' : req.status === 'approved' ? '<span class="text-green-500 font-bold text-xs md:text-sm shrink-0"><i class="fa-solid fa-check"></i> อนุมัติแล้ว</span>' : '<span class="text-red-500 font-bold text-xs md:text-sm shrink-0"><i class="fa-solid fa-xmark"></i> ไม่อนุมัติ</span>'; 
-                let btn = req.status === 'pending' ? `<button onclick="openReviewModal(${req.id})" class="mt-4 w-full bg-[#111827] text-white py-3 rounded-xl font-bold text-sm md:text-base hover:bg-gray-800 active:scale-95 transition-all">ตรวจสอบคำขอ</button>` : ''; 
-                let iconClass = req.reqType === 'leave' ? 'fa-calendar-minus text-blue-600 bg-blue-100 border-blue-300' : req.reqType === 'swap' ? 'fa-rotate text-yellow-600 bg-yellow-100 border-yellow-400' : 'fa-people-arrows text-purple-600 bg-purple-100 border-purple-300'; 
-                let typeText = req.reqType === 'leave' ? req.type : req.reqType === 'swap' ? 'สลับวัน(ตัวเอง)' : 'สลับกะ(แลกเวร)'; 
-                let deleteBtn = `<button onclick="confirmCancelRequest(${req.id})" class="ml-2 w-8 h-8 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 flex justify-center items-center shrink-0 border-2 border-[#111827] active:scale-95 transition-all"><i class="fa-solid fa-trash text-xs"></i></button>`;
-
-                return `<div class="bg-white p-5 rounded-2xl border-[3px] border-[#111827] shadow-[4px_4px_0px_#111827] flex flex-col justify-between">
-                    <div>
-                        <div class="flex justify-between items-start mb-3">
-                            <div class="flex items-center gap-3">
-                                <img src="${emp.avatar}" class="w-12 h-12 rounded-full border-2 border-[#111827] bg-gray-100 shrink-0">
-                                <div class="min-w-0">
-                                    <h4 class="font-extrabold text-[#111827] text-base md:text-lg leading-tight truncate">${emp.name}</h4>
-                                    <span class="inline-block mt-1 text-[9px] md:text-[10px] font-bold px-2 py-0.5 rounded border-2 ${iconClass}"><i class="fa-solid ${iconClass.split(' ')[0]} mr-1"></i> ${typeText}</span>
-                                </div>
-                            </div>
-                            <div class="flex items-center">
-                                ${ui}
-                                ${deleteBtn}
-                            </div>
-                        </div>
-                        <p class="text-sm text-gray-600 font-medium break-words bg-gray-50 p-3 rounded-xl border border-gray-200 mt-2">${req.reason}</p>
-                    </div>
-                    ${btn}
-                </div>`; 
-            }).join(''); 
-        }
         function openReviewModal(id) { selectedReqIdForReview=id; const req=requests.find(x=>x.id===id), emp=employees.find(e=>e.id===req.empId)||{name:'?'}; document.getElementById('rev-name').innerText=emp.name; document.getElementById('rev-reason').innerText=req.reason; document.getElementById('rev-icon').className = req.reqType === 'leave' ? "fa-solid fa-calendar-minus" : "fa-solid fa-rotate"; document.getElementById('rev-icon-bg').className = req.reqType === 'leave' ? "w-12 h-12 rounded-xl flex items-center justify-center border-[3px] border-[#111827] text-2xl bg-[#38bdf8] text-[#111827]" : "w-12 h-12 rounded-xl flex items-center justify-center border-[3px] border-[#111827] text-2xl bg-[#ffde59] text-[#111827]"; document.getElementById('rev-modal-title').innerText = req.reqType === 'leave' ? "พิจารณาคำขอลา" : "พิจารณาคำขอสลับกะ"; document.getElementById('rev-type').innerText = req.reqType === 'leave' ? req.type : "สลับวันทำงาน"; document.getElementById('rev-type').className = req.reqType === 'leave' ? "bg-blue-100 text-blue-800 px-2 py-1 rounded font-bold ml-2 text-xs border border-blue-300" : "bg-yellow-100 text-yellow-800 px-2 py-1 rounded font-bold ml-2 text-xs border border-yellow-400"; document.getElementById('rev-dynamic-content').innerHTML = `<p class="text-sm font-bold text-[#111827] bg-white px-3 py-2 rounded-lg border border-gray-200"><i class="fa-solid fa-calendar-day mr-2 text-gray-400"></i>วันที่: ${formatDate(req.startDate || req.originalDate || req.dateAOff)}</p>`; document.getElementById('modal-review').classList.remove('hidden'); setTimeout(()=>document.getElementById('modal-review-content').classList.remove('scale-95','opacity-0'),10); }
         function closeReviewModal() { document.getElementById('modal-review-content').classList.add('scale-95','opacity-0'); setTimeout(()=>{document.getElementById('modal-review').classList.add('hidden'); selectedReqIdForReview=null;},300); }
         function approveRequest() { 
@@ -1338,8 +1314,19 @@
             showToast('ระบบได้บันทึกรูปสลิปเงินเดือนเรียบร้อยแล้ว', 'success');
         }
 
-        // เริ่มต้นโหลดข้อมูล
-        loadData(); 
+        // มอบหมายฟังก์ชันให้กับ window เพื่อให้ HTML ฝั่ง UI ดึงไปใช้งานได้เมื่อเราใช้ type="module"
+        Object.assign(window, {
+            gotoSelectEmployee, backToRole, openPinPad, backFromPin, pressPin, deletePin, switchEmpTab, logout,
+            attemptPunch, openLeaveModal, openSwapModal, submitLeaveForm, submitSwapForm, closeLeaveModal,
+            validateLeaveDates, closeSwapModal, toggleSwapMode, approveRequest, rejectRequest, closeReviewModal,
+            closeConfirmModal, switchOwnerTab, renderOwnerEmployeeList, openEmployeeModal, submitEmployeeForm,
+            closeEmployeeModal, renderOwnerPayroll, savePaySlip, viewSlip, closePaySlipModal, mockPrintPayslip,
+            updateSalaryUnit, confirmCancelRequest, openReviewModal
+        });
+
+        // เริ่มต้นการทำงาน (Initialise Firebase Auth & Load)
+        showLoading(true);
+        initAuth(); 
     </script>
 </body>
 </html>
