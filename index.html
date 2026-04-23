@@ -706,7 +706,7 @@
                                         <div class="font-bold">${p.totalRegHrs.toFixed(1)} ชม.</div>
                                     </div>
                                     <div class="bg-white p-2 rounded border border-gray-200">
-                                        <div class="text-gray-500 text-xs">เวลา OT รวม</div>
+                                        <div class="text-gray-500 text-xs">เวลา OTรวม</div>
                                         <div class="font-bold text-orange-600">${p.totalOTHrs.toFixed(1)} ชม.</div>
                                     </div>
                                 </div>
@@ -749,11 +749,13 @@
                 tabContent = `
                     <div class="space-y-4">
                         <div class="flex justify-between items-center border-b-2 pb-2">
-                            <h3 class="font-bold text-lg">จัดการพนักงานและค่าแรง</h3>
+                            <h3 class="font-bold text-lg">จัดการพนักงาน</h3>
                             <button id="btn-add-emp" class="iso-btn iso-btn-primary px-3 py-1 text-sm"><i class="fas fa-plus"></i> เพิ่มพนักงาน</button>
                         </div>
                         
-                        <div id="add-emp-form" class="iso-card p-4 hidden bg-blue-50 border-blue-800">
+                        <!-- ฟอร์มเพิ่มพนักงาน -->
+                        <div id="add-emp-form" class="iso-card p-4 hidden bg-blue-50 border-blue-800 transition-all">
+                            <h4 class="font-bold mb-3 text-blue-800 border-b border-blue-200 pb-1">เพิ่มพนักงานใหม่</h4>
                             <input type="text" id="new-emp-name" placeholder="ชื่อพนักงาน" class="iso-input mb-3 text-sm">
                             <input type="text" id="new-emp-pin" placeholder="PIN ล็อกอิน 4 หลัก" class="iso-input mb-3 text-sm" maxlength="4" inputmode="numeric">
                             <select id="new-emp-wage-type" class="iso-input mb-3 text-sm bg-white">
@@ -776,17 +778,49 @@
                             </div>
                         </div>
 
+                        <!-- ฟอร์มแก้ไขพนักงาน -->
+                        <div id="edit-emp-form" class="iso-card p-4 hidden bg-yellow-50 border-yellow-600 transition-all">
+                            <h4 class="font-bold mb-3 text-yellow-800 border-b border-yellow-200 pb-1">แก้ไขข้อมูลพนักงาน</h4>
+                            <input type="hidden" id="edit-emp-id">
+                            <input type="text" id="edit-emp-name" placeholder="ชื่อพนักงาน" class="iso-input mb-3 text-sm">
+                            <input type="text" id="edit-emp-pin" placeholder="PIN ล็อกอิน 4 หลัก" class="iso-input mb-3 text-sm" maxlength="4" inputmode="numeric">
+                            <select id="edit-emp-wage-type" class="iso-input mb-3 text-sm bg-white">
+                                <option value="daily">รับค่าแรง: แบบรายวัน</option>
+                                <option value="hourly">รับค่าแรง: แบบรายชั่วโมง</option>
+                            </select>
+                            <div class="flex gap-2 mb-3">
+                                <div class="flex-1">
+                                    <label class="text-xs text-gray-600 font-bold">เรทปกติ (บาท)</label>
+                                    <input type="number" id="edit-emp-base" placeholder="เช่น 350" class="iso-input text-sm">
+                                </div>
+                                <div class="flex-1">
+                                    <label class="text-xs text-gray-600 font-bold">เรท OT (บาท/ชม.)</label>
+                                    <input type="number" id="edit-emp-ot" placeholder="เช่น 50" class="iso-input text-sm">
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="save-edit-emp" class="iso-btn iso-btn-success flex-1 py-2">บันทึกการแก้ไข</button>
+                                <button onclick="document.getElementById('edit-emp-form').classList.add('hidden')" class="iso-btn iso-btn-white flex-1 py-2">ยกเลิก</button>
+                            </div>
+                        </div>
+
+                        <!-- รายชื่อพนักงาน -->
                         ${employees.map(emp => `
                             <div class="iso-card p-3 flex justify-between items-center">
-                                <div>
+                                <div class="flex-grow">
                                     <h4 class="font-bold">${emp.name}</h4>
-                                    <div class="text-xs text-gray-500 mt-1 flex gap-2">
+                                    <div class="text-xs text-gray-500 mt-1 flex flex-wrap gap-2">
                                         <span class="bg-gray-100 px-1 rounded border">PIN: ${emp.pin}</span>
-                                        <span class="bg-blue-100 text-blue-700 px-1 rounded border">${emp.wageType==='daily'?'รายวัน':'รายชั่วโมง'}</span>
-                                        <span class="bg-orange-100 text-orange-700 px-1 rounded border">฿${emp.baseRate} | OT ฿${emp.otRate}</span>
+                                        <span class="bg-blue-100 text-blue-700 px-1 rounded border">${emp.wageType==='hourly'?'รายชั่วโมง':'รายวัน'}</span>
+                                        <span class="bg-orange-100 text-orange-700 px-1 rounded border">฿${emp.baseRate || 0} | OT ฿${emp.otRate || 0}</span>
                                     </div>
                                 </div>
-                                <button data-delete-emp="${emp.id}" class="iso-btn iso-btn-danger px-3 py-1 text-sm"><i class="fas fa-trash"></i></button>
+                                <div class="flex gap-1 flex-shrink-0 ml-2">
+                                    <!-- ปุ่มแก้ไข (ดินสอ) -->
+                                    <button data-edit-emp="${emp.id}" class="iso-btn iso-btn-warning w-8 h-8 p-0 text-sm"><i class="fas fa-edit"></i></button>
+                                    <!-- ปุ่มลบ (ถังขยะ) -->
+                                    <button data-delete-emp="${emp.id}" class="iso-btn iso-btn-danger w-8 h-8 p-0 text-sm"><i class="fas fa-trash"></i></button>
+                                </div>
                             </div>
                         `).join('')}
                     </div>
@@ -841,7 +875,7 @@
                         <button onclick="setOwnerTab('settings')" class="whitespace-nowrap px-3 py-2 font-bold rounded-md transition-colors ${ownerTab === 'settings' ? 'bg-white shadow border border-gray-300 text-black' : 'text-gray-500'}">ตั้งค่า</button>
                     </div>
 
-                    <div class="flex-grow overflow-y-auto pb-6 pr-1">
+                    <div id="owner-scroll-area" class="flex-grow overflow-y-auto pb-6 pr-1">
                         ${tabContent}
                     </div>
                 </div>
@@ -876,8 +910,15 @@
                 };
             }
 
+            // --- พนักงาน: เพิ่ม ---
             const btnAddEmp = document.getElementById('btn-add-emp');
-            if (btnAddEmp) btnAddEmp.onclick = () => document.getElementById('add-emp-form').classList.remove('hidden');
+            if (btnAddEmp) {
+                btnAddEmp.onclick = () => {
+                    // ปิดฟอร์มแก้ไข (ถ้าเปิดอยู่) แล้วเปิดฟอร์มเพิ่ม
+                    document.getElementById('edit-emp-form')?.classList.add('hidden');
+                    document.getElementById('add-emp-form').classList.remove('hidden');
+                };
+            }
             
             const btnSaveEmp = document.getElementById('save-new-emp');
             if (btnSaveEmp) {
@@ -897,7 +938,57 @@
                     showModal('สำเร็จ', 'เพิ่มข้อมูลพนักงานเรียบร้อย');
                 };
             }
-            
+
+            // --- พนักงาน: แก้ไข (ใหม่) ---
+            document.querySelectorAll('[data-edit-emp]').forEach(btn => {
+                btn.onclick = (e) => {
+                    const id = e.currentTarget.getAttribute('data-edit-emp');
+                    const emp = employees.find(e => e.id === id);
+                    if (emp) {
+                        // ปิดฟอร์มเพิ่มและเปิดฟอร์มแก้ไข
+                        document.getElementById('add-emp-form')?.classList.add('hidden');
+                        document.getElementById('edit-emp-form').classList.remove('hidden');
+
+                        // เติมข้อมูลเก่าลงไปในช่อง
+                        document.getElementById('edit-emp-id').value = emp.id;
+                        document.getElementById('edit-emp-name').value = emp.name;
+                        document.getElementById('edit-emp-pin').value = emp.pin || '';
+                        document.getElementById('edit-emp-wage-type').value = emp.wageType || 'daily';
+                        document.getElementById('edit-emp-base').value = emp.baseRate || '';
+                        document.getElementById('edit-emp-ot').value = emp.otRate || '';
+                        
+                        // เลื่อนหน้าจอกลับไปด้านบนสุดเพื่อให้เห็นฟอร์มแก้ไข
+                        const scrollArea = document.getElementById('owner-scroll-area');
+                        if (scrollArea) scrollArea.scrollTop = 0;
+                    }
+                };
+            });
+
+            const btnSaveEditEmp = document.getElementById('save-edit-emp');
+            if (btnSaveEditEmp) {
+                btnSaveEditEmp.onclick = async () => {
+                    const id = document.getElementById('edit-emp-id').value;
+                    const name = document.getElementById('edit-emp-name').value.trim();
+                    const pin = document.getElementById('edit-emp-pin').value.trim();
+                    const wageType = document.getElementById('edit-emp-wage-type').value;
+                    const baseRate = parseFloat(document.getElementById('edit-emp-base').value) || 0;
+                    const otRate = parseFloat(document.getElementById('edit-emp-ot').value) || 0;
+
+                    if (!name || pin.length < 4) return showModal('แจ้งเตือน', 'กรอกชื่อและ PIN อย่างน้อย 4 หลัก');
+                    
+                    try {
+                        await updateDoc(doc(db, `artifacts/${appId}/public/data/employees`, id), { 
+                            name, pin, wageType, baseRate, otRate 
+                        });
+                        document.getElementById('edit-emp-form').classList.add('hidden');
+                        showModal('สำเร็จ', 'แก้ไขข้อมูลพนักงานเรียบร้อย');
+                    } catch (error) {
+                        showModal('ผิดพลาด', 'ไม่สามารถแก้ไขข้อมูลได้');
+                    }
+                };
+            }
+
+            // --- พนักงาน: ลบ ---
             document.querySelectorAll('[data-delete-emp]').forEach(btn => {
                 btn.onclick = (e) => {
                     const id = e.currentTarget.getAttribute('data-delete-emp');
