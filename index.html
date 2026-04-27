@@ -2,229 +2,192 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TimeTrack (Professional UI)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>TimeTrack - 2026 Practical UI</title>
     <style>
-        /* --- Modern Variables 2025 --- */
+        /* --- 2026 Practical Design System --- */
         :root {
-            --primary: #4f46e5;
-            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            --success-gradient: linear-gradient(135deg, #059669 0%, #10b981 100%);
-            --danger-gradient: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%);
-            --warning-gradient: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+            /* Color Palette (High Contrast, Clean) */
+            --bg-body: #e4e4e7;
+            --bg-app: #f4f4f5;
+            --bg-card: #ffffff;
+            --bg-input: #f4f4f5;
             
-            --bg-body: #0f172a;
-            --bg-app: #f8fafc;
+            --text-main: #09090b;
+            --text-sec: #52525b;
+            --text-ter: #a1a1aa;
             
-            --glass-bg: rgba(255, 255, 255, 0.85);
-            --glass-border: rgba(255, 255, 255, 0.6);
+            --border-light: #e4e4e7;
+            --border-dark: #d4d4d8;
             
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --tab-bar-bg: rgba(255, 255, 255, 0.95);
+            /* Semantic Colors (Solid, No Gradients for Professional Look) */
+            --accent: #09090b; /* Black as primary accent */
+            --success: #10b981;
+            --danger: #f43f5e;
+            --warning: #f59e0b;
             
-            --radius-xl: 24px;
-            --radius-lg: 14px;
-            --radius-pill: 999px;
+            /* Geometry */
+            --rad-sm: 12px;
+            --rad-md: 16px;
+            --rad-lg: 24px;
+            --rad-pill: 99px;
             
-            --shadow-glass: 0 -8px 25px rgba(0,0,0,0.04);
-            --shadow-glow: 0 8px 20px -6px rgba(79, 70, 229, 0.4);
+            /* Shadows (Very subtle, mostly flat design) */
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.02);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.04);
+            --shadow-up: 0 -4px 20px rgba(0,0,0,0.03);
         }
 
+        /* --- Base & Reset --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0; padding: 0;
-            background-color: var(--bg-body); color: var(--text-main);
-            display: flex; justify-content: center; align-items: center; min-height: 100vh;
-            touch-action: manipulation; 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 0; background-color: var(--bg-body); color: var(--text-main);
+            display: flex; justify-content: center; align-items: center; height: 100vh; height: 100dvh;
+            overflow: hidden; touch-action: manipulation;
         }
 
-        /* --- โครงสร้างหลักแบบ Flex Stacking --- */
-        #app-container {
-            width: 100%; max-width: 414px; 
-            height: 100dvh; max-height: 896px;
-            background-color: var(--bg-app); position: relative; overflow: hidden;
-            display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        /* --- App Container (Mobile Simulator) --- */
+        #app {
+            width: 100%; max-width: 430px; height: 100%; max-height: 932px; /* iPhone 15 Pro Max size */
+            background-color: var(--bg-app); position: relative;
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1); border-radius: 40px;
         }
+        @media (max-width: 430px) { #app { border-radius: 0; box-shadow: none; } }
 
-        @media (max-width: 414px) {
-            #app-container { max-height: 100dvh; box-shadow: none; border-radius: 0; }
-        }
-
-        /* Background Orbs */
-        .bg-orb {
-            position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.5;
-            z-index: 0; pointer-events: none; animation: floatOrb 12s ease-in-out infinite alternate;
-        }
-        .orb-1 { top: -10%; right: -10%; width: 60vmin; height: 60vmin; background: #e0e7ff; }
-        .orb-2 { bottom: 10%; left: -10%; width: 70vmin; height: 70vmin; background: #fae8ff; }
-
-        @keyframes floatOrb { 0% { transform: translateY(0); } 100% { transform: translateY(20px); } }
-
-        /* --- 1. Top Bar (Header) --- */
+        /* --- Layout System (Absolute Separation) --- */
         header {
-            flex: 0 0 auto; 
-            padding: clamp(1rem, 4vw, 1.5rem); position: relative; z-index: 10;
+            flex: 0 0 auto; padding: 1.5rem 1.5rem 1rem;
             display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg-app); z-index: 10;
         }
-        .logo { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.5px; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .header-actions { display: flex; gap: 0.5rem; align-items: center; }
-        .user-role-badge { font-size: 0.7rem; padding: 0.3rem 0.8rem; border-radius: var(--radius-pill); font-weight: 700; text-transform: uppercase; }
-        .role-admin { background-color: rgba(79, 70, 229, 0.15); color: var(--primary); }
-        .role-emp { background-color: rgba(5, 150, 105, 0.15); color: #059669; }
         
-        .btn-logout {
-            background: rgba(225, 29, 72, 0.1); border: none; color: #e11d48;
-            font-size: 0.75rem; font-weight: 700; cursor: pointer; padding: 0.4rem 0.8rem; border-radius: var(--radius-pill);
-            transition: 0.2s; display: none;
-        }
-        .btn-logout:active { transform: scale(0.95); }
-
-        /* --- 2. Scrollable Content (พื้นที่ดูข้อมูลหลัก) --- */
         main {
-            flex: 1 1 auto; 
-            overflow-y: auto; -webkit-overflow-scrolling: touch; 
-            padding: 0 clamp(1.2rem, 4vw, 1.5rem); 
-            padding-bottom: 1.5rem; 
-            box-sizing: border-box; position: relative; z-index: 10;
+            flex: 1 1 auto; overflow-y: auto; overflow-x: hidden;
+            padding: 0 1.5rem 1.5rem; display: flex; flex-direction: column;
             -ms-overflow-style: none; scrollbar-width: none;
-            display: flex; flex-direction: column;
         }
         main::-webkit-scrollbar { display: none; }
-
-        /* --- 3. Thumb Zone Actions (แผงควบคุมด้านล่าง) --- */
-        #thumb-actions-container {
-            flex: 0 0 auto; z-index: 40;
-            background: var(--glass-bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-            border-top: 1px solid var(--glass-border); border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-            box-shadow: var(--shadow-glass);
-        }
-        .thumb-actions {
-            padding: clamp(1.2rem, 4vw, 1.5rem); 
-            padding-bottom: max(1.2rem, env(safe-area-inset-bottom));
-            display: flex; flex-direction: column; gap: 0.75rem;
-        }
         
-        /* --- 4. Bottom Tab Bar --- */
-        #bottomNav {
-            flex: 0 0 auto; display: flex; background-color: var(--tab-bar-bg);
-            border-top: 1px solid var(--glass-border); padding: 0.4rem 0.5rem; 
-            padding-bottom: max(0.4rem, env(safe-area-inset-bottom)); z-index: 50;
+        #action-zone {
+            flex: 0 0 auto; background: var(--bg-card);
+            border-top: 1px solid var(--border-light);
+            border-radius: 32px 32px 0 0; box-shadow: var(--shadow-up);
+            padding: 1.5rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom));
+            z-index: 40; display: flex; flex-direction: column; gap: 1rem;
         }
-        .nav-item {
-            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 0.4rem 0; color: var(--text-muted); text-decoration: none; font-size: 0.65rem;
-            font-weight: 600; cursor: pointer; transition: all 0.2s; border-radius: var(--radius-lg);
-        }
-        .nav-item svg { width: 24px; height: 24px; margin-bottom: 2px; transition: transform 0.2s; }
-        .nav-item.active { background: var(--text-main); color: white; }
-        .nav-item.active svg { transform: translateY(-2px); }
 
-        /* --- UI Components พื้นฐาน --- */
-        .card {
-            background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border); border-radius: var(--radius-xl); 
-            padding: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.02); text-align: center; margin-bottom: 1rem;
-        }
-        .section-title { font-size: 1.05rem; font-weight: 800; text-align: left; margin: 1rem 0 0.5rem 0; color: var(--text-main); letter-spacing: -0.3px; }
-
-        /* ฟอร์มและปุ่ม */
-        .native-input, .native-select, .native-textarea {
-            width: 100%; padding: 1.1rem 1.2rem; border-radius: var(--radius-lg); border: 1px solid var(--glass-border);
-            background-color: rgba(255, 255, 255, 0.9); font-size: 1rem; font-family: inherit; font-weight: 500;
-            color: var(--text-main); outline: none; box-sizing: border-box; transition: all 0.2s; margin-bottom: 1rem;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
-        }
-        .native-textarea { resize: vertical; min-height: 80px; }
-        .native-input:focus, .native-select:focus, .native-textarea:focus { border-color: var(--primary); background-color: #fff; box-shadow: var(--shadow-glow); }
-
-        .btn {
-            width: 100%; border: none; padding: 1.2rem; font-size: 1.05rem; font-weight: 700;
-            border-radius: var(--radius-lg); cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
-            display: flex; justify-content: center; align-items: center; gap: 0.5rem;
-        }
-        .btn:active { transform: scale(0.97); opacity: 0.9; }
-        .btn-primary { background: var(--primary-gradient); color: white; box-shadow: var(--shadow-glow); }
-        .btn-success { background: var(--success-gradient); color: white; box-shadow: 0 6px 20px -6px rgba(5, 150, 105, 0.5); }
-        .btn-danger { background: var(--danger-gradient); color: white; box-shadow: 0 6px 20px -6px rgba(225, 29, 72, 0.5); }
-        .btn-outline { background: rgba(255, 255, 255, 0.5); color: var(--text-main); border: 1px solid var(--glass-border); }
-
-        /* Typography */
-        .live-clock { font-size: clamp(3.5rem, 12vw, 4.5rem); font-weight: 300; margin: 0; font-variant-numeric: tabular-nums; letter-spacing: -2px; color: var(--text-main); }
-        .live-date { color: var(--primary); font-size: 0.95rem; font-weight: 700; margin-top: 0.5rem; }
-        .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 0.4rem 1rem; border-radius: var(--radius-pill); font-size: 0.8rem; font-weight: 700; background: var(--glass-bg); border: 1px solid var(--glass-border); }
+        /* --- Typography & Branding --- */
+        .brand { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.5px; display: flex; align-items: center; gap: 6px; }
+        .brand-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; }
         
-        /* List View */
-        .list-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.2rem; background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: var(--radius-lg); }
-        .item-main { display: flex; flex-direction: column; text-align: left; }
-        .item-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; color: var(--text-main); }
-        .item-subtitle { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
-        
-        .empty-state { text-align: center; padding: 2rem 1rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500;}
+        .role-tag { font-size: 0.7rem; font-weight: 700; padding: 4px 10px; border-radius: var(--rad-pill); text-transform: uppercase; letter-spacing: 0.5px; }
+        .role-admin { background: #e0e7ff; color: #4f46e5; }
+        .role-emp { background: #dcfce7; color: #059669; }
 
-        /* --- Numpad แบบมืออาชีพ (ไม่มีขอบวงกลม เน้นความคลีน) --- */
-        .pin-dots { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1rem; }
-        .pin-dot { width: 16px; height: 16px; border-radius: 50%; background: rgba(0,0,0,0.05); transition: all 0.2s;}
-        .pin-dot.filled { background: var(--primary); transform: scale(1.1); box-shadow: 0 0 10px rgba(79, 70, 229, 0.4); }
-        .pin-dot.error { background: #e11d48; box-shadow: 0 0 10px rgba(225, 29, 72, 0.4); }
-        
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
-        .shake-animation { animation: shake 0.4s ease-in-out; }
-        
-        .numpad { 
-            display: grid; grid-template-columns: repeat(3, 1fr); 
-            gap: 0.5rem; max-width: 300px; width: 100%; margin: 0 auto; 
-        }
-        .numpad-btn { 
-            background: transparent; border: none; border-radius: 50%; 
-            aspect-ratio: 1/1; font-size: clamp(1.8rem, 6vw, 2.2rem); 
-            font-weight: 400; color: var(--text-main); /* ฟอนต์บางลง ดูพรีเมียม */
-            display: flex; align-items: center; justify-content: center; 
-            cursor: pointer; transition: background-color 0.2s; 
-            user-select: none; -webkit-tap-highlight-color: transparent;
-        }
-        .numpad-btn:active { background: rgba(0,0,0,0.05); }
-        .numpad-btn.control { font-size: 1.1rem; font-weight: 600; color: var(--text-muted); }
-        
-        .req-badge { font-size: 0.7rem; font-weight: 700; padding: 4px 8px; border-radius: var(--radius-pill); white-space: nowrap; }
-        .badge-pending { background: rgba(245, 158, 11, 0.1); color: #d97706; }
-        .badge-approved { background: rgba(16, 185, 129, 0.1); color: #059669; }
-        .badge-rejected { background: rgba(225, 29, 72, 0.1); color: #e11d48; }
+        .title { font-size: 1.25rem; font-weight: 700; margin: 0 0 1rem 0; letter-spacing: -0.5px; }
+        .subtitle { font-size: 0.85rem; color: var(--text-sec); margin-top: -0.75rem; margin-bottom: 1.5rem; }
 
+        .time-display { font-size: clamp(4rem, 15vw, 5rem); font-weight: 800; letter-spacing: -3px; line-height: 1; text-align: center; margin: 1rem 0 0; }
+        .date-display { font-size: 1rem; font-weight: 600; color: var(--text-sec); text-align: center; margin-top: 0.5rem; }
+
+        /* --- UI Components --- */
+        .card { background: var(--bg-card); border-radius: var(--rad-lg); padding: 1.25rem; margin-bottom: 1rem; border: 1px solid var(--border-light); }
+        .card-row { display: flex; gap: 1rem; margin-bottom: 1rem; }
+        .card-stat { flex: 1; background: var(--bg-card); border-radius: var(--rad-lg); padding: 1.25rem; border: 1px solid var(--border-light); display: flex; flex-direction: column; justify-content: center; }
+        
+        /* Forms */
+        .input-group { margin-bottom: 1rem; }
+        .input-label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-sec); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .input-el { width: 100%; padding: 1rem 1.2rem; background: var(--bg-input); border: 1px solid transparent; border-radius: var(--rad-md); font-size: 1rem; font-weight: 500; color: var(--text-main); font-family: inherit; transition: 0.2s; }
+        .input-el:focus { border-color: var(--accent); background: var(--bg-card); outline: none; }
+        textarea.input-el { resize: vertical; min-height: 80px; }
+
+        /* Buttons */
+        .btn { width: 100%; padding: 1.2rem; border-radius: var(--rad-md); font-size: 1.05rem; font-weight: 700; border: none; cursor: pointer; transition: transform 0.15s ease, opacity 0.15s ease; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn:active { transform: scale(0.96); opacity: 0.9; }
+        
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-success { background: var(--success); color: #fff; }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-outline { background: transparent; border: 2px solid var(--border-dark); color: var(--text-main); }
+        .btn-ghost { background: transparent; color: var(--text-sec); padding: 0.8rem; font-size: 0.9rem; }
+        .btn-ghost:active { background: var(--bg-input); }
+
+        /* Lists */
+        .list-wrap { display: flex; flex-direction: column; gap: 0.5rem; }
+        .list-item { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--rad-md); padding: 1rem 1.2rem; display: flex; justify-content: space-between; align-items: center; }
+        .item-col { display: flex; flex-direction: column; gap: 4px; }
+        .item-head { font-weight: 600; font-size: 0.95rem; }
+        .item-sub { font-size: 0.8rem; color: var(--text-sec); font-weight: 500; }
+
+        /* Status Badges */
+        .badge { font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; white-space: nowrap; }
+        .bg-in { background: #dcfce7; color: #059669; }
+        .bg-out { background: #f1f5f9; color: #475569; }
+        .bg-pend { background: #fef3c7; color: #d97706; }
+        .bg-appr { background: #dcfce7; color: #059669; }
+        .bg-rej { background: #ffe4e6; color: #e11d48; }
+
+        /* --- 2026 Smart Numpad --- */
+        .numpad-area { display: flex; flex-direction: column; align-items: center; width: 100%; }
+        .pin-display { display: flex; gap: 1rem; margin-bottom: 1.5rem; height: 16px; align-items: center; }
+        .pin-dot { width: 12px; height: 12px; border-radius: 12px; background: var(--border-dark); transition: 0.2s ease-out; }
+        .pin-dot.filled { width: 24px; background: var(--accent); }
+        .pin-dot.error { background: var(--danger); width: 12px; }
+        
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+        .shake { animation: shake 0.3s ease-in-out; }
+
+        .numpad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; width: 100%; max-width: 320px; }
+        .num-key { background: var(--bg-input); border: none; border-radius: var(--rad-md); aspect-ratio: 1.3/1; font-size: 1.75rem; font-weight: 600; color: var(--text-main); cursor: pointer; transition: 0.1s; user-select: none; }
+        .num-key:active { background: var(--border-dark); transform: scale(0.92); }
+        .num-key.action { font-size: 1.2rem; font-weight: 700; color: var(--text-sec); background: transparent; }
+
+        /* --- Bottom Navigation (Admin Only) --- */
+        #bottom-nav {
+            display: flex; background: var(--bg-card); border-top: 1px solid var(--border-light);
+            padding: 0.5rem 1rem calc(0.5rem + env(safe-area-inset-bottom)); z-index: 50;
+        }
+        .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 0.5rem 0; color: var(--text-ter); font-size: 0.65rem; font-weight: 700; cursor: pointer; transition: 0.2s; border-radius: var(--rad-md); }
+        .nav-tab svg { width: 24px; height: 24px; stroke-width: 2px; }
+        .nav-tab.active { color: var(--accent); }
+
+        /* Helpers */
+        .hide { display: none !important; }
+        .empty { text-align: center; padding: 2rem; color: var(--text-ter); font-weight: 500; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
-    <div id="app-container">
-        <!-- Background Elements -->
-        <div class="bg-orb orb-1"></div>
-        <div class="bg-orb orb-2"></div>
-
-        <!-- 1. Header -->
+    <div id="app">
+        <!-- HEADER -->
         <header>
-            <div class="logo">TimeTrack</div>
+            <div class="brand"><div class="brand-dot"></div>TimeTrack</div>
             <div class="header-actions">
-                <div id="roleBadge"></div>
-                <button class="btn-logout" id="btnLogout" onclick="logout()">ออกระบบ</button>
+                <div id="role-badge"></div>
+                <button class="btn-logout hide" id="btn-logout" onclick="logout()">ออกระบบ</button>
             </div>
         </header>
 
-        <!-- 2. Scrollable Content Zone -->
-        <main id="app-content"></main>
+        <!-- MAIN SCROLLABLE CONTENT -->
+        <main id="main-view"></main>
 
-        <!-- 3. Thumb Action Zone -->
-        <div id="thumb-actions-container"></div>
+        <!-- FIXED THUMB ACTION ZONE -->
+        <div id="action-zone" class="hide"></div>
 
-        <!-- 4. Bottom Tab Bar -->
-        <nav class="bottom-nav" id="bottomNav" style="display: none;"></nav>
+        <!-- ADMIN BOTTOM NAV -->
+        <nav id="bottom-nav" class="hide"></nav>
     </div>
 
+    <!-- Firebase SDK (ES Modules) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
+        // Firebase Setup
         const firebaseConfig = {
             apiKey: "AIzaSyBHuZGyY1F3v4rCrhrpt9YB90C0Ahh-stE",
             authDomain: "my-company-time-tracking.firebaseapp.com",
@@ -234,583 +197,428 @@
             appId: "1:758524847747:web:2e5a49e4064334f1265db6",
             measurementId: "G-50SYJKTRT1"
         };
-
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        /* =========================================
-           ส่วนที่ 1: การจัดการข้อมูลและสถานะ
-           ========================================= */
-        let records = [];
-        let employees = [];
-        let requests = []; 
-        let adminPin = null; 
+        // --- Global State ---
+        let records = [], employees = [], requests = [], adminPin = null;
         let currentUser = JSON.parse(sessionStorage.getItem('currentUser')) || null;
-        
-        let isReady = false;
-        let loadedFlags = { emp: false, rec: false, sys: false, req: false };
-        const contentDiv = document.getElementById('app-content');
-        const thumbDiv = document.getElementById('thumb-actions-container');
-        const bottomNav = document.getElementById('bottomNav');
-        const roleBadge = document.getElementById('roleBadge');
-        const btnLogout = document.getElementById('btnLogout');
+        let isReady = false, loaded = { emp: false, rec: false, sys: false, req: false };
         let clockInterval;
-
         let currentPin = "";
-        let pinTargetId = null;
+        let pendingAction = null; // 'setup' | null
 
-        contentDiv.innerHTML = '<div style="flex:1; display:flex; align-items:center; justify-content:center;"><div class="live-clock" style="font-size:1.5rem; font-weight:600;">เชื่อมต่อระบบ...</div></div>';
+        // --- DOM Elements ---
+        const vMain = document.getElementById('main-view');
+        const vAction = document.getElementById('action-zone');
+        const vNav = document.getElementById('bottom-nav');
+        const eRole = document.getElementById('role-badge');
+        const eLogout = document.getElementById('btn-logout');
+
+        // --- Initialization ---
+        vMain.innerHTML = '<div style="flex:1;display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--text-ter);">กำลังเชื่อมต่อ...</div>';
         
-        signInAnonymously(auth).then(() => { setupRealtimeListeners(); })
-        .catch(err => { contentDiv.innerHTML = '<div class="empty-state" style="color: #e11d48;">เชื่อมต่อล้มเหลว กรุณาเช็คอินเทอร์เน็ต</div>'; });
+        signInAnonymously(auth).then(() => {
+            onSnapshot(collection(db, "employees"), (s) => { employees = s.docs.map(d => ({id: d.id, ...d.data()})); loaded.emp = true; checkReady(); });
+            onSnapshot(collection(db, "timeRecords"), (s) => { records = s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp)); loaded.rec = true; checkReady(); });
+            onSnapshot(collection(db, "system"), (s) => { const ad = s.docs.find(d => d.id === 'settings'); adminPin = ad ? ad.data().adminPin : null; loaded.sys = true; checkReady(); });
+            onSnapshot(collection(db, "requests"), (s) => { requests = s.docs.map(d => ({id: d.id, ...d.data()})).sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)); loaded.req = true; checkReady(); });
+        }).catch(() => { vMain.innerHTML = '<div class="empty" style="color:var(--danger);">เชื่อมต่อล้มเหลว กรุณาตรวจสอบอินเทอร์เน็ต</div>'; });
 
         function checkReady() {
-            if (loadedFlags.emp && loadedFlags.rec && loadedFlags.sys && loadedFlags.req && !isReady) {
-                isReady = true; updateHeaderAndNav(); handleRouting();
+            if (loaded.emp && loaded.rec && loaded.sys && loaded.req) {
+                isReady = true; updateLayout(); route();
             }
         }
 
-        function setupRealtimeListeners() {
-            onSnapshot(collection(db, "employees"), (snap) => {
-                employees = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                loadedFlags.emp = true; if(isReady) refreshCurrentView(); else checkReady();
-            });
-            onSnapshot(collection(db, "timeRecords"), (snap) => {
-                records = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                records.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-                loadedFlags.rec = true; if(isReady) refreshCurrentView(); else checkReady();
-            });
-            onSnapshot(collection(db, "system"), (snap) => {
-                const adminDoc = snap.docs.find(d => d.id === 'settings');
-                adminPin = adminDoc ? adminDoc.data().adminPin : null;
-                loadedFlags.sys = true; if(isReady) refreshCurrentView(); else checkReady();
-            });
-            onSnapshot(collection(db, "requests"), (snap) => {
-                requests = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                requests.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); 
-                loadedFlags.req = true; if(isReady) refreshCurrentView(); else checkReady();
-            });
-        }
-
-        function refreshCurrentView() {
-            const page = window.location.hash.replace('#', '');
-            if (page) navigateTo(page, false);
-        }
-
-        function getEmployeeStatus(empId) {
-            const empRecords = records.filter(r => r.empId === empId);
-            return empRecords.length === 0 ? 'OUT' : empRecords[empRecords.length - 1].type;
-        }
-
-        /* =========================================
-           ส่วนส่งออกฟังก์ชัน Global
-           ========================================= */
-        window.pressNumpad = function(val) {
-            if (val === 'C') currentPin = "";
-            else if (val === '<') currentPin = currentPin.slice(0, -1);
-            else if (currentPin.length < 4) currentPin += val;
-            updatePinUI();
-            if (currentPin.length === 4) setTimeout(() => verifyPinSubmit(), 100);
-        };
-
-        function updatePinUI() {
-            const dotsContainer = document.getElementById('pin-dots-container');
-            if(!dotsContainer) return;
-            let dotsHTML = '';
-            for(let i=0; i<4; i++) {
-                const filled = i < currentPin.length ? 'filled' : '';
-                dotsHTML += `<div class="pin-dot ${filled}"></div>`;
-            }
-            dotsContainer.innerHTML = dotsHTML;
-        }
-
-        function showPinError() {
-            const dotsContainer = document.getElementById('pin-dots-container');
-            if(!dotsContainer) return;
-            dotsContainer.innerHTML = `<div class="pin-dot error"></div><div class="pin-dot error"></div><div class="pin-dot error"></div><div class="pin-dot error"></div>`;
-            dotsContainer.classList.add('shake-animation');
-            setTimeout(() => { dotsContainer.classList.remove('shake-animation'); currentPin = ""; updatePinUI(); }, 400);
-        }
-
-        function verifyPinSubmit() {
-            if (pinTargetId === 'setup') {
-                setDoc(doc(db, "system", "settings"), { adminPin: currentPin });
-                adminPin = currentPin; navigateTo('login'); return;
-            } 
-            if (currentPin === adminPin) {
-                currentUser = { role: 'admin' }; sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-                updateHeaderAndNav(); navigateTo('admin-dash');
-            } else {
-                const emp = employees.find(e => e.pin === currentPin);
-                if (emp) {
-                    currentUser = { role: 'emp', id: emp.id, name: emp.name };
-                    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    updateHeaderAndNav(); navigateTo('emp-dash');
-                } else showPinError();
-            }
-        }
-
-        window.recordTime = async function(type) {
-            if (!currentUser || currentUser.role !== 'emp') return;
-            const emp = employees.find(e => e.id === currentUser.id);
-            if (!emp) return;
-
-            const now = new Date();
-            await addDoc(collection(db, "timeRecords"), {
-                empId: emp.id, empName: emp.name, type: type,
-                timestamp: now.toISOString(),
-                timeString: now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
-                dateString: now.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })
-            });
-            alert(`บันทึกเวลา${type === 'IN' ? 'เข้า' : 'ออก'}งาน สำเร็จ!`);
-        };
-
-        window.submitLeave = async function() {
-            const type = document.getElementById('leaveType').value;
-            const date = document.getElementById('leaveDate').value;
-            const reason = document.getElementById('leaveReason').value;
-            if(!type || !date) return alert('กรุณากรอกข้อมูลให้ครบถ้วน');
-
-            await addDoc(collection(db, "requests"), {
-                empId: currentUser.id, empName: currentUser.name, reqType: 'LEAVE',
-                leaveType: type, date: date, reason: reason, status: 'PENDING', timestamp: new Date().toISOString()
-            });
-            document.getElementById('leaveDate').value = ''; document.getElementById('leaveReason').value = '';
-            alert('ส่งคำขอสำเร็จ');
-        };
-
-        window.submitSwap = async function() {
-            const targetEmpId = document.getElementById('swapEmp').value;
-            const date = document.getElementById('swapDate').value;
-            const reason = document.getElementById('swapReason').value;
-            if(!targetEmpId || !date) return alert('กรุณาระบุคนที่จะสลับและวันที่');
-            
-            const targetEmp = employees.find(e => e.id === targetEmpId);
-            await addDoc(collection(db, "requests"), {
-                empId: currentUser.id, empName: currentUser.name, reqType: 'SWAP',
-                targetEmpId: targetEmp.id, targetEmpName: targetEmp.name,
-                date: date, reason: reason, status: 'PENDING', timestamp: new Date().toISOString()
-            });
-            document.getElementById('swapDate').value = ''; document.getElementById('swapReason').value = '';
-            alert('ส่งคำขอสลับวันหยุดสำเร็จ');
-        };
-
-        window.updateReqStatus = async function(reqId, status) {
-            await updateDoc(doc(db, "requests", reqId), { status: status });
-        };
-
-        window.logout = function() {
-            sessionStorage.removeItem('currentUser'); currentUser = null;
-            clearInterval(clockInterval); updateHeaderAndNav(); navigateTo('login');
-        };
-
-        window.handleAddEmployee = async function() {
-            const name = document.getElementById('newEmpName').value.trim();
-            const pin = document.getElementById('newEmpPin').value;
-            if (!name) return alert('กรุณาระบุชื่อ');
-            if (pin.length !== 4 || isNaN(pin)) return alert('กรุณาตั้งรหัส PIN 4 หลัก');
-            if (pin === adminPin) return alert('รหัส PIN ซ้ำกับแอดมิน');
-            if (employees.some(e => e.pin === pin)) return alert('รหัส PIN มีคนใช้งานแล้ว');
-
-            await addDoc(collection(db, "employees"), { name, pin });
-            document.getElementById('newEmpName').value = ''; document.getElementById('newEmpPin').value = '';
-            alert('เพิ่มพนักงานเรียบร้อย');
-        };
-
-        window.handleDeleteEmployee = async function(id) {
-            if (confirm('ยืนยันการลบพนักงานรายนี้?')) await deleteDoc(doc(db, "employees", id));
-        };
-
-        window.navigateTo = navigateTo;
-
-        /* =========================================
-           ส่วนที่ 2: การควบคุม UI แกนหลัก
-           ========================================= */
-        function updateHeaderAndNav() {
-            if (!currentUser) {
-                bottomNav.style.display = 'none'; roleBadge.innerHTML = ''; btnLogout.style.display = 'none'; return;
-            }
-            
-            bottomNav.style.display = 'flex';
-            btnLogout.style.display = 'block';
-
-            if (currentUser.role === 'admin') {
-                roleBadge.innerHTML = '<span class="user-role-badge role-admin">Admin</span>';
-                bottomNav.innerHTML = `
-                    <a class="nav-item" onclick="navigateTo('admin-dash')" id="nav-admin-dash"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>แดชบอร์ด</a>
-                    <a class="nav-item" onclick="navigateTo('admin-emp')" id="nav-admin-emp"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>พนักงาน</a>
-                    <a class="nav-item" onclick="navigateTo('admin-req')" id="nav-admin-req"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>คำขอ</a>
-                `;
-            } else if (currentUser.role === 'emp') {
-                roleBadge.innerHTML = '<span class="user-role-badge role-emp">Staff</span>';
-                bottomNav.innerHTML = `
-                    <a class="nav-item" onclick="navigateTo('emp-dash')" id="nav-emp-dash"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>ลงเวลา</a>
-                    <a class="nav-item" onclick="navigateTo('emp-leave')" id="nav-emp-leave"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>ลางาน</a>
-                    <a class="nav-item" onclick="navigateTo('emp-swap')" id="nav-emp-swap"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>สลับวันหยุด</a>
-                `;
-            }
+        // --- Utility ---
+        function getEmpStatus(empId) {
+            const empRecs = records.filter(r => r.empId === empId);
+            return empRecs.length === 0 ? 'OUT' : empRecs[empRecs.length - 1].type;
         }
 
         function startClock() {
             clearInterval(clockInterval);
             const tick = () => {
                 const now = new Date();
-                const clockEl = document.getElementById('clockDisplay');
-                const dateEl = document.getElementById('dateDisplay');
-                if(clockEl) clockEl.textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }); 
-                if(dateEl) dateEl.textContent = now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long' });
+                const elTime = document.getElementById('clock-time');
+                const elDate = document.getElementById('clock-date');
+                if(elTime) elTime.textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                if(elDate) elDate.textContent = now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'short' });
             };
-            tick();
-            clockInterval = setInterval(tick, 1000);
+            tick(); clockInterval = setInterval(tick, 1000);
         }
 
-        function getNumpadHTML() {
+        function formatStatus(status) {
+            if(status === 'PENDING') return '<span class="badge bg-pend">รอพิจารณา</span>';
+            if(status === 'APPROVED') return '<span class="badge bg-appr">อนุมัติ</span>';
+            return '<span class="badge bg-rej">ปฏิเสธ</span>';
+        }
+
+        // --- Core UI Logic ---
+        function updateLayout() {
+            if (!currentUser) {
+                eRole.innerHTML = ''; eLogout.classList.add('hide'); vNav.classList.add('hide'); vAction.classList.remove('hide');
+            } else if (currentUser.role === 'admin') {
+                eRole.innerHTML = '<span class="role-tag role-admin">Admin</span>'; eLogout.classList.remove('hide');
+                vNav.classList.remove('hide'); vAction.classList.add('hide'); // Admin mostly uses lists/forms in main view
+                vNav.innerHTML = `
+                    <div class="nav-tab" onclick="nav('ad-dash')" id="tab-ad-dash"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>แดชบอร์ด</div>
+                    <div class="nav-tab" onclick="nav('ad-emp')" id="tab-ad-emp"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>ทีมงาน</div>
+                    <div class="nav-tab" onclick="nav('ad-req')" id="tab-ad-req"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>คำขอ</div>
+                `;
+            } else {
+                eRole.innerHTML = '<span class="role-tag role-emp">Staff</span>'; eLogout.classList.remove('hide');
+                vNav.classList.remove('hide'); vAction.classList.add('hide'); // Emp uses action zone contextually
+                vNav.innerHTML = `
+                    <div class="nav-tab" onclick="nav('em-dash')" id="tab-em-dash"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>ลงเวลา</div>
+                    <div class="nav-tab" onclick="nav('em-req')" id="tab-em-req"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>คำขอลางาน</div>
+                `;
+            }
+        }
+
+        // --- Numpad System (Smart Entry) ---
+        window.typePin = function(val) {
+            if (val === 'C') currentPin = "";
+            else if (val === '<') currentPin = currentPin.slice(0, -1);
+            else if (currentPin.length < 4) currentPin += val;
+            
+            drawPinDots();
+            if (currentPin.length === 4) setTimeout(() => processPin(), 100);
+        };
+
+        function drawPinDots() {
+            const wrap = document.getElementById('pin-wrap');
+            if(!wrap) return;
+            wrap.innerHTML = Array.from({length:4}).map((_,i) => `<div class="pin-dot ${i<currentPin.length?'filled':''} ${currentPin==='err'?'error':''}"></div>`).join('');
+        }
+
+        function processPin() {
+            if (pendingAction === 'setup') {
+                setDoc(doc(db, "system", "settings"), { adminPin: currentPin });
+                adminPin = currentPin; nav('login'); return;
+            }
+            
+            if (currentPin === adminPin) {
+                currentUser = { role: 'admin' }; sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+                updateLayout(); nav('ad-dash');
+            } else {
+                const emp = employees.find(e => e.pin === currentPin);
+                if (emp) {
+                    currentUser = { role: 'emp', id: emp.id, name: emp.name };
+                    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    updateLayout(); nav('em-dash');
+                } else {
+                    currentPin = 'err'; drawPinDots(); document.getElementById('pin-wrap').classList.add('shake');
+                    setTimeout(() => { document.getElementById('pin-wrap').classList.remove('shake'); currentPin = ""; drawPinDots(); }, 300);
+                }
+            }
+        }
+
+        function renderNumpad() {
             return `
-                <div class="numpad">
-                    <div class="numpad-btn" onclick="pressNumpad('1')">1</div>
-                    <div class="numpad-btn" onclick="pressNumpad('2')">2</div>
-                    <div class="numpad-btn" onclick="pressNumpad('3')">3</div>
-                    <div class="numpad-btn" onclick="pressNumpad('4')">4</div>
-                    <div class="numpad-btn" onclick="pressNumpad('5')">5</div>
-                    <div class="numpad-btn" onclick="pressNumpad('6')">6</div>
-                    <div class="numpad-btn" onclick="pressNumpad('7')">7</div>
-                    <div class="numpad-btn" onclick="pressNumpad('8')">8</div>
-                    <div class="numpad-btn" onclick="pressNumpad('9')">9</div>
-                    <div class="numpad-btn control" onclick="pressNumpad('C')">ล้าง</div>
-                    <div class="numpad-btn" onclick="pressNumpad('0')">0</div>
-                    <div class="numpad-btn control" onclick="pressNumpad('<')">ลบ</div>
-                </div>
-            `;
-        }
-
-        function getStatusBadgeHtml(status) {
-            if(status === 'PENDING') return `<span class="req-badge badge-pending">รออนุมัติ</span>`;
-            if(status === 'APPROVED') return `<span class="req-badge badge-approved">อนุมัติแล้ว</span>`;
-            if(status === 'REJECTED') return `<span class="req-badge badge-rejected">ไม่อนุมัติ</span>`;
-            return '';
-        }
-
-        /* =========================================
-           ส่วนที่ 3: ระบบ Kiosk Login (Lock Screen Style)
-           ========================================= */
-        function renderSetup() {
-            currentPin = ""; pinTargetId = 'setup'; thumbDiv.innerHTML = '';
-            contentDiv.innerHTML = `
-                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-                    <h2 style="margin: 0; font-size: 1.8rem; font-weight: 800; letter-spacing: -0.5px;">ตั้งค่าระบบ</h2>
-                    <p style="color: var(--text-muted); margin-top: 0.5rem; font-size: 0.95rem;">กำหนด PIN 4 หลักสำหรับผู้ดูแล</p>
-                    <div class="pin-dots" id="pin-dots-container" style="margin-top: 1.5rem;">
+                <div class="numpad-area">
+                    <div class="pin-display" id="pin-wrap">
                         <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
                     </div>
-                </div>
-            `;
-            thumbDiv.innerHTML = `
-                <div class="thumb-actions" style="background: transparent; border: none; box-shadow: none;">
-                    ${getNumpadHTML()}
-                </div>
-            `;
-        }
-
-        function renderLogin() {
-            currentPin = ""; pinTargetId = null; thumbDiv.innerHTML = '';
-            
-            // หน้าจอหลัก (แยกส่วนแสดงผล)
-            contentDiv.innerHTML = `
-                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-                    <div class="live-clock" id="clockDisplay">00:00</div>
-                    <div class="live-date" id="dateDisplay">--</div>
-                    
-                    <div style="margin-top: 2.5rem; display: flex; flex-direction: column; align-items: center;">
-                        <p style="color: var(--text-main); font-size: 1rem; font-weight: 600; margin: 0;">กรุณากดรหัสผ่าน</p>
-                        <div class="pin-dots" id="pin-dots-container" style="margin-top: 1rem;">
-                            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-                        </div>
+                    <div class="numpad-grid">
+                        ${[1,2,3,4,5,6,7,8,9].map(n => `<button class="num-key" onclick="typePin('${n}')">${n}</button>`).join('')}
+                        <button class="num-key action" onclick="typePin('C')">ล้าง</button>
+                        <button class="num-key" onclick="typePin('0')">0</button>
+                        <button class="num-key action" onclick="typePin('<')">ลบ</button>
                     </div>
                 </div>
             `;
+        }
+
+        // --- VIEWS: UNAUTHENTICATED ---
+        function viewSetup() {
+            pendingAction = 'setup'; currentPin = "";
+            vMain.innerHTML = `
+                <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                    <h1 class="title">ตั้งค่าเริ่มต้น</h1>
+                    <p class="subtitle">กำหนดรหัส PIN 4 หลักสำหรับเจ้าของร้าน</p>
+                </div>
+            `;
+            vAction.innerHTML = renderNumpad();
+        }
+
+        function viewLogin() {
+            pendingAction = null; currentPin = "";
+            vMain.innerHTML = `
+                <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                    <div class="time-display" id="clock-time">00:00</div>
+                    <div class="date-display" id="clock-date">--</div>
+                    <p style="margin-top:2rem; font-weight:600; color:var(--text-sec);">เข้าสู่ระบบ / ลงเวลา</p>
+                </div>
+            `;
+            vAction.innerHTML = renderNumpad();
             startClock();
+        }
+
+        // --- VIEWS: EMPLOYEE ---
+        function viewEmpDash() {
+            vAction.classList.remove('hide');
+            const status = getEmpStatus(currentUser.id);
+            const isIn = status === 'IN';
             
-            // Thumb Zone (เฉพาะแป้นตัวเลข)
-            thumbDiv.innerHTML = `
-                <div class="thumb-actions" style="background: transparent; border: none; box-shadow: none; padding-top: 0;">
-                    ${getNumpadHTML()}
+            const btnHtml = isIn 
+                ? `<button class="btn btn-danger" onclick="doPunch('OUT')">ลงเวลาออกงาน</button>`
+                : `<button class="btn btn-success" onclick="doPunch('IN')">ลงเวลาเข้างาน</button>`;
+
+            const myRecs = records.filter(r => r.empId === currentUser.id).reverse().slice(0, 5);
+            let recsHtml = myRecs.length ? myRecs.map(r => `
+                <div class="list-item">
+                    <div class="item-col">
+                        <span class="item-head">${r.dateString}</span>
+                        <span class="item-sub">${r.timeString}</span>
+                    </div>
+                    <span class="badge ${r.type==='IN'?'bg-in':'bg-out'}">${r.type==='IN'?'เข้างาน':'ออกงาน'}</span>
                 </div>
+            `).join('') : '<div class="empty">ยังไม่มีประวัติ</div>';
+
+            vMain.innerHTML = `
+                <div style="padding: 1rem 0;">
+                    <h2 class="title" style="font-size:1.5rem;">สวัสดี, ${currentUser.name}</h2>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:0.85rem; font-weight:600; color:var(--text-sec);">สถานะปัจจุบัน:</span>
+                        <span class="badge ${isIn?'bg-in':'bg-out'}">${isIn?'กำลังทำงาน':'ยังไม่เข้างาน'}</span>
+                    </div>
+                </div>
+                <div class="title" style="margin-top:1.5rem; font-size:1rem;">ประวัติล่าสุด</div>
+                <div class="list-wrap" style="padding-bottom:120px;">${recsHtml}</div>
             `;
+
+            vAction.innerHTML = btnHtml;
         }
 
-        /* =========================================
-           ส่วนที่ 4: Views ฝั่งพนักงาน (Employee)
-           ========================================= */
-        function renderEmpDashboard() {
-            thumbDiv.innerHTML = '';
-            const status = getEmployeeStatus(currentUser.id);
-            const isClockedIn = status === 'IN';
-
-            let statusHTML = isClockedIn ? `<span style="color: #059669; font-weight:800;">กำลังทำงาน</span>` : `<span style="color: var(--text-muted); font-weight:800;">ยังไม่เข้างาน</span>`;
-            let buttonHTML = isClockedIn 
-                ? `<button class="btn btn-danger" style="padding: 1.5rem; font-size: 1.1rem;" onclick="recordTime('OUT')">บันทึกเวลาออกงาน</button>`
-                : `<button class="btn btn-success" style="padding: 1.5rem; font-size: 1.1rem;" onclick="recordTime('IN')">บันทึกเวลาเข้างาน</button>`;
-
-            const myRecords = records.filter(r => r.empId === currentUser.id).reverse().slice(0, 3);
-            let recentHistoryHTML = '';
-            if (myRecords.length > 0) {
-                let listItems = '';
-                myRecords.forEach(rec => {
-                    const isTypeIn = rec.type === 'IN';
-                    listItems += `
-                        <div class="list-item" style="padding: 0.8rem 1rem; margin-bottom: 0.5rem;">
-                            <span style="font-weight: 600; font-size: 0.9rem;">${rec.dateString} ${rec.timeString}</span>
-                            <span style="color: ${isTypeIn ? '#059669' : 'var(--text-muted)'}; font-weight: 700; font-size: 0.8rem; background: rgba(0,0,0,0.03); padding: 4px 10px; border-radius: var(--radius-pill);">${isTypeIn ? 'เข้างาน' : 'ออกงาน'}</span>
-                        </div>`;
-                });
-                recentHistoryHTML = `<div class="section-title" style="margin-top: 1.5rem;">ประวัติลงเวลาล่าสุด</div>${listItems}`;
-            }
-
-            contentDiv.innerHTML = `
-                <div style="text-align:center; padding-top: 1rem;">
-                    <h3 style="margin:0; color: var(--text-muted); font-weight: 500; font-size: 1rem;">สวัสดี, ${currentUser.name}</h3>
-                    <div style="margin-top: 0.25rem; font-size: 0.9rem;">สถานะ: ${statusHTML}</div>
-                    <div class="live-clock" id="clockDisplay" style="margin: 0.5rem 0; font-size: 3rem;">00:00</div>
-                </div>
-                ${recentHistoryHTML}
-            `;
-            startClock();
-
-            thumbDiv.innerHTML = `
-                <div class="thumb-actions">
-                    ${buttonHTML}
-                </div>
-            `;
-        }
-
-        function renderEmpLeave() {
-            thumbDiv.innerHTML = '';
-            const myLeaves = requests.filter(r => r.empId === currentUser.id && r.reqType === 'LEAVE');
-            let historyHtml = myLeaves.length === 0 ? `<div class="empty-state">ไม่มีประวัติการลางาน</div>` : `<div class="list-group">`;
-            myLeaves.forEach(req => {
-                historyHtml += `
-                    <div class="list-item">
-                        <div class="item-main">
-                            <span class="item-title">${req.leaveType} (${req.date})</span>
-                            <span class="item-subtitle">${req.reason || '-'}</span>
-                        </div>
-                        ${getStatusBadgeHtml(req.status)}
-                    </div>`;
+        window.doPunch = async function(type) {
+            vAction.innerHTML = `<button class="btn" style="background:var(--bg-input); color:var(--text-sec);" disabled>กำลังบันทึก...</button>`;
+            const now = new Date();
+            await addDoc(collection(db, "timeRecords"), {
+                empId: currentUser.id, empName: currentUser.name, type: type,
+                timestamp: now.toISOString(),
+                timeString: now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
+                dateString: now.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })
             });
-            if(myLeaves.length > 0) historyHtml += `</div>`;
+            // Update UI automatically via listener
+        };
 
-            // ย้ายฟอร์มกรอกมาไว้ที่หน้าจอหลัก (ป้องกันคีย์บอร์ดบัง)
-            contentDiv.innerHTML = `
-                <div class="card" style="text-align: left; padding: 1.25rem; margin-top: 1rem;">
-                    <div style="font-weight: 800; color: var(--text-main); font-size: 1.1rem; margin-bottom: 1rem;">แบบฟอร์มลางาน</div>
-                    <div style="display:flex; gap:0.5rem;">
-                        <select id="leaveType" class="native-select" style="flex:1;">
-                            <option value="" disabled selected>ประเภท</option>
-                            <option value="ลาป่วย">ลาป่วย</option><option value="ลากิจ">ลากิจ</option><option value="พักร้อน">พักร้อน</option>
+        function viewEmpReq() {
+            vAction.classList.add('hide'); // ซ่อน Thumb Zone ให้ใช้ฟอร์มแบบเลื่อนได้
+            const myReqs = requests.filter(r => r.empId === currentUser.id);
+            let listHtml = myReqs.length ? myReqs.map(r => `
+                <div class="list-item">
+                    <div class="item-col">
+                        <span class="item-head">${r.reqType==='LEAVE' ? r.leaveType : 'สลับวันหยุด'}</span>
+                        <span class="item-sub">วันที่: ${r.date}</span>
+                    </div>
+                    ${formatStatus(r.status)}
+                </div>
+            `).join('') : '<div class="empty">ไม่มีประวัติคำขอ</div>';
+
+            let empOpts = employees.filter(e => e.id !== currentUser.id).map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+
+            vMain.innerHTML = `
+                <h2 class="title" style="margin-top:1rem;">ส่งคำขอใหม่</h2>
+                
+                <div class="card" style="padding:1rem;">
+                    <div class="input-group">
+                        <span class="input-label">ประเภทคำขอ</span>
+                        <select id="reqSelect" class="input-el" onchange="toggleReqForm(this.value)">
+                            <option value="LEAVE">ลางาน</option>
+                            <option value="SWAP">สลับวันหยุด</option>
                         </select>
-                        <input type="date" id="leaveDate" class="native-input" style="flex:1;">
                     </div>
-                    <input type="text" id="leaveReason" class="native-input" placeholder="ระบุเหตุผลสั้นๆ (ถ้ามี)" style="margin-bottom:0;">
-                </div>
-                
-                <div class="section-title">ประวัติการลาของคุณ</div>
-                ${historyHtml}
-            `;
 
-            // Thumb Zone มีแค่ปุ่มยืนยัน
-            thumbDiv.innerHTML = `
-                <div class="thumb-actions">
-                    <button class="btn btn-primary" onclick="submitLeave()">ส่งคำขอลางาน</button>
-                </div>
-            `;
-        }
-
-        function renderEmpSwap() {
-            thumbDiv.innerHTML = '';
-            let empOptions = '<option value="" disabled selected>เลือกเพื่อนที่ต้องการสลับ</option>';
-            employees.filter(e => e.id !== currentUser.id).forEach(e => {
-                empOptions += `<option value="${e.id}">${e.name}</option>`;
-            });
-
-            const mySwaps = requests.filter(r => r.empId === currentUser.id && r.reqType === 'SWAP');
-            let historyHtml = mySwaps.length === 0 ? `<div class="empty-state">ไม่มีประวัติสลับวันหยุด</div>` : `<div class="list-group">`;
-            mySwaps.forEach(req => {
-                historyHtml += `
-                    <div class="list-item">
-                        <div class="item-main">
-                            <span class="item-title">สลับกับ: ${req.targetEmpName}</span>
-                            <span class="item-subtitle">วันที่: ${req.date}</span>
+                    <div id="form-leave">
+                        <div class="input-group">
+                            <select id="f-lType" class="input-el"><option value="ลาป่วย">ลาป่วย</option><option value="ลากิจ">ลากิจ</option><option value="พักร้อน">พักร้อน</option></select>
                         </div>
-                        ${getStatusBadgeHtml(req.status)}
-                    </div>`;
-            });
-            if(mySwaps.length > 0) historyHtml += `</div>`;
-
-            // ย้ายฟอร์มกรอกมาไว้หน้าจอหลัก
-            contentDiv.innerHTML = `
-                <div class="card" style="text-align: left; padding: 1.25rem; margin-top: 1rem;">
-                    <div style="font-weight: 800; color: var(--text-main); font-size: 1.1rem; margin-bottom: 1rem;">ขอสลับวันหยุด</div>
-                    <select id="swapEmp" class="native-select">${empOptions}</select>
-                    <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom: 0;">
-                        <span style="font-size:0.85rem; color:var(--text-muted); white-space:nowrap; font-weight:600;">วันที่เพื่อนแทน:</span>
-                        <input type="date" id="swapDate" class="native-input" style="flex:1; margin-bottom: 0;">
+                        <div class="input-group"><input type="date" id="f-lDate" class="input-el"></div>
+                        <div class="input-group"><input type="text" id="f-lNote" class="input-el" placeholder="เหตุผลการลา"></div>
+                        <button class="btn btn-primary" onclick="submitReq('LEAVE')">ส่งคำขอลางาน</button>
                     </div>
-                </div>
 
-                <div class="section-title">ประวัติขอสลับวันหยุด</div>
-                ${historyHtml}
-            `;
-
-            thumbDiv.innerHTML = `
-                <div class="thumb-actions">
-                    <button class="btn btn-primary" style="background: var(--warning-gradient);" onclick="submitSwap()">ส่งคำขอสลับวัน</button>
-                </div>
-            `;
-        }
-
-        /* =========================================
-           ส่วนที่ 5: Views ฝั่งแอดมิน (Admin)
-           ========================================= */
-        function renderAdminDashboard() {
-            clearInterval(clockInterval); thumbDiv.innerHTML = '';
-            let workingCount = employees.filter(e => getEmployeeStatus(e.id) === 'IN').length;
-            let pendingCount = requests.filter(r => r.status === 'PENDING').length;
-
-            contentDiv.innerHTML = `
-                <div class="section-title">ภาพรวมวันนี้</div>
-                <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
-                    <div class="card" style="flex: 1; padding: 1.2rem 1rem; margin: 0;">
-                        <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary); letter-spacing: -1px;">${employees.length}</div>
-                        <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">พนักงานรวม</div>
-                    </div>
-                    <div class="card" style="flex: 1; padding: 1.2rem 1rem; margin: 0;">
-                        <div style="font-size: 2.2rem; font-weight: 800; color: #059669; letter-spacing: -1px;">${workingCount}</div>
-                        <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">เข้างานแล้ว</div>
-                    </div>
-                </div>
-                <div class="card" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding: 1.2rem;" onclick="navigateTo('admin-req')">
-                    <div style="text-align:left;">
-                        <div style="font-weight:800; font-size:1.05rem; color:var(--text-main);">คำขอรอดำเนินการ</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted);">ลางาน / สลับวันหยุด</div>
-                    </div>
-                    <div style="background: #fef3c7; color: #d97706; font-weight:800; font-size:1.2rem; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;">${pendingCount}</div>
-                </div>
-            `;
-        }
-
-        function renderAdminEmployees() {
-            clearInterval(clockInterval); thumbDiv.innerHTML = '';
-            let listHTML = employees.length === 0 ? `<div class="empty-state">ยังไม่ได้เพิ่มรายชื่อพนักงาน</div>` : `<div class="list-group">`;
-            employees.forEach(emp => {
-                listHTML += `
-                    <div class="list-item">
-                        <div class="item-main">
-                            <span class="item-title" style="margin:0;">${emp.name}</span><span class="item-subtitle">PIN: ${emp.pin}</span>
+                    <div id="form-swap" class="hide">
+                        <div class="input-group">
+                            <span class="input-label">สลับวันหยุดกับ</span>
+                            <select id="f-sEmp" class="input-el"><option value="" disabled selected>เลือกเพื่อนร่วมงาน</option>${empOpts}</select>
                         </div>
-                        <button class="btn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.8rem; background: rgba(225,29,72,0.1); color: #e11d48; border-radius: var(--radius-pill); margin: 0;" onclick="handleDeleteEmployee('${emp.id}')">ลบ</button>
-                    </div>`;
-            });
-            if(employees.length > 0) listHTML += `</div>`;
-
-            // ฟอร์มเพิ่มพนักงานย้ายมาหน้าจอหลัก
-            contentDiv.innerHTML = `
-                <div class="card" style="text-align: left; padding: 1.25rem; margin-top: 1rem;">
-                    <div style="font-weight: 800; color: var(--text-main); font-size: 1.1rem; margin-bottom: 1rem;">+ เพิ่มพนักงานใหม่</div>
-                    <div style="display:flex; gap:0.5rem; margin-bottom:0;">
-                        <input type="text" id="newEmpName" class="native-input" placeholder="ชื่อพนักงาน" style="flex:2; margin-bottom:0;">
-                        <input type="password" id="newEmpPin" class="native-input" placeholder="PIN 4 หลัก" maxlength="4" pattern="[0-9]*" inputmode="numeric" style="flex:1; text-align:center; margin-bottom:0;">
+                        <div class="input-group">
+                            <span class="input-label">วันที่ต้องการให้มาแทน</span>
+                            <input type="date" id="f-sDate" class="input-el">
+                        </div>
+                        <button class="btn btn-primary" onclick="submitReq('SWAP')">ส่งคำขอสลับวัน</button>
                     </div>
                 </div>
 
-                <div class="section-title">รายชื่อพนักงาน</div>
-                ${listHTML}
-            `;
-
-            thumbDiv.innerHTML = `
-                <div class="thumb-actions">
-                    <button class="btn btn-primary" onclick="handleAddEmployee()">บันทึกข้อมูลพนักงาน</button>
-                </div>
+                <h2 class="title" style="margin-top:1rem; font-size:1rem;">ประวัติคำขอ</h2>
+                <div class="list-wrap">${listHtml}</div>
             `;
         }
 
-        function renderAdminRequests() {
-            clearInterval(clockInterval); thumbDiv.innerHTML = '';
+        window.toggleReqForm = function(type) {
+            document.getElementById('form-leave').classList.toggle('hide', type !== 'LEAVE');
+            document.getElementById('form-swap').classList.toggle('hide', type !== 'SWAP');
+        }
+
+        window.submitReq = async function(type) {
+            const now = new Date().toISOString();
+            if(type === 'LEAVE') {
+                const lt = document.getElementById('f-lType').value, ld = document.getElementById('f-lDate').value, ln = document.getElementById('f-lNote').value;
+                if(!ld) return alert('กรุณาเลือกวันที่');
+                await addDoc(collection(db, "requests"), { empId: currentUser.id, empName: currentUser.name, reqType: 'LEAVE', leaveType: lt, date: ld, reason: ln, status: 'PENDING', timestamp: now });
+            } else {
+                const tid = document.getElementById('f-sEmp').value, sd = document.getElementById('f-sDate').value;
+                if(!tid || !sd) return alert('กรุณากรอกให้ครบ');
+                const tName = employees.find(e=>e.id===tid).name;
+                await addDoc(collection(db, "requests"), { empId: currentUser.id, empName: currentUser.name, reqType: 'SWAP', targetEmpId: tid, targetEmpName: tName, date: sd, status: 'PENDING', timestamp: now });
+            }
+            alert('ส่งคำขอเรียบร้อย');
+        }
+
+        // --- VIEWS: ADMIN ---
+        function viewAdDash() {
+            vAction.classList.add('hide');
+            const workCount = employees.filter(e => getEmpStatus(e.id) === 'IN').length;
+            const pendCount = requests.filter(r => r.status === 'PENDING').length;
             
-            let listHTML = requests.length === 0 ? `<div class="empty-state">ไม่มีคำขอรอดำเนินการ</div>` : `<div class="list-group">`;
-            requests.forEach(req => {
-                let details = req.reqType === 'LEAVE' ? `${req.leaveType} (${req.date})` : `ขอสลับวันหยุดกับ ${req.targetEmpName} (${req.date})`;
-                
-                let actionBtns = req.status === 'PENDING' ? `
-                    <div style="display:flex; gap:0.5rem; margin-top:1rem;">
-                        <button class="btn btn-success" style="padding:0.7rem; font-size:0.9rem; border-radius:10px;" onclick="updateReqStatus('${req.id}', 'APPROVED')">อนุมัติ</button>
-                        <button class="btn btn-outline" style="padding:0.7rem; font-size:0.9rem; color:#f43f5e; border-color:#f43f5e; border-radius:10px; background:rgba(244,63,94,0.05);" onclick="updateReqStatus('${req.id}', 'REJECTED')">ปฏิเสธ</button>
+            let recsHtml = records.slice(-5).reverse().map(r => `
+                <div class="list-item">
+                    <div class="item-col"><span class="item-head">${r.empName}</span><span class="item-sub">${r.dateString} ${r.timeString}</span></div>
+                    <span class="badge ${r.type==='IN'?'bg-in':'bg-out'}">${r.type==='IN'?'เข้า':'ออก'}</span>
+                </div>
+            `).join('');
+
+            vMain.innerHTML = `
+                <h2 class="title" style="margin-top:1rem;">ภาพรวมวันนี้</h2>
+                <div class="card-row">
+                    <div class="card-stat">
+                        <div style="font-size:2rem; font-weight:800; line-height:1;">${employees.length}</div>
+                        <div style="font-size:0.8rem; color:var(--text-sec); font-weight:600; margin-top:4px;">พนักงานรวม</div>
                     </div>
-                ` : '';
+                    <div class="card-stat">
+                        <div style="font-size:2rem; font-weight:800; color:var(--success); line-height:1;">${workCount}</div>
+                        <div style="font-size:0.8rem; color:var(--text-sec); font-weight:600; margin-top:4px;">กำลังทำงาน</div>
+                    </div>
+                </div>
+                
+                <div class="card" style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; padding:1rem 1.25rem;" onclick="nav('ad-req')">
+                    <div class="item-col">
+                        <span class="item-head">คำขอรอดำเนินการ</span>
+                        <span class="item-sub">แตะเพื่อจัดการ</span>
+                    </div>
+                    <div style="background:#fef3c7; color:#d97706; font-weight:800; padding:4px 12px; border-radius:12px;">${pendCount} รายการ</div>
+                </div>
 
-                listHTML += `
-                    <div class="list-item" style="display:block;">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                            <div class="item-main">
-                                <span class="item-title">${req.empName}</span>
-                                <span class="item-subtitle" style="color:var(--text-main); font-weight:600;">${details}</span>
-                                ${req.reason ? `<span class="item-subtitle" style="font-style:italic; margin-top:4px;">เหตุผล: ${req.reason}</span>` : ''}
-                            </div>
-                            ${getStatusBadgeHtml(req.status)}
-                        </div>
-                        ${actionBtns}
-                    </div>`;
-            });
-            if(requests.length > 0) listHTML += `</div>`;
-
-            contentDiv.innerHTML = `
-                <div class="section-title" style="margin-top: 1rem;">จัดการคำขอ</div>
-                ${listHTML}
+                <h2 class="title" style="font-size:1rem; margin-top:1rem;">ความเคลื่อนไหวล่าสุด</h2>
+                <div class="list-wrap">${recsHtml || '<div class="empty">ไม่มีความเคลื่อนไหว</div>'}</div>
             `;
         }
 
-        /* =========================================
-           ส่วนที่ 6: Router
-           ========================================= */
-        function navigateTo(page, pushState = true) {
-            if (!adminPin && page !== 'setup') { window.location.hash = 'setup'; return; }
-            if (adminPin && !currentUser && page !== 'login') { window.location.hash = 'login'; return; }
+        function viewAdEmp() {
+            vAction.classList.add('hide');
+            let empHtml = employees.map(e => `
+                <div class="list-item">
+                    <div class="item-col"><span class="item-head">${e.name}</span><span class="item-sub">PIN: ${e.pin}</span></div>
+                    <button class="btn-ghost" style="color:var(--danger); font-weight:700;" onclick="delEmp('${e.id}')">ลบ</button>
+                </div>
+            `).join('');
 
-            if (currentUser && currentUser.role === 'admin') {
-                if(page.startsWith('emp-')) page = 'admin-dash';
-            } else if (currentUser && currentUser.role === 'emp') {
-                if(page.startsWith('admin-')) page = 'emp-dash';
-            }
-
-            document.querySelectorAll('.nav-item').forEach(link => link.classList.remove('active'));
-            const activeTab = document.getElementById('nav-' + page);
-            if(activeTab) activeTab.classList.add('active');
-
-            if(pushState) { window.location.hash = page; document.querySelector('main').scrollTop = 0; }
-
-            if (page === 'setup') renderSetup();
-            else if (page === 'login') renderLogin();
-            else if (page === 'admin-dash') renderAdminDashboard();
-            else if (page === 'admin-emp') renderAdminEmployees();
-            else if (page === 'admin-req') renderAdminRequests();
-            else if (page === 'emp-dash') renderEmpDashboard();
-            else if (page === 'emp-leave') renderEmpLeave();
-            else if (page === 'emp-swap') renderEmpSwap();
+            vMain.innerHTML = `
+                <h2 class="title" style="margin-top:1rem;">เพิ่มพนักงาน</h2>
+                <div class="card" style="padding:1rem;">
+                    <div class="card-row" style="margin-bottom:0.75rem;">
+                        <input type="text" id="a-eName" class="input-el" style="flex:2;" placeholder="ชื่อพนักงาน">
+                        <input type="password" id="a-ePin" class="input-el" style="flex:1; text-align:center;" placeholder="PIN" maxlength="4" inputmode="numeric">
+                    </div>
+                    <button class="btn btn-primary" onclick="addEmp()">บันทึกข้อมูล</button>
+                </div>
+                <h2 class="title" style="font-size:1rem; margin-top:1rem;">รายชื่อพนักงาน</h2>
+                <div class="list-wrap">${empHtml || '<div class="empty">ไม่มีข้อมูลพนักงาน</div>'}</div>
+            `;
         }
 
-        function handleRouting() {
-            if(!isReady) return; 
-            let page = window.location.hash.replace('#', '');
-            if (!page) {
-                if (!adminPin) page = 'setup';
-                else if (!currentUser) page = 'login';
-                else if (currentUser.role === 'admin') page = 'admin-dash';
-                else page = 'emp-dash';
-            }
-            navigateTo(page);
+        window.addEmp = async function() {
+            const n = document.getElementById('a-eName').value.trim(), p = document.getElementById('a-ePin').value;
+            if(!n || p.length !== 4) return alert('กรุณากรอกชื่อ และ PIN 4 หลัก');
+            if(p === adminPin || employees.some(e=>e.pin===p)) return alert('PIN ซ้ำในระบบ');
+            await addDoc(collection(db, "employees"), { name: n, pin: p });
+            alert('เพิ่มสำเร็จ');
         }
+        window.delEmp = async function(id) { if(confirm('ยืนยันลบพนักงาน?')) await deleteDoc(doc(db, "employees", id)); }
 
-        window.addEventListener('hashchange', handleRouting);
+        function viewAdReq() {
+            vAction.classList.add('hide');
+            let reqHtml = requests.map(r => `
+                <div class="card" style="padding:1rem;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                        <div class="item-col">
+                            <span class="item-head">${r.empName}</span>
+                            <span class="item-sub" style="color:var(--text-main); font-weight:600;">
+                                ${r.reqType==='LEAVE' ? `ลา: ${r.leaveType} (${r.date})` : `สลับกับ: ${r.targetEmpName} (${r.date})`}
+                            </span>
+                            ${r.reason ? `<span class="item-sub" style="font-style:italic;">"${r.reason}"</span>` : ''}
+                        </div>
+                        ${formatStatus(r.status)}
+                    </div>
+                    ${r.status === 'PENDING' ? `
+                    <div class="card-row" style="margin-bottom:0;">
+                        <button class="btn btn-outline" style="border-color:var(--danger); color:var(--danger);" onclick="updReq('${r.id}', 'REJECTED')">ปฏิเสธ</button>
+                        <button class="btn btn-primary" onclick="updReq('${r.id}', 'APPROVED')">อนุมัติ</button>
+                    </div>` : ''}
+                </div>
+            `).join('');
+
+            vMain.innerHTML = `
+                <h2 class="title" style="margin-top:1rem;">จัดการคำขอ</h2>
+                <div class="list-wrap">${reqHtml || '<div class="empty">ไม่มีคำขอในระบบ</div>'}</div>
+            `;
+        }
+        window.updReq = async function(id, status) { await updateDoc(doc(db, "requests", id), {status: status}); }
+
+        window.logout = function() {
+            sessionStorage.removeItem('currentUser'); currentUser = null;
+            updateLayout(); nav('login');
+        };
+
+        // --- Router ---
+        window.nav = function(page) {
+            if (!adminPin && page !== 'setup') page = 'setup';
+            else if (adminPin && !currentUser && page !== 'login') page = 'login';
+            
+            // Role Guard
+            if (currentUser) {
+                if (currentUser.role === 'admin' && page.startsWith('em-')) page = 'ad-dash';
+                if (currentUser.role === 'emp' && page.startsWith('ad-')) page = 'em-dash';
+            }
+
+            // Update Tabs
+            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+            const tab = document.getElementById(`tab-${page}`);
+            if(tab) tab.classList.add('active');
+
+            window.location.hash = page;
+            vMain.scrollTop = 0;
+
+            if (page === 'setup') viewSetup();
+            else if (page === 'login') viewLogin();
+            else if (page === 'ad-dash') viewAdDash();
+            else if (page === 'ad-emp') viewAdEmp();
+            else if (page === 'ad-req') viewAdReq();
+            else if (page === 'em-dash') viewEmpDash();
+            else if (page === 'em-req') viewEmpReq();
+        };
+
+        function route() {
+            if(!isReady) return;
+            let page = window.location.hash.replace('#', '') || (adminPin ? (currentUser ? (currentUser.role==='admin'?'ad-dash':'em-dash') : 'login') : 'setup');
+            nav(page);
+        }
+        window.addEventListener('hashchange', route);
+
     </script>
 </body>
 </html>
