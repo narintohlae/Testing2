@@ -3,204 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบลงเวลา & จัดการพนักงาน</title>
+    <title>ระบบพนักงาน Pro</title>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     
     <style>
-        :root {
-            --primary-color: #00B900;
-            --bg-color: #f4f7f6;
-            --text-color: #333;
-            --card-bg: #ffffff;
-        }
-
-        body {
-            font-family: 'Sarabun', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 15px;
-        }
-
+        :root { --primary-color: #00B900; --bg-color: #f4f7f6; --text-color: #333; --card-bg: #ffffff; --admin-color: #3b5998; }
+        body { font-family: 'Sarabun', sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; padding-bottom: 30px; }
         .container { max-width: 500px; margin: 0 auto; }
-
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 15px;
-        }
-
+        .card { background-color: var(--card-bg); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
         h2, h3 { margin-top: 0; text-align: center; }
-
-        /* ปุ่มกด */
-        .btn {
-            display: block; width: 100%; padding: 15px; margin-bottom: 10px;
-            border: none; border-radius: 8px; font-size: 16px; font-weight: bold;
-            cursor: pointer; transition: 0.3s;
-        }
+        .btn { display: block; width: 100%; padding: 15px; margin-bottom: 10px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; text-align: center; text-decoration: none; }
+        .btn:active { transform: scale(0.98); }
         .btn-primary { background-color: var(--primary-color); color: white; }
         .btn-danger { background-color: #ff4d4d; color: white; }
         .btn-outline { background-color: transparent; border: 2px solid var(--primary-color); color: var(--primary-color); }
-        .btn-admin { background-color: #3b5998; color: white; }
+        .btn-admin { background-color: var(--admin-color); color: white; }
         .btn-secondary { background-color: #ccc; color: #333; }
+        .btn-sm { padding: 8px; font-size: 14px; margin-top: 5px; width: auto; display: inline-block; margin-right: 5px; }
 
-        /* ฟอร์ม Input */
+        /* Form & List Style */
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%; padding: 10px; border: 1px solid #ddd;
-            border-radius: 6px; box-sizing: border-box; font-family: inherit;
-        }
-
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         .hidden { display: none !important; }
-
-        .time-display {
-            text-align: center; font-size: 24px; font-weight: bold;
-            margin: 20px 0; color: var(--primary-color);
-        }
+        .list-item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        .list-item:last-child { border-bottom: none; }
+        .status-badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; color: white; }
+        .status-pending { background: #f0ad4e; }
+        .status-approved { background: #5cb85c; }
+        .time-display { text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0; color: var(--primary-color); }
+        
+        /* สลับโหมด Admin/User */
+        #role-switch { text-align: center; font-size: 12px; color: #999; margin-bottom: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <div id="loading-view" class="card">
-            <h2>กำลังโหลดข้อมูล...</h2>
-        </div>
+        <div id="role-switch" onclick="toggleRole()">สลับโหมด (จำลอง)</div>
+        <div id="loading-view" class="card"><h2>กำลังโหลดข้อมูล...</h2></div>
 
         <div id="employee-view" class="hidden app-view">
             <div class="card">
                 <h3>สวัสดี, <span id="emp-name">พนักงาน</span></h3>
                 <p style="text-align: center; margin:0;">รหัส: <span id="emp-id">EMP-001</span></p>
                 <div class="time-display" id="current-time">00:00:00</div>
-                
                 <button class="btn btn-primary" onclick="window.clockIn()">📍 เข้างาน</button>
                 <button class="btn btn-danger" onclick="window.clockOut()">🏠 ออกงาน</button>
             </div>
-            
             <div class="card">
-                <h3>เมนูอื่นๆ</h3>
+                <h3>เมนู</h3>
+                <button class="btn btn-outline" onclick="window.loadHistory()">🕒 ประวัติเข้างาน</button>
                 <button class="btn btn-outline" onclick="window.showView('leave-form-view')">📝 ขอลางาน</button>
+            </div>
+        </div>
+
+        <div id="history-view" class="hidden app-view">
+            <div class="card">
+                <h3>🕒 ประวัติการลงเวลา</h3>
+                <div id="history-list">กำลังโหลด...</div>
+                <button class="btn btn-secondary" onclick="window.goBack()" style="margin-top:20px;">ย้อนกลับ</button>
+            </div>
+        </div>
+
+        <div id="admin-view" class="hidden app-view">
+            <div class="card" style="border-top: 5px solid var(--admin-color);">
+                <h3>👑 ระบบผู้ดูแลร้าน</h3>
+                <button class="btn btn-admin" onclick="window.loadAdminApprovals()">✅ อนุมัติคำขอลางาน</button>
+                <button class="btn btn-admin" onclick="window.showView('admin-settings-view')">⚙️ ตั้งค่าพนักงาน & ค่าแรง</button>
+            </div>
+        </div>
+
+        <div id="admin-approvals-view" class="hidden app-view">
+            <div class="card">
+                <h3>รายการรอดำเนินการ</h3>
+                <div id="admin-approval-list">ไม่มีรายการค้าง</div>
+                <button class="btn btn-secondary" onclick="window.goBack()">ย้อนกลับ</button>
+            </div>
+        </div>
+
+        <div id="admin-settings-view" class="hidden app-view">
+            <div class="card">
+                <h3>⚙️ ตั้งค่าข้อมูลพนักงาน</h3>
+                <div class="form-group"><label>ชื่อพนักงาน:</label><input type="text" id="set-name" placeholder="ชื่อ-นามสกุล"></div>
+                <div class="form-group"><label>รหัสพนักงาน:</label><input type="text" id="set-id" placeholder="เช่น EMP-002"></div>
+                <div class="form-group"><label>ค่าแรงรายชั่วโมง (บาท):</label><input type="number" id="set-rate" value="50"></div>
+                <div class="form-group"><label>เวลางานเข้า-ออกปกติ:</label>
+                    <input type="time" id="set-time-in" value="09:00" style="width:48%">
+                    <input type="time" id="set-time-out" value="18:00" style="width:48%">
+                </div>
+                <button class="btn btn-primary" onclick="window.saveEmployeeSettings()">บันทึกพนักงาน</button>
+                <button class="btn btn-secondary" onclick="window.goBack()">ย้อนกลับ</button>
             </div>
         </div>
 
         <div id="leave-form-view" class="hidden app-view">
             <div class="card">
                 <h3>📝 แบบฟอร์มขอลางาน</h3>
-                <div class="form-group">
-                    <label>ประเภทการลา:</label>
-                    <select id="leave-type">
-                        <option value="ป่วย">ลาป่วย</option>
-                        <option value="กิจ">ลากิจ</option>
-                        <option value="พักร้อน">ลาพักร้อน</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>วันที่เริ่มลา:</label>
-                    <input type="date" id="leave-start">
-                </div>
-                <div class="form-group">
-                    <label>เหตุผล:</label>
-                    <textarea id="leave-reason" rows="3"></textarea>
-                </div>
+                <div class="form-group"><label>ประเภท:</label><select id="leave-type"><option value="ป่วย">ลาป่วย</option><option value="กิจ">ลากิจ</option><option value="พักร้อน">ลาพักร้อน</option></select></div>
+                <div class="form-group"><label>วันที่เริ่ม:</label><input type="date" id="leave-start"></div>
+                <div class="form-group"><label>เหตุผล:</label><textarea id="leave-reason" rows="3"></textarea></div>
                 <button class="btn btn-primary" onclick="window.submitLeave()">ส่งคำขอ</button>
                 <button class="btn btn-secondary" onclick="window.goBack()">ย้อนกลับ</button>
             </div>
         </div>
-
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, query, where, orderBy, limit, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
-        // ตั้งค่า Firebase ตามที่คุณให้มา
         const firebaseConfig = {
             apiKey: "AIzaSyBHuZGyY1F3v4rCrhrpt9YB90C0Ahh-stE",
             authDomain: "my-company-time-tracking.firebaseapp.com",
             projectId: "my-company-time-tracking",
             storageBucket: "my-company-time-tracking.firebasestorage.app",
             messagingSenderId: "758524847747",
-            appId: "1:758524847747:web:2e5a49e4064334f1265db6",
-            measurementId: "G-50SYJKTRT1"
+            appId: "1:758524847747:web:2e5a49e4064334f1265db6"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const BACKUP_SHEET_URL = "https://script.google.com/macros/s/AKfycbwBKqMvEiBJzbFj8mv5Wbg2kLtJ33_CIVSSOxhDtOp7XE0uFGPjfnls-nydjA_aRkYedQ/exec";
 
-        // URL สำหรับ Backup ไป Google Sheets
-        const BACKUP_SHEET_URL = "https://script.google.com/macros/s/AKfycbwBKqMvEiBJzbFj8mv5Wbg2kLtJ33_CIVSSOxhDtOp7XE0uFGPjfnls-nydjA_aRkYedQ/exec"; 
+        let currentRole = "employee"; // ในอนาคตเช็คจาก LINE User ID
 
-        // จัดการเรื่องเวลาบนหน้าจอ
-        setInterval(() => {
-            document.getElementById('current-time').innerText = new Date().toLocaleTimeString('th-TH');
-        }, 1000);
-
-        // นำฟังก์ชันไปผูกกับ window เพื่อให้ HTML เรียกใช้จาก onclick ได้
+        // --- ระบบสลับหน้าจอ ---
         window.showView = function(viewId) {
             document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
             document.getElementById('loading-view').classList.add('hidden');
             document.getElementById(viewId).classList.remove('hidden');
         };
+        window.goBack = () => window.showView(currentRole === 'admin' ? 'admin-view' : 'employee-view');
+        window.toggleRole = () => {
+            currentRole = (currentRole === 'employee' ? 'admin' : 'employee');
+            window.goBack();
+            alert("สลับเป็นโหมด: " + currentRole);
+        };
 
-        window.goBack = function() { window.showView('employee-view'); };
+        setInterval(() => { document.getElementById('current-time').innerText = new Date().toLocaleTimeString('th-TH'); }, 1000);
 
-        // ฟังก์ชัน บันทึกเวลาเข้างาน
-        window.clockIn = async function() {
-            const empId = document.getElementById('emp-id').innerText;
-            const empName = document.getElementById('emp-name').innerText;
-            
+        // --- ฟังก์ชันหลัก: เข้า/ออกงาน ---
+        window.clockIn = () => recordAttendance("IN");
+        window.clockOut = () => recordAttendance("OUT");
+
+        async function recordAttendance(type) {
             const data = {
-                empId: empId,
-                name: empName,
-                type: "IN",
+                empId: document.getElementById('emp-id').innerText,
+                name: document.getElementById('emp-name').innerText,
+                type: type,
                 timestamp: serverTimestamp(),
                 dateText: new Date().toLocaleString('th-TH')
             };
-
             try {
-                // 1. บันทึกลง Firestore (ฐานข้อมูลหลัก)
                 await addDoc(collection(db, "attendance"), data);
-                
-                // 2. ส่ง Backup ไป Google Sheets อัตโนมัติทันที
-                backupToSheets("Attendance", data);
-                
-                alert("บันทึกเวลาเข้างานสำเร็จ!");
-            } catch (e) {
-                console.error("Error adding document: ", e);
-                alert("เกิดข้อผิดพลาดในการบันทึกข้อมูลเข้างาน");
-            }
-        };
+                fetch(BACKUP_SHEET_URL, { method: 'POST', body: JSON.stringify({ sheet: "Attendance", data: data }) });
+                alert("บันทึก " + (type === "IN" ? "เข้างาน" : "ออกงาน") + " สำเร็จ!");
+            } catch (e) { alert("ล้มเหลว: " + e.message); }
+        }
 
-        // ฟังก์ชัน บันทึกเวลาออกงาน (เพิ่มให้แล้ว)
-        window.clockOut = async function() {
-            const empId = document.getElementById('emp-id').innerText;
-            const empName = document.getElementById('emp-name').innerText;
+        // --- ฟังก์ชัน: ดึงประวัติ (Employee) ---
+        window.loadHistory = async function() {
+            window.showView('history-view');
+            const listDiv = document.getElementById('history-list');
+            listDiv.innerHTML = "กำลังโหลด...";
             
-            const data = {
-                empId: empId,
-                name: empName,
-                type: "OUT", 
-                timestamp: serverTimestamp(),
-                dateText: new Date().toLocaleString('th-TH')
-            };
-
-            try {
-                // 1. บันทึกลง Firestore
-                await addDoc(collection(db, "attendance"), data);
-                
-                // 2. ส่ง Backup ไป Google Sheets
-                backupToSheets("Attendance", data);
-                
-                alert("บันทึกเวลาออกงานสำเร็จ!");
-            } catch (e) {
-                console.error("Error adding document: ", e);
-                alert("เกิดข้อผิดพลาดในการบันทึกข้อมูลออกงาน");
-            }
+            const q = query(collection(db, "attendance"), 
+                        where("empId", "==", document.getElementById('emp-id').innerText),
+                        orderBy("timestamp", "desc"), limit(10));
+            
+            const querySnapshot = await getDocs(q);
+            let html = "";
+            querySnapshot.forEach((doc) => {
+                const d = doc.data();
+                html += `<div class="list-item">
+                            <span><b>${d.type === 'IN' ? '📍 เข้า' : '🏠 ออก'}</b><br><small>${d.dateText}</small></span>
+                         </div>`;
+            });
+            listDiv.innerHTML = html || "ไม่มีข้อมูลประวัติ";
         };
 
-        // ฟังก์ชัน ส่งคำขอลางาน
+        // --- ฟังก์ชัน: ลางาน ---
         window.submitLeave = async function() {
             const data = {
                 empId: document.getElementById('emp-id').innerText,
@@ -210,36 +192,59 @@
                 status: "รออนุมัติ",
                 timestamp: serverTimestamp()
             };
-
             try {
                 await addDoc(collection(db, "leave_requests"), data);
-                backupToSheets("LeaveRequests", data);
-                alert("ส่งคำขอลางานสำเร็จ!");
+                fetch(BACKUP_SHEET_URL, { method: 'POST', body: JSON.stringify({ sheet: "LeaveRequests", data: data }) });
+                alert("ส่งคำขอแล้ว!");
                 window.goBack();
-            } catch (e) {
-                alert("เกิดข้อผิดพลาดในการส่งคำขอ");
-            }
+            } catch (e) { alert("ล้มเหลว"); }
         };
 
-        // ฟังก์ชันส่งข้อมูลไปสำรองที่ Google Sheets
-        function backupToSheets(sheetName, payload) {
-            if(!BACKUP_SHEET_URL.includes("script.google.com")) return; // กันพังถ้ายังไม่ใส่ URL
+        // --- ฟังก์ชันแอดมิน: อนุมัติ ---
+        window.loadAdminApprovals = async function() {
+            window.showView('admin-approvals-view');
+            const listDiv = document.getElementById('admin-approval-list');
+            listDiv.innerHTML = "กำลังค้นหาคำขอ...";
             
-            fetch(BACKUP_SHEET_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    sheet: sheetName,
-                    data: payload
-                })
-            }).catch(err => console.log("Backup failed, but Firestore saved.", err));
-        }
+            const q = query(collection(db, "leave_requests"), where("status", "==", "รออนุมัติ"));
+            const querySnapshot = await getDocs(q);
+            let html = "";
+            querySnapshot.forEach((docSnap) => {
+                const d = docSnap.data();
+                html += `<div class="card" style="padding:10px; font-size:14px; margin-bottom:10px;">
+                            <b>${d.empId} ขอลา${d.leaveType}</b><br>
+                            วันที่: ${d.start}<br>เหตุผล: ${d.reason}<br>
+                            <button class="btn btn-primary btn-sm" onclick="window.approveRequest('${docSnap.id}', 'อนุมัติแล้ว')">อนุมัติ</button>
+                            <button class="btn btn-danger btn-sm" onclick="window.approveRequest('${docSnap.id}', 'ปฏิเสธ')">ปฏิเสธ</button>
+                         </div>`;
+            });
+            listDiv.innerHTML = html || "ไม่มีรายการค้างอนุมัติ";
+        };
 
-        // โหลดหน้าจอเริ่มต้น (จำลองข้อมูลพนักงาน)
-        setTimeout(() => {
-            document.getElementById('loading-view').classList.add('hidden');
-            window.showView('employee-view');
-        }, 1000);
+        window.approveRequest = async function(docId, newStatus) {
+            await updateDoc(doc(db, "leave_requests", docId), { status: newStatus });
+            alert("ดำเนินการเรียบร้อย: " + newStatus);
+            window.loadAdminApprovals();
+        };
 
+        // --- ฟังก์ชันแอดมิน: ตั้งค่าพนักงาน ---
+        window.saveEmployeeSettings = async function() {
+            const data = {
+                name: document.getElementById('set-name').value,
+                empId: document.getElementById('set-id').value,
+                rate: document.getElementById('set-rate').value,
+                timeIn: document.getElementById('set-time-in').value,
+                timeOut: document.getElementById('set-time-out').value,
+                updatedAt: serverTimestamp()
+            };
+            if(!data.empId) return alert("กรุณาใส่รหัสพนักงาน");
+            await addDoc(collection(db, "employees"), data);
+            alert("บันทึกข้อมูลพนักงานสำเร็จ!");
+            window.goBack();
+        };
+
+        // เริ่มต้น
+        window.showView('employee-view');
     </script>
 </body>
 </html>
