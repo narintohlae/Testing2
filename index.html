@@ -6,7 +6,6 @@
     <title>ระบบลงเวลาพนักงาน (Time Tracking)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body {
@@ -14,7 +13,6 @@
             background-color: #f3f4f6;
             -webkit-tap-highlight-color: transparent;
         }
-        /* ซ่อน Scrollbar แต่ยังเลื่อนได้ */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -22,15 +20,10 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-        }
     </style>
 </head>
 <body class="flex justify-center min-h-screen text-gray-800">
 
-    <!-- Mobile Container -->
     <div class="w-full max-w-md bg-white shadow-2xl relative flex flex-col h-[100dvh] overflow-hidden">
         
         <!-- Header -->
@@ -91,7 +84,6 @@
         <!-- Main Content -->
         <main id="appScreen" class="hidden flex-1 overflow-y-auto no-scrollbar p-6 pb-24 relative z-0 -mt-4 pt-8">
             
-            <!-- User Info -->
             <div class="mb-4 bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-sm">
                 <label class="block text-sm font-medium text-gray-600 mb-2">พนักงานที่เข้าสู่ระบบ</label>
                 <div class="relative">
@@ -104,7 +96,6 @@
                 </div>
             </div>
 
-            <!-- Remark Input -->
             <div class="mb-8 bg-gray-50 p-4 rounded-2xl border border-gray-100 shadow-sm">
                 <label class="block text-sm font-medium text-gray-600 mb-2" for="remark">หมายเหตุ (ถ้ามี)</label>
                 <div class="relative">
@@ -115,16 +106,15 @@
                 </div>
             </div>
 
-            <!-- Action Buttons -->
             <div class="grid grid-cols-2 gap-4 mb-8">
-                <button id="btnClockIn" class="flex flex-col items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-6 rounded-2xl shadow-md shadow-green-200 transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button id="btnClockIn" class="flex flex-col items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-6 rounded-2xl shadow-md shadow-green-200 transition transform active:scale-95">
                     <div class="bg-white/20 p-3 rounded-full">
                         <i data-lucide="log-in" class="w-8 h-8"></i>
                     </div>
                     <span class="font-semibold text-lg">เข้างาน</span>
                 </button>
                 
-                <button id="btnClockOut" class="flex flex-col items-center justify-center gap-2 bg-rose-500 hover:bg-rose-600 text-white py-6 rounded-2xl shadow-md shadow-rose-200 transition transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button id="btnClockOut" class="flex flex-col items-center justify-center gap-2 bg-rose-500 hover:bg-rose-600 text-white py-6 rounded-2xl shadow-md shadow-rose-200 transition transform active:scale-95">
                     <div class="bg-white/20 p-3 rounded-full">
                         <i data-lucide="log-out" class="w-8 h-8"></i>
                     </div>
@@ -132,15 +122,13 @@
                 </button>
             </div>
 
-            <!-- History Section -->
             <div>
                 <h2 class="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
                     <i data-lucide="history" class="w-5 h-5"></i>
                     ประวัติของวันนี้
                 </h2>
                 <div id="historyList" class="space-y-3">
-                    <!-- รายการจะถูกสร้างที่นี่ด้วย JavaScript -->
-                    <div class="text-center text-gray-400 py-4 text-sm">ยังไม่มีข้อมูลการลงเวลา...</div>
+                    <div class="text-center text-gray-400 py-4 text-sm">กำลังเชื่อมต่อข้อมูล...</div>
                 </div>
             </div>
             
@@ -151,10 +139,9 @@
             <i data-lucide="loader-2" class="w-10 h-10 text-blue-500 animate-spin mb-4"></i>
             <p class="text-gray-600 font-medium">กำลังประมวลผล...</p>
         </div>
-
     </div>
 
-    <!-- Custom Modal (แทน Alert) -->
+    <!-- Custom Modal -->
     <div id="customModal" class="fixed inset-0 z-50 flex items-center justify-center px-4 bg-gray-900/40 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl transform scale-95 transition-transform duration-300" id="modalContent">
             <div class="text-center">
@@ -173,15 +160,13 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // ==========================================
-        // 1. CONFIGURATION
+        // 1. CONFIGURATION (ใช้ Config ของ User 100%)
         // ==========================================
-        
-        // Config ที่คุณให้มา
-        const userFirebaseConfig = {
+        const firebaseConfig = {
             apiKey: "AIzaSyBHuZGyY1F3v4rCrhrpt9YB90C0Ahh-stE",
             authDomain: "my-company-time-tracking.firebaseapp.com",
             projectId: "my-company-time-tracking",
@@ -190,13 +175,9 @@
             appId: "1:758524847747:web:2e5a49e4064334f1265db6",
             measurementId: "G-50SYJKTRT1"
         };
-
-        // ตรวจสอบ Environment เพื่อให้ใช้งานบน Canvas ได้ (ถ้ามี) หรือใช้ของ User
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userFirebaseConfig;
         
-        // URL ของ Google Apps Script Web App สำหรับส่งเข้า Google Sheets อัตโนมัติ
-        // วิธีทำ: 1. สร้าง Google Sheets 2. ไปที่ Extensions > Apps Script 3. วางโค้ดด้านล่าง 4. Deploy เป็น Web App
-        const GOOGLE_SHEETS_WEBHOOK_URL = ""; // <-- นำ URL ที่ได้จากการ Deploy มาวางที่นี่
+        // URL ของ Google Apps Script Web App สำหรับส่งเข้า Google Sheets
+        const GOOGLE_SHEETS_WEBHOOK_URL = ""; 
         
         // ==========================================
         // 2. INITIALIZATION
@@ -205,12 +186,8 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // กำหนด Path ของ Collection อย่างปลอดภัย
-        const isCanvasEnv = typeof __app_id !== 'undefined';
-        const appId = isCanvasEnv ? __app_id : 'my-company-app';
-        const collectionPath = isCanvasEnv 
-            ? `artifacts/${appId}/public/data/timelogs` 
-            : 'timelogs'; // ใช้ path 'timelogs' ทั่วไปหากรันบนเซิร์ฟเวอร์จริง
+        // ใช้ Path มาตรฐานสำหรับฐานข้อมูลของคุณโดยตรง
+        const collectionPath = 'timelogs'; 
 
         let currentUser = null;
         let allLogs = [];
@@ -226,7 +203,6 @@
         const historyList = document.getElementById('historyList');
         const loadingOverlay = document.getElementById('loadingOverlay');
         
-        // UI Elements for Auth
         const loginScreen = document.getElementById('loginScreen');
         const appScreen = document.getElementById('appScreen');
         const exportCsvBtn = document.getElementById('exportCsvBtn');
@@ -234,7 +210,6 @@
         const userGreeting = document.getElementById('userGreeting');
         const loggedInUserName = document.getElementById('loggedInUserName');
         
-        // Auth Form Elements
         const authTitle = document.getElementById('authTitle');
         const authSubtitle = document.getElementById('authSubtitle');
         const nameField = document.getElementById('nameField');
@@ -247,31 +222,14 @@
         
         let isLoginMode = true;
 
-        // ระบบ Auth พื้นฐานสำหรับ Canvas Environment
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                }
-            } catch (error) {
-                console.error("Auth init error:", error);
-            }
-        };
-        initAuth();
-
-        // อัปเดตนาฬิกา
         function updateClock() {
             const now = new Date();
-            const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const dateStr = now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            
-            timeDisplay.textContent = timeStr;
-            dateDisplay.textContent = dateStr;
+            timeDisplay.textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            dateDisplay.textContent = now.toLocaleDateString('th-TH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         }
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Modal (แทน Alert)
         const modal = document.getElementById('customModal');
         const modalContent = document.getElementById('modalContent');
         const modalIcon = document.getElementById('modalIcon');
@@ -303,11 +261,9 @@
             modalContent.classList.add('scale-95');
         });
 
-        // แสดงผล History
         function renderHistory(data) {
             historyList.innerHTML = '';
             
-            // กรองเอาเฉพาะของวันนี้ และเรียงจากล่าสุดไปเก่า
             const todayStr = new Date().toLocaleDateString('th-TH');
             let todayLogs = data.filter(log => log.date === todayStr);
             todayLogs.sort((a, b) => b.timestamp - a.timestamp);
@@ -354,24 +310,15 @@
             lucide.createIcons();
         }
 
-        // ==========================================
-        // 4. CORE LOGIC (FIREBASE & SHEETS SYNC)
-        // ==========================================
-        
-        // Sync ไปยัง Google Sheets
         async function syncToGoogleSheets(logData) {
-            if (!GOOGLE_SHEETS_WEBHOOK_URL) return; // ข้ามหากไม่ได้ตั้งค่า URL
-            
+            if (!GOOGLE_SHEETS_WEBHOOK_URL) return;
             try {
                 await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // สำคัญสำหรับ Google Apps Script เพื่อไม่ให้ติดเรื่อง CORS
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(logData)
                 });
-                console.log("Synced to Google Sheets successfully");
             } catch (err) {
                 console.error("Error syncing to sheets:", err);
             }
@@ -386,20 +333,15 @@
             }
 
             const empName = currentUser.displayName || currentUser.email;
-
             loadingOverlay.classList.remove('hidden');
             
-            // ขอดึงข้อมูลพิกัด GPS (ถ้าผู้ใช้ไม่อนุญาต ก็ยังบันทึกเวลาได้ตามปกติ)
             let locationData = null;
             try {
                 if (navigator.geolocation) {
                     const position = await new Promise((resolve, reject) => {
                         navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000, enableHighAccuracy: true });
                     });
-                    locationData = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
+                    locationData = { lat: position.coords.latitude, lng: position.coords.longitude };
                 }
             } catch (geoError) {
                 console.warn("ไม่สามารถดึงตำแหน่ง GPS ได้:", geoError);
@@ -412,24 +354,20 @@
                     empName: empName,
                     remark: remark,
                     location: locationData,
-                    type: type, // 'IN' or 'OUT'
+                    type: type,
                     timestamp: now.getTime(),
                     date: now.toLocaleDateString('th-TH'),
                     time: now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
                     isoString: now.toISOString()
                 };
 
-                // บันทึกลง Firestore
                 const colRef = collection(db, collectionPath);
                 await addDoc(colRef, logData);
 
-                // พยายามส่งไป Google Sheets ทันที (Background)
                 syncToGoogleSheets(logData);
-
-                remarkInput.value = ''; // เคลียร์ช่องหมายเหตุหลังกด
+                remarkInput.value = '';
 
                 loadingOverlay.classList.add('hidden');
-                
                 const typeTxt = type === 'IN' ? 'เข้างาน' : 'ออกงาน';
                 showModal('สำเร็จ', `ลงเวลา${typeTxt}เรียบร้อยแล้วเวลา ${logData.time} น.`, 'success');
 
@@ -438,27 +376,25 @@
                 loadingOverlay.classList.add('hidden');
                 
                 if (error.code === 'permission-denied' || error.message.includes('Missing or insufficient permissions')) {
-                    showModal('ตั้งค่า Firestore Rules', 'ไม่สามารถบันทึกได้: กรุณาไปที่ Firebase Console > Firestore Database > Rules แล้วเปลี่ยนเป็น allow read, write: if request.auth != null;', 'error');
+                    showModal('สิทธิ์การเข้าถึงถูกปฏิเสธ', 'ไม่สามารถบันทึกได้ กรุณาตรวจสอบ Firestore Rules ของคุณอีกครั้งว่าบันทึกและ Publish เรียบร้อยแล้ว (allow read, write: if request.auth != null;)', 'error');
                 } else {
                     showModal('ข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่', 'error');
                 }
             }
         }
 
-        // ==========================================
-        // 5. EVENT LISTENERS & AUTH SETUP
-        // ==========================================
-
         document.getElementById('btnClockIn').addEventListener('click', () => handleClockEvent('IN'));
         document.getElementById('btnClockOut').addEventListener('click', () => handleClockEvent('OUT'));
 
-        // ดึงข้อมูลประวัติ
+        let unsubscribeSnapshot = null;
+
         function fetchLogs() {
             if (!currentUser) return;
             const colRef = collection(db, collectionPath);
             
-            // อ่านข้อมูลทั้งหมด (ไม่ใช้ Query แบบซับซ้อนตามกฎ)
-            onSnapshot(colRef, (snapshot) => {
+            if(unsubscribeSnapshot) unsubscribeSnapshot();
+
+            unsubscribeSnapshot = onSnapshot(colRef, (snapshot) => {
                 allLogs = [];
                 snapshot.forEach((doc) => {
                     allLogs.push({ id: doc.id, ...doc.data() });
@@ -468,14 +404,10 @@
                 console.error("Error fetching logs:", error);
                 if (error.code === 'permission-denied' || error.message.includes('Missing or insufficient permissions')) {
                     historyList.innerHTML = `<div class="text-center text-red-500 py-4 text-sm bg-red-50 rounded-xl border border-dashed border-red-200">ไม่สามารถโหลดข้อมูลได้: ติดปัญหาเรื่องสิทธิ์ Firestore Rules</div>`;
-                    showModal('ตั้งค่า Firestore Rules', 'ระบบฐานข้อมูลถูกล็อกไว้ กรุณาไปที่ Firebase Console > Firestore Database > Rules แล้วแก้ไขตามคำแนะนำ', 'error');
                 }
             });
         }
 
-        // --- ระบบ Authentication (Login / Register / Logout) ---
-
-        // สลับโหมด Login / Register
         authToggleBtn.addEventListener('click', () => {
             isLoginMode = !isLoginMode;
             if (isLoginMode) {
@@ -495,7 +427,6 @@
             }
         });
 
-        // จัดการฟอร์ม Login/Register
         authSubmitBtn.addEventListener('click', async () => {
             const email = authEmail.value.trim();
             const password = authPassword.value;
@@ -536,7 +467,9 @@
                 } else if (error.code === 'auth/weak-password') {
                     errorMsg = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
                 } else if (error.code === 'auth/operation-not-allowed') {
-                    errorMsg = 'ยังไม่ได้เปิดใช้งาน Email/Password Auth กรุณาไปที่ Firebase Console -> Authentication -> Sign-in method แล้วเปิดใช้งาน "Email/Password" ครับ';
+                    errorMsg = 'ยังไม่ได้เปิดใช้งาน Email/Password Auth กรุณาไปที่ Firebase Console ครับ';
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    errorMsg = 'โดเมนนี้ยังไม่ได้รับอนุญาต กรุณาไปที่ Firebase Console -> Authentication -> Settings -> Authorized domains แล้วเพิ่มโดเมนของหน้านี้ลงไปครับ';
                 } else {
                     errorMsg = error.message;
                 }
@@ -546,19 +479,17 @@
             }
         });
 
-        // จัดการออกจากระบบ
         logoutBtn.addEventListener('click', async () => {
             try {
                 await signOut(auth);
+                if(unsubscribeSnapshot) unsubscribeSnapshot();
             } catch (error) {
                 console.error("Logout error:", error);
             }
         });
 
-        // ตรวจสถานะ UI ตาม User
         function updateUIState(user) {
-            if (user && !user.isAnonymous) {
-                // Logged In
+            if (user) {
                 loginScreen.classList.add('hidden');
                 appScreen.classList.remove('hidden');
                 exportCsvBtn.classList.remove('hidden');
@@ -569,7 +500,6 @@
                 userGreeting.textContent = `สวัสดี, ${displayName}`;
                 loggedInUserName.textContent = displayName;
             } else {
-                // Logged Out
                 loginScreen.classList.remove('hidden');
                 appScreen.classList.add('hidden');
                 exportCsvBtn.classList.add('hidden');
@@ -578,14 +508,7 @@
             }
         }
 
-        // ตรวจสอบสถานะ User จาก Firebase
         onAuthStateChanged(auth, (user) => {
-            if (user && user.isAnonymous) {
-                // หากเคยเข้าสู่ระบบแบบไม่ระบุตัวตนจากเวอร์ชันเก่า ให้ล็อกเอาต์ทิ้ง
-                signOut(auth);
-                return;
-            }
-
             currentUser = user;
             updateUIState(user);
 
@@ -597,18 +520,15 @@
             }
         });
 
-        // ฟังก์ชัน Export CSV เป็น Backup
         document.getElementById('exportCsvBtn').addEventListener('click', () => {
             if (allLogs.length === 0) {
                 showModal('แจ้งเตือน', 'ยังไม่มีข้อมูลสำหรับส่งออก', 'info');
                 return;
             }
             
-            // สร้าง Header ของ CSV (รองรับภาษาไทย)
-            let csvContent = "\uFEFF"; // BOM for Excel to read UTF-8 properly
+            let csvContent = "\uFEFF"; 
             csvContent += "วันที่,เวลา,ประเภท,ชื่อพนักงาน,หมายเหตุ,ละติจูด,ลองจิจูด\n";
             
-            // นำข้อมูลมาแปลงเป็นแถว
             const sortedLogs = [...allLogs].sort((a, b) => b.timestamp - a.timestamp);
             sortedLogs.forEach(row => {
                 const typeStr = row.type === 'IN' ? 'เข้างาน' : 'ออกงาน';
@@ -618,7 +538,6 @@
                 csvContent += `${row.date},${row.time},${typeStr},"${row.empName}",${remarkStr},${lat},${lng}\n`;
             });
             
-            // สร้างปุ่มดาวน์โหลดจำลองและคลิก
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
