@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Time Attendance UI</title>
+    <title>Time Attendance UI & Owner Dashboard</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -21,7 +21,7 @@
         .animate-blob { animation: blob 10s infinite; }
         .animation-delay-2000 { animation-delay: 2s; }
         
-        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
@@ -36,89 +36,225 @@
             <div id="blob2" class="absolute top-[20%] -right-[10%] w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob animation-delay-2000 transition-colors duration-1000 bg-indigo-400"></div>
         </div>
 
-        <div class="w-full max-w-[420px] h-[100dvh] sm:h-[850px] bg-white/70 backdrop-blur-3xl sm:rounded-[40px] shadow-2xl border border-white/80 flex flex-col relative overflow-hidden z-10">
+        <!-- Main App Container -->
+        <div class="w-full max-w-[420px] h-[100dvh] sm:h-[850px] sm:rounded-[40px] shadow-2xl border border-white/80 relative overflow-hidden z-10 bg-slate-50/50 backdrop-blur-3xl">
             
-            <!-- Header -->
-            <div class="p-6 pb-2 flex justify-between items-center">
-                <div>
-                    <p class="text-slate-500 font-medium text-xs flex items-center gap-1.5 uppercase tracking-wider">
-                        <span id="greeting-text">สวัสดี</span> 
-                        <span id="greeting-icon-container" class="text-orange-400 w-3 h-3 flex items-center justify-center">
-                            <i data-lucide="sun" class="w-3 h-3"></i>
-                        </span>
-                    </p>
-                    <h2 class="text-xl font-bold text-slate-800 tracking-tight mt-0.5">สมชาย ใจดี</h2>
+            <!-- ========================================== -->
+            <!-- EMPLOYEE SELECTOR (LOGIN) OVERLAY -->
+            <!-- ========================================== -->
+            <div id="login-overlay" class="absolute inset-0 z-30 bg-white/95 backdrop-blur-xl flex flex-col transition-all duration-500 opacity-100">
+                <div class="p-6 pb-2 flex justify-end">
+                    <button id="btn-go-owner-from-login" class="w-10 h-10 rounded-full bg-slate-100 shadow-sm border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-200 hover:text-blue-600 transition-colors">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    </button>
                 </div>
-                <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm">
-                    <img src="https://ui-avatars.com/api/?name=Somchai&background=eff6ff&color=2563eb&bold=true" alt="Profile" />
-                </div>
-            </div>
-
-            <!-- Chips -->
-            <div class="px-6 flex gap-2 mt-1">
-                <div id="date-display" class="bg-white/80 px-3 py-1.5 rounded-full text-[11px] font-bold text-slate-500 shadow-sm border border-white">
-                    กำลังโหลด...
-                </div>
-                <div id="conn-status" class="px-3 py-1.5 rounded-full text-[11px] font-bold shadow-sm transition-colors bg-slate-300 text-slate-600">
-                    CONNECTING...
-                </div>
-            </div>
-
-            <!-- Clock & Timer -->
-            <div class="flex flex-col items-center justify-center flex-grow text-center mt-4">
-                <h1 id="clock-display" class="text-[5.5rem] font-light tracking-tighter text-slate-800 leading-none tabular-nums">
-                    00:00
-                </h1>
-                
-                <div id="timer-container" class="mt-6 h-20 transition-all duration-500 opacity-0 scale-95 pointer-events-none">
-                    <span class="text-emerald-600 font-black text-xs tracking-widest uppercase bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                        Working Now
-                    </span>
-                    <div id="elapsed-time" class="text-4xl font-black text-slate-800 mt-2 tabular-nums drop-shadow-sm">00:00:00</div>
-                </div>
-            </div>
-
-            <!-- Hold Button -->
-            <div class="py-10 flex justify-center items-center min-h-[220px]">
-                <div id="hold-area" class="relative w-[180px] h-[180px] flex items-center justify-center cursor-pointer" style="-webkit-tap-highlight-color: transparent;">
+                <div class="flex-1 flex flex-col items-center justify-center px-6 pb-12">
+                    <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6 shadow-inner text-blue-600">
+                        <i data-lucide="users" class="w-10 h-10"></i>
+                    </div>
+                    <h2 class="text-2xl font-black text-slate-800 tracking-tight mb-2">เข้าสู่ระบบ</h2>
+                    <p class="text-sm text-slate-500 mb-8">กรุณาเลือกชื่อพนักงานเพื่อบันทึกเวลา</p>
                     
-                    <svg class="absolute inset-0 w-full h-full -rotate-90 pointer-events-none drop-shadow-md">
-                        <circle cx="90" cy="90" r="82" class="text-slate-200/50 backdrop-blur-sm" stroke-width="8" fill="none" stroke="currentColor" />
-                        <circle id="progress-ring" cx="90" cy="90" r="82" class="text-blue-600 transition-all duration-75" stroke-width="8" fill="none" stroke="currentColor" stroke-dasharray="515" stroke-dashoffset="515" stroke-linecap="round" />
-                    </svg>
-
-                    <div id="btn-inner" class="w-[136px] h-[136px] rounded-full flex flex-col items-center justify-center transition-all duration-300 shadow-xl bg-slate-200 text-slate-400 cursor-not-allowed opacity-70 border-2 border-transparent">
-                        
-                        <div id="btn-icon-container" class="mb-1 flex items-center justify-center">
-                            <i data-lucide="fingerprint" class="w-10 h-10"></i>
-                        </div>
-                        <span id="btn-text" class="font-bold text-slate-800 text-lg tracking-wide">เข้างาน</span>
-                        <span id="btn-subtext" class="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider">Connecting...</span>
+                    <div id="employee-select-list" class="w-full space-y-3 overflow-y-auto max-h-[50vh] custom-scrollbar px-2">
+                        <p class="text-center text-slate-400 text-sm italic py-4">กำลังโหลดรายชื่อ...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- History Area -->
-            <div class="bg-white/90 backdrop-blur-xl flex-1 px-6 pt-5 pb-8 rounded-t-[40px] shadow-[0_-20px_50px_rgba(0,0,0,0.05)] overflow-hidden flex flex-col h-[35%] relative">
-                <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4"></div>
-                <h3 class="font-bold text-slate-800 flex items-center gap-2 mb-4 text-sm uppercase tracking-wider">
-                    <i data-lucide="history" class="w-4 h-4 text-slate-400"></i> ประวัติ 10 รายการล่าสุด
-                </h3>
-                
-                <div id="history-list" class="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2 pb-4">
-                    <p class="text-center text-slate-400 text-xs py-10 italic">No cloud logs found...</p>
+            <!-- ========================================== -->
+            <!-- EMPLOYEE VIEW -->
+            <!-- ========================================== -->
+            <div id="employee-view" class="flex flex-col h-full w-full absolute top-0 left-0 transition-all duration-500 transform translate-x-0 opacity-100">
+                <!-- Header -->
+                <div class="p-6 pb-2 flex justify-between items-center">
+                    <div>
+                        <p class="text-slate-500 font-medium text-xs flex items-center gap-1.5 uppercase tracking-wider">
+                            <span id="greeting-text">สวัสดี</span> 
+                            <span id="greeting-icon-container" class="text-orange-400 w-3 h-3 flex items-center justify-center">
+                                <i data-lucide="sun" class="w-3 h-3"></i>
+                            </span>
+                        </p>
+                        <h2 id="current-emp-name" class="text-xl font-bold text-slate-800 tracking-tight mt-0.5">...</h2>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button id="btn-go-owner" class="w-10 h-10 rounded-full bg-white/80 shadow-sm border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-blue-600 transition-colors">
+                            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                        </button>
+                        <div id="btn-logout" class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm cursor-pointer hover:border-rose-300 transition-colors" title="สลับบัญชีผู้ใช้">
+                            <img id="current-emp-avatar" src="https://ui-avatars.com/api/?name=User&background=eff6ff&color=2563eb&bold=true" alt="Profile" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chips -->
+                <div class="px-6 flex gap-2 mt-1">
+                    <div id="date-display" class="bg-white/80 px-3 py-1.5 rounded-full text-[11px] font-bold text-slate-500 shadow-sm border border-white">
+                        กำลังโหลด...
+                    </div>
+                    <div id="conn-status" class="px-3 py-1.5 rounded-full text-[11px] font-bold shadow-sm transition-colors bg-slate-300 text-slate-600">
+                        CONNECTING...
+                    </div>
+                </div>
+
+                <!-- Clock & Timer -->
+                <div class="flex flex-col items-center justify-center flex-grow text-center mt-2">
+                    <h1 id="clock-display" class="text-[5.5rem] font-light tracking-tighter text-slate-800 leading-none tabular-nums">
+                        00:00
+                    </h1>
+                    
+                    <div id="timer-container" class="mt-6 h-20 transition-all duration-500 opacity-0 scale-95 pointer-events-none">
+                        <span class="text-emerald-600 font-black text-xs tracking-widest uppercase bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                            Working Now
+                        </span>
+                        <div id="elapsed-time" class="text-4xl font-black text-slate-800 mt-2 tabular-nums drop-shadow-sm">00:00:00</div>
+                    </div>
+                </div>
+
+                <!-- Hold Button -->
+                <div class="py-8 flex justify-center items-center min-h-[220px]">
+                    <div id="hold-area" class="relative w-[180px] h-[180px] flex items-center justify-center cursor-pointer" style="-webkit-tap-highlight-color: transparent;">
+                        <svg class="absolute inset-0 w-full h-full -rotate-90 pointer-events-none drop-shadow-md">
+                            <circle cx="90" cy="90" r="82" class="text-slate-200/80 backdrop-blur-sm" stroke-width="8" fill="none" stroke="currentColor" />
+                            <circle id="progress-ring" cx="90" cy="90" r="82" class="text-blue-600 transition-all duration-75" stroke-width="8" fill="none" stroke="currentColor" stroke-dasharray="515" stroke-dashoffset="515" stroke-linecap="round" />
+                        </svg>
+                        <div id="btn-inner" class="w-[136px] h-[136px] rounded-full flex flex-col items-center justify-center transition-all duration-300 shadow-xl bg-slate-200 text-slate-400 cursor-not-allowed opacity-70 border-2 border-transparent">
+                            <div id="btn-icon-container" class="mb-1 flex items-center justify-center">
+                                <i data-lucide="fingerprint" class="w-10 h-10"></i>
+                            </div>
+                            <span id="btn-text" class="font-bold text-slate-800 text-lg tracking-wide">เข้างาน</span>
+                            <span id="btn-subtext" class="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider">Connecting...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Area -->
+                <div class="bg-white/90 backdrop-blur-xl flex-1 px-6 pt-5 pb-8 rounded-t-[40px] shadow-[0_-20px_50px_rgba(0,0,0,0.05)] overflow-hidden flex flex-col h-[35%] relative">
+                    <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4"></div>
+                    <h3 class="font-bold text-slate-800 flex items-center gap-2 mb-4 text-sm uppercase tracking-wider">
+                        <i data-lucide="history" class="w-4 h-4 text-slate-400"></i> ประวัติส่วนตัว (ล่าสุด)
+                    </h3>
+                    <div id="history-list" class="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2 pb-4">
+                        <p class="text-center text-slate-400 text-xs py-10 italic">กำลังดึงข้อมูล...</p>
+                    </div>
                 </div>
             </div>
+
+            <!-- ========================================== -->
+            <!-- OWNER VIEW -->
+            <!-- ========================================== -->
+            <div id="owner-view" class="flex flex-col h-full w-full absolute top-0 left-0 transition-all duration-500 transform translate-x-full opacity-0 bg-white/95 backdrop-blur-3xl z-40">
+                
+                <!-- Owner Header -->
+                <div class="p-6 pb-2 flex items-center justify-between bg-white">
+                    <button id="btn-back-employee" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition-colors -ml-2">
+                        <i data-lucide="chevron-left" class="w-6 h-6"></i>
+                    </button>
+                    <h2 class="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+                        <i data-lucide="crown" class="w-5 h-5 text-amber-500"></i> ระบบเจ้าของร้าน
+                    </h2>
+                    <div class="w-10 h-10"></div>
+                </div>
+
+                <!-- Owner Tabs -->
+                <div class="flex border-b border-slate-200 bg-white px-6 pt-2">
+                    <button id="tab-overview" class="flex-1 pb-3 text-sm font-bold border-b-2 border-blue-600 text-blue-600 transition-colors">ภาพรวม</button>
+                    <button id="tab-employees" class="flex-1 pb-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors">จัดการพนักงาน</button>
+                </div>
+
+                <!-- TAB CONTENT: OVERVIEW -->
+                <div id="owner-content-overview" class="flex-1 flex flex-col overflow-hidden">
+                    <div class="p-6 grid grid-cols-2 gap-4 bg-slate-50/50">
+                        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100/50 p-5 rounded-3xl shadow-sm relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-4 opacity-10">
+                                <i data-lucide="users" class="w-12 h-12 text-blue-600"></i>
+                            </div>
+                            <p class="text-xs text-blue-600 font-bold mb-1 uppercase tracking-wider">กำลังทำงาน</p>
+                            <div class="flex items-baseline gap-1">
+                                <p id="owner-active-count" class="text-4xl font-black text-blue-700">0</p>
+                                <p class="text-sm font-bold text-blue-500">คน</p>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100/50 p-5 rounded-3xl shadow-sm relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-4 opacity-10">
+                                <i data-lucide="list-checks" class="w-12 h-12 text-emerald-600"></i>
+                            </div>
+                            <p class="text-xs text-emerald-600 font-bold mb-1 uppercase tracking-wider">บันทึกวันนี้</p>
+                            <div class="flex items-baseline gap-1">
+                                <p id="owner-today-count" class="text-4xl font-black text-emerald-700">0</p>
+                                <p class="text-sm font-bold text-emerald-500">ครั้ง</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 overflow-hidden flex flex-col bg-white border-t border-slate-100">
+                        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center shadow-sm z-10">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm uppercase tracking-wider">
+                                <i data-lucide="activity" class="w-4 h-4 text-slate-400"></i> ความเคลื่อนไหวทั้งหมด
+                            </h3>
+                        </div>
+                        <div id="owner-history-list" class="flex-1 overflow-y-auto px-6 py-4 space-y-3 custom-scrollbar">
+                            <p class="text-center text-slate-400 text-xs py-10 italic">กำลังดึงข้อมูล...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT: MANAGE EMPLOYEES -->
+                <div id="owner-content-employees" class="flex-1 hidden flex-col bg-slate-50/50">
+                    <div class="p-6 flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg">รายชื่อพนักงาน</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">พนักงานทั้งหมด <span id="owner-emp-total" class="font-bold">0</span> คน</p>
+                        </div>
+                        <button id="btn-add-employee" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm shadow-blue-600/30 transition-all flex items-center gap-1">
+                            <i data-lucide="plus" class="w-4 h-4"></i> เพิ่ม
+                        </button>
+                    </div>
+
+                    <div id="owner-employee-list" class="flex-1 overflow-y-auto px-6 pb-6 space-y-3 custom-scrollbar">
+                        <!-- Employee list renders here -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ========================================== -->
+            <!-- EMPLOYEE MODAL (ADD / EDIT) -->
+            <!-- ========================================== -->
+            <div id="employee-modal" class="absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-6 opacity-0 pointer-events-none transition-opacity duration-300">
+                <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300" id="employee-modal-content">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                        <h3 id="modal-title" class="font-bold text-lg text-slate-800">เพิ่มพนักงานใหม่</h3>
+                        <button id="btn-close-modal" class="text-slate-400 hover:text-slate-600">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        <input type="hidden" id="modal-doc-id">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">รหัสพนักงาน</label>
+                            <input type="text" id="modal-emp-id" placeholder="เช่น EMP-001" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all font-medium">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">ชื่อ - นามสกุล</label>
+                            <input type="text" id="modal-emp-name" placeholder="ชื่อพนักงาน" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all font-medium">
+                        </div>
+                        <button id="btn-save-employee" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-600/20 transition-all flex justify-center items-center gap-2 mt-4">
+                            <i data-lucide="save" class="w-5 h-5"></i> บันทึกข้อมูล
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <!-- Firebase & Application Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Firebase Configuration (รองรับ Canvas Environment)
+        // Firebase Configuration
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
             : {
@@ -132,26 +268,48 @@
             };
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const employeeId = "EMP-1042";
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // State Variables
+        // --- Core State ---
         let user = null;
         let isCheckedIn = false;
-        let logs = [];
+        let allLogs = [];
+        let allEmployees = [];
+        let employeeLogs = [];
         let checkInTime = null;
+        
+        let currentEmpId = null;   // ID ปัจจุบันที่ล็อกอินอยู่
+        let currentEmpName = null;
         
         let holdProgress = 0;
         let isHolding = false;
         let showSuccess = false;
         let holdIntervalId = null;
+        
         let unsubscribeLogs = null;
+        let unsubscribeEmps = null;
 
-        // DOM Elements
+        // --- DOM Elements ---
+        const loginOverlay = document.getElementById('login-overlay');
+        const empSelectList = document.getElementById('employee-select-list');
+        const currentEmpNameEl = document.getElementById('current-emp-name');
+        const currentEmpAvatarEl = document.getElementById('current-emp-avatar');
+        const btnLogout = document.getElementById('btn-logout');
+
+        const employeeView = document.getElementById('employee-view');
+        const ownerView = document.getElementById('owner-view');
+        const btnGoOwner = document.getElementById('btn-go-owner');
+        const btnGoOwnerFromLogin = document.getElementById('btn-go-owner-from-login');
+        const btnBackEmployee = document.getElementById('btn-back-employee');
+
+        const tabOverview = document.getElementById('tab-overview');
+        const tabEmployees = document.getElementById('tab-employees');
+        const ownerContentOverview = document.getElementById('owner-content-overview');
+        const ownerContentEmployees = document.getElementById('owner-content-employees');
+
         const clockDisplay = document.getElementById('clock-display');
         const dateDisplay = document.getElementById('date-display');
         const greetingText = document.getElementById('greeting-text');
@@ -172,30 +330,264 @@
         
         const historyList = document.getElementById('history-list');
 
-        // Initialize Icons
+        const ownerActiveCount = document.getElementById('owner-active-count');
+        const ownerTodayCount = document.getElementById('owner-today-count');
+        const ownerHistoryList = document.getElementById('owner-history-list');
+        const ownerEmployeeList = document.getElementById('owner-employee-list');
+        const ownerEmpTotal = document.getElementById('owner-emp-total');
+
+        const employeeModal = document.getElementById('employee-modal');
+        const employeeModalContent = document.getElementById('employee-modal-content');
+        const btnAddEmployee = document.getElementById('btn-add-employee');
+        const btnCloseModal = document.getElementById('btn-close-modal');
+        const btnSaveEmployee = document.getElementById('btn-save-employee');
+        
+        const modalTitle = document.getElementById('modal-title');
+        const modalDocId = document.getElementById('modal-doc-id');
+        const modalEmpId = document.getElementById('modal-emp-id');
+        const modalEmpName = document.getElementById('modal-emp-name');
+
         lucide.createIcons();
 
-        // --- Core Logic ---
+        // --- Navigation & Tabs Logic ---
+        
+        function openOwnerView() {
+            employeeView.classList.add('-translate-x-full', 'opacity-0');
+            ownerView.classList.remove('translate-x-full', 'opacity-0');
+            if(!currentEmpId) {
+                loginOverlay.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+        function closeOwnerView() {
+            ownerView.classList.add('translate-x-full', 'opacity-0');
+            employeeView.classList.remove('-translate-x-full', 'opacity-0');
+            if(!currentEmpId) {
+                loginOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            }
+        }
 
-        // 1. Time & Greeting Updater
+        btnGoOwner.addEventListener('click', openOwnerView);
+        btnGoOwnerFromLogin.addEventListener('click', openOwnerView);
+        btnBackEmployee.addEventListener('click', closeOwnerView);
+
+        tabOverview.addEventListener('click', () => {
+            tabOverview.className = 'flex-1 pb-3 text-sm font-bold border-b-2 border-blue-600 text-blue-600 transition-colors';
+            tabEmployees.className = 'flex-1 pb-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors';
+            ownerContentOverview.classList.remove('hidden');
+            ownerContentOverview.classList.add('flex');
+            ownerContentEmployees.classList.add('hidden');
+            ownerContentEmployees.classList.remove('flex');
+        });
+
+        tabEmployees.addEventListener('click', () => {
+            tabEmployees.className = 'flex-1 pb-3 text-sm font-bold border-b-2 border-blue-600 text-blue-600 transition-colors';
+            tabOverview.className = 'flex-1 pb-3 text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors';
+            ownerContentEmployees.classList.remove('hidden');
+            ownerContentEmployees.classList.add('flex');
+            ownerContentOverview.classList.add('hidden');
+            ownerContentOverview.classList.remove('flex');
+        });
+
+        // --- Employee Selection (Login) ---
+        
+        function loginAs(empId, empName) {
+            currentEmpId = empId;
+            currentEmpName = empName;
+            
+            currentEmpNameEl.textContent = empName;
+            currentEmpAvatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(empName)}&background=eff6ff&color=2563eb&bold=true`;
+            
+            loginOverlay.classList.add('opacity-0', 'pointer-events-none');
+            
+            // Recalculate local state for this specific user
+            refreshCurrentUserState();
+        }
+
+        btnLogout.addEventListener('click', () => {
+            currentEmpId = null;
+            currentEmpName = null;
+            isCheckedIn = false;
+            checkInTime = null;
+            updateUIState();
+            loginOverlay.classList.remove('opacity-0', 'pointer-events-none');
+        });
+
+        // Make login globally available for the dynamically generated buttons
+        window.loginAs = loginAs;
+
+        function renderEmployeeSelector() {
+            if (allEmployees.length === 0) {
+                empSelectList.innerHTML = `
+                    <div class="text-center bg-rose-50 border border-rose-100 p-4 rounded-2xl">
+                        <p class="text-rose-600 font-bold text-sm mb-1">ยังไม่มีข้อมูลพนักงานในระบบ</p>
+                        <p class="text-rose-500/80 text-xs">กรุณากดไอคอนมุมขวาบนเพื่อเข้าสู่โหมดเจ้าของร้าน และเพิ่มพนักงาน</p>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            allEmployees.forEach(emp => {
+                html += `
+                <button onclick="loginAs('${emp.empId}', '${emp.empName}')" class="w-full flex items-center p-3.5 bg-white border border-slate-100 shadow-sm rounded-2xl hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all group">
+                    <div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-full flex items-center justify-center mr-4 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                    </div>
+                    <div class="text-left flex-1">
+                        <p class="font-bold text-slate-800">${emp.empName}</p>
+                        <p class="text-xs text-slate-500 font-medium">${emp.empId}</p>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300 group-hover:text-blue-500 transition-colors"></i>
+                </button>
+                `;
+            });
+            empSelectList.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        // --- Employee CRUD (Owner Mode) ---
+
+        function openModal(docId = null, empId = '', empName = '') {
+            modalDocId.value = docId || '';
+            modalEmpId.value = empId;
+            modalEmpName.value = empName;
+            
+            modalTitle.textContent = docId ? 'แก้ไขข้อมูลพนักงาน' : 'เพิ่มพนักงานใหม่';
+            
+            employeeModal.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                employeeModalContent.classList.remove('scale-95');
+                employeeModalContent.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            employeeModalContent.classList.remove('scale-100');
+            employeeModalContent.classList.add('scale-95');
+            setTimeout(() => {
+                employeeModal.classList.add('opacity-0', 'pointer-events-none');
+            }, 200);
+        }
+
+        btnAddEmployee.addEventListener('click', () => openModal());
+        btnCloseModal.addEventListener('click', closeModal);
+
+        window.editEmployee = (docId, empId, empName) => {
+            openModal(docId, empId, empName);
+        };
+
+        window.deleteEmployee = async (docId) => {
+            if(confirm('คุณต้องการลบพนักงานคนนี้ออกจากระบบใช่หรือไม่?')) {
+                if(!user) return;
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', docId));
+                } catch(e) { console.error("Error deleting employee:", e); }
+            }
+        };
+
+        btnSaveEmployee.addEventListener('click', async () => {
+            if(!user) return;
+            const docId = modalDocId.value;
+            const empId = modalEmpId.value.trim();
+            const empName = modalEmpName.value.trim();
+
+            if (!empId || !empName) {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+
+            const empRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
+            
+            btnSaveEmployee.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> กำลังบันทึก...';
+            lucide.createIcons();
+            btnSaveEmployee.disabled = true;
+
+            try {
+                if (docId) {
+                    // Update existing
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', docId), {
+                        empId: empId,
+                        empName: empName
+                    });
+                } else {
+                    // Add new
+                    await addDoc(empRef, {
+                        empId: empId,
+                        empName: empName,
+                        createdAt: serverTimestamp()
+                    });
+                }
+                closeModal();
+                
+                // Update current user name if edited themselves
+                if(currentEmpId === empId) {
+                    currentEmpName = empName;
+                    currentEmpNameEl.textContent = empName;
+                }
+            } catch (e) {
+                console.error("Error saving employee:", e);
+                alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+            } finally {
+                btnSaveEmployee.disabled = false;
+                btnSaveEmployee.innerHTML = '<i data-lucide="save" class="w-5 h-5"></i> บันทึกข้อมูล';
+                lucide.createIcons();
+            }
+        });
+
+        function renderOwnerEmployeeList() {
+            ownerEmpTotal.textContent = allEmployees.length;
+
+            if (allEmployees.length === 0) {
+                ownerEmployeeList.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-10 opacity-60">
+                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mb-3"></i>
+                        <p class="text-sm font-medium text-slate-500">ยังไม่มีพนักงานในระบบ</p>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            let html = '';
+            allEmployees.forEach(emp => {
+                html += `
+                <div class="flex justify-between items-center p-4 bg-white rounded-2xl shadow-sm border border-slate-100 hover:border-blue-100 transition-colors">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 shrink-0">
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                        </div>
+                        <div class="truncate">
+                            <p class="font-bold text-slate-800 text-sm truncate">${emp.empName}</p>
+                            <p class="text-[11px] text-slate-500 font-medium">${emp.empId}</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-1.5 shrink-0">
+                        <button onclick="editEmployee('${emp.id}', '${emp.empId}', '${emp.empName}')" class="w-8 h-8 flex items-center justify-center text-blue-500 bg-blue-50 rounded-lg hover:bg-blue-500 hover:text-white transition-colors">
+                            <i data-lucide="edit-2" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="deleteEmployee('${emp.id}')" class="w-8 h-8 flex items-center justify-center text-rose-500 bg-rose-50 rounded-lg hover:bg-rose-500 hover:text-white transition-colors">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>`;
+            });
+            ownerEmployeeList.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        // --- Real-time Logic & Updating ---
+
         function updateTime() {
             const now = new Date();
             clockDisplay.textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
             dateDisplay.textContent = now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long' });
 
-            // Greeting Logic
             const hour = now.getHours();
             let greeting = 'สวัสดี';
             let iconName = 'sun';
             let iconColor = 'text-amber-500';
 
-            if (hour < 12) {
-                greeting = 'อรุณสวัสดิ์'; iconName = 'sun'; iconColor = 'text-amber-500';
-            } else if (hour < 18) {
-                greeting = 'สวัสดีตอนบ่าย'; iconName = 'coffee'; iconColor = 'text-orange-500';
-            } else {
-                greeting = 'สวัสดีตอนเย็น'; iconName = 'moon'; iconColor = 'text-indigo-400';
-            }
+            if (hour < 12) { greeting = 'อรุณสวัสดิ์'; iconName = 'sun'; iconColor = 'text-amber-500'; } 
+            else if (hour < 18) { greeting = 'สวัสดีตอนบ่าย'; iconName = 'coffee'; iconColor = 'text-orange-500'; } 
+            else { greeting = 'สวัสดีตอนเย็น'; iconName = 'moon'; iconColor = 'text-indigo-400'; }
 
             greetingText.textContent = greeting;
             if(!greetingIconContainer.querySelector(`[data-lucide="${iconName}"]`)) {
@@ -204,7 +596,6 @@
                 lucide.createIcons();
             }
 
-            // Elapsed Time Logic
             if (isCheckedIn && checkInTime) {
                 const diff = Math.floor((now - checkInTime) / 1000);
                 const hours = String(Math.floor(diff / 3600)).padStart(2, '0');
@@ -216,9 +607,7 @@
         setInterval(updateTime, 1000);
         updateTime();
 
-        // 2. UI Updater based on State
         function updateUIState() {
-            // Connection Status
             if (user) {
                 connStatus.textContent = 'CONNECTED TO CLOUD';
                 connStatus.className = 'px-3 py-1.5 rounded-full text-[11px] font-bold shadow-sm transition-colors bg-emerald-500 text-white';
@@ -227,34 +616,29 @@
                 connStatus.className = 'px-3 py-1.5 rounded-full text-[11px] font-bold shadow-sm transition-colors bg-slate-300 text-slate-600';
             }
 
-            // Timer Container Visibility
-            if (isCheckedIn) {
-                timerContainer.className = 'mt-6 h-20 transition-all duration-500 opacity-100 scale-100';
-            } else {
-                timerContainer.className = 'mt-6 h-20 transition-all duration-500 opacity-0 scale-95 pointer-events-none absolute';
-            }
+            // Only show active states if a user is logged in
+            const showActive = isCheckedIn && currentEmpId !== null;
 
-            // Background Blobs
-            if (isCheckedIn) {
+            if (showActive) {
+                timerContainer.className = 'mt-6 h-20 transition-all duration-500 opacity-100 scale-100';
                 blob1.className = 'absolute -top-[10%] -left-[10%] w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob transition-colors duration-1000 bg-emerald-400';
                 blob2.className = 'absolute top-[20%] -right-[10%] w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob animation-delay-2000 transition-colors duration-1000 bg-teal-300';
             } else {
+                timerContainer.className = 'mt-6 h-20 transition-all duration-500 opacity-0 scale-95 pointer-events-none absolute';
                 blob1.className = 'absolute -top-[10%] -left-[10%] w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob transition-colors duration-1000 bg-blue-400';
                 blob2.className = 'absolute top-[20%] -right-[10%] w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob animation-delay-2000 transition-colors duration-1000 bg-indigo-400';
             }
 
-            // Progress Ring Color (Fixed SVG className issue)
-            progressRing.setAttribute('class', `text-${isCheckedIn ? 'rose-500' : 'blue-600'} transition-all duration-75`);
+            progressRing.setAttribute('class', `text-${showActive ? 'rose-500' : 'blue-600'} transition-all duration-75`);
 
-            // Hold Button Logic
             let btnClasses = 'w-[136px] h-[136px] rounded-full flex flex-col items-center justify-center transition-all duration-300 shadow-xl relative overflow-hidden ';
             
-            if (!user) {
+            if (!user || !currentEmpId) {
                 btnClasses += 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-70 border-2 border-transparent';
                 btnIconContainer.innerHTML = '<i data-lucide="fingerprint" class="w-[42px] h-[42px]"></i>';
                 btnText.textContent = 'เข้างาน';
                 btnText.className = 'mt-2 font-bold text-slate-400 text-lg tracking-wide';
-                btnSubtext.textContent = 'Connecting...';
+                btnSubtext.textContent = !user ? 'Connecting...' : 'Login Required';
                 btnSubtext.className = 'text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider';
             } else if (showSuccess) {
                 btnClasses += 'bg-emerald-500 text-white scale-110 border-2 border-transparent';
@@ -264,7 +648,7 @@
                 btnSubtext.textContent = '';
             } else {
                 btnClasses += isHolding ? 'scale-95 shadow-inner ' : 'scale-100 hover:scale-105 hover:shadow-2xl ';
-                if (isCheckedIn) {
+                if (showActive) {
                     btnClasses += 'bg-gradient-to-b from-white to-rose-50 text-rose-600 border-2 border-white';
                     btnIconContainer.innerHTML = '<i data-lucide="log-out" class="w-9 h-9"></i>';
                     btnText.textContent = 'เลิกงาน';
@@ -281,20 +665,41 @@
             btnInner.className = btnClasses;
             lucide.createIcons();
             
-            // Update Ring Offset
             const offset = 515 - (515 * holdProgress / 100);
             progressRing.style.strokeDashoffset = offset;
         }
 
-        // 3. Render History List
-        function renderHistory() {
-            if (logs.length === 0) {
-                historyList.innerHTML = '<p class="text-center text-slate-400 text-xs py-10 italic">No cloud logs found...</p>';
+        function refreshCurrentUserState() {
+            if(!currentEmpId) return;
+            
+            employeeLogs = allLogs.filter(log => log.employeeId === currentEmpId);
+            
+            if (employeeLogs.length > 0 && employeeLogs[0].type === 'IN') {
+                isCheckedIn = true;
+                checkInTime = employeeLogs[0].time;
+            } else {
+                isCheckedIn = false;
+                checkInTime = null;
+            }
+            
+            updateTime();
+            updateUIState();
+            renderEmployeeHistory();
+        }
+
+        function renderEmployeeHistory() {
+            if (!currentEmpId) {
+                historyList.innerHTML = '<p class="text-center text-slate-400 text-xs py-10 italic">กรุณาเลือกพนักงานเพื่อดูประวัติ</p>';
+                return;
+            }
+
+            if (employeeLogs.length === 0) {
+                historyList.innerHTML = '<p class="text-center text-slate-400 text-xs py-10 italic">ไม่มีข้อมูลการบันทึก...</p>';
                 return;
             }
 
             let html = '';
-            logs.forEach((log, index) => {
+            employeeLogs.slice(0, 10).forEach((log, index) => {
                 const timeStr = log.time.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
                 const isFirst = index === 0;
                 const borderClass = isFirst ? (log.type === 'IN' ? 'border-l-4 border-l-blue-500' : 'border-l-4 border-l-rose-500') : '';
@@ -315,23 +720,77 @@
                     </div>
                 </div>`;
             });
-            
             historyList.innerHTML = html;
             lucide.createIcons();
         }
 
-        // 4. Firestore Write Logic
+        function renderOwnerDashboard() {
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
+            
+            let todayCount = 0;
+            const activeEmployees = new Set();
+            const latestStatusByEmployee = {};
+
+            allLogs.forEach(log => {
+                if (log.time >= todayStart) todayCount++;
+                if (!latestStatusByEmployee[log.employeeId]) {
+                    latestStatusByEmployee[log.employeeId] = log;
+                    if (log.type === 'IN') {
+                        activeEmployees.add(log.employeeId);
+                    }
+                }
+            });
+
+            ownerActiveCount.textContent = activeEmployees.size;
+            ownerTodayCount.textContent = todayCount;
+
+            if (allLogs.length === 0) {
+                ownerHistoryList.innerHTML = '<p class="text-center text-slate-400 text-xs py-10 italic">ไม่มีข้อมูลในระบบ...</p>';
+            } else {
+                let html = '';
+                allLogs.slice(0, 20).forEach((log) => {
+                    const timeStr = log.time.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                    const dateStr = log.time.toLocaleDateString('th-TH', { month: 'short', day: 'numeric' });
+                    
+                    html += `
+                    <div class="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-100 shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center ${log.type === 'IN' ? 'bg-blue-50 text-blue-600' : 'bg-rose-50 text-rose-500'}">
+                                <i data-lucide="${log.type === 'IN' ? 'log-in' : 'log-out'}" class="w-[18px] h-[18px]"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-800 text-sm">${log.employeeName || log.employeeId}</p>
+                                <p class="text-[11px] font-medium mt-0.5 ${log.type === 'IN' ? 'text-blue-500' : 'text-rose-500'}">
+                                    ${log.type === 'IN' ? 'Clock In' : 'Clock Out'} • <span class="text-slate-400">${log.location}</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold text-slate-800 text-sm tabular-nums tracking-tight">${timeStr}</div>
+                            <div class="text-[10px] text-slate-400">${dateStr}</div>
+                        </div>
+                    </div>`;
+                });
+                ownerHistoryList.innerHTML = html;
+            }
+            lucide.createIcons();
+        }
+
+        // --- Interaction Logic ---
+
         async function handlePunch() {
-            if (!user) return;
+            if (!user || !currentEmpId) return;
             const type = isCheckedIn ? 'OUT' : 'IN';
             
             try {
-                const logsRef = collection(db, 'artifacts', appId, 'users', user.uid, 'attendance_logs');
+                const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'attendance_logs');
                 await addDoc(logsRef, {
-                    employeeId: employeeId,
+                    employeeId: currentEmpId,
+                    employeeName: currentEmpName,
                     type: type,
                     timestamp: serverTimestamp(),
-                    location: 'สำนักงานใหญ่ HQ (GPS Verified)',
+                    location: 'สำนักงานใหญ่ HQ (GPS)',
                     device: 'Web Browser'
                 });
             } catch (error) {
@@ -339,10 +798,9 @@
             }
         }
 
-        // 5. Hold Button Event Handlers
         function startHold(e) {
             e.preventDefault();
-            if (showSuccess || !user) return;
+            if (showSuccess || !user || !currentEmpId) return;
             isHolding = true;
             holdProgress = 0;
             
@@ -370,21 +828,21 @@
         }
 
         function endHold() {
-            if (showSuccess || !user) return;
+            if (showSuccess || !user || !currentEmpId) return;
             clearInterval(holdIntervalId);
             holdProgress = 0;
             isHolding = false;
             updateUIState();
         }
 
-        // Add Listeners
         holdArea.addEventListener('mousedown', startHold);
         holdArea.addEventListener('mouseup', endHold);
         holdArea.addEventListener('mouseleave', endHold);
         holdArea.addEventListener('touchstart', startHold, {passive: false});
         holdArea.addEventListener('touchend', endHold);
 
-        // 6. Authentication & Data Fetching
+        // --- App Initialization ---
+
         async function initAuth() {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -402,47 +860,53 @@
             updateUIState();
 
             if (user) {
-                // Fetch Data
-                const logsRef = collection(db, 'artifacts', appId, 'users', user.uid, 'attendance_logs');
-                
+                // Subscribe to Logs
+                const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'attendance_logs');
                 if (unsubscribeLogs) unsubscribeLogs();
-                
                 unsubscribeLogs = onSnapshot(logsRef, (snapshot) => {
                     const fetchedLogs = snapshot.docs.map(doc => {
                         const data = doc.data();
-                        return {
-                            id: doc.id,
-                            ...data,
-                            time: data.timestamp ? data.timestamp.toDate() : new Date()
-                        };
+                        return { id: doc.id, ...data, time: data.timestamp ? data.timestamp.toDate() : new Date() };
                     });
 
                     fetchedLogs.sort((a, b) => b.time - a.time);
-                    logs = fetchedLogs.slice(0, 10);
+                    allLogs = fetchedLogs;
                     
-                    if (logs.length > 0 && logs[0].type === 'IN') {
-                        isCheckedIn = true;
-                        checkInTime = logs[0].time;
-                    } else {
-                        isCheckedIn = false;
-                        checkInTime = null;
+                    refreshCurrentUserState();
+                    renderOwnerDashboard();
+                }, (error) => console.error("Logs Snapshot error:", error));
+
+                // Subscribe to Employees
+                const empRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
+                if (unsubscribeEmps) unsubscribeEmps();
+                unsubscribeEmps = onSnapshot(empRef, (snapshot) => {
+                    const emps = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    // Add default employee if collection is completely empty (For demo purposes)
+                    if(emps.length === 0 && snapshot.metadata.hasPendingWrites === false) {
+                        addDoc(empRef, { empId: 'EMP-1042', empName: 'สมชาย ใจดี', createdAt: serverTimestamp() });
+                        return;
                     }
-                    
-                    updateTime();
-                    updateUIState();
-                    renderHistory();
-                }, (error) => {
-                    console.error("Snapshot error:", error);
-                });
+
+                    // Sort by name or creation
+                    emps.sort((a, b) => a.empId.localeCompare(b.empId));
+                    allEmployees = emps;
+
+                    // If logged in user was deleted, log them out
+                    if(currentEmpId && !emps.find(e => e.empId === currentEmpId)) {
+                        btnLogout.click(); 
+                    }
+
+                    renderEmployeeSelector();
+                    renderOwnerEmployeeList();
+                }, (error) => console.error("Emps Snapshot error:", error));
+
             } else {
-                if (unsubscribeLogs) {
-                    unsubscribeLogs();
-                    unsubscribeLogs = null;
-                }
+                if (unsubscribeLogs) { unsubscribeLogs(); unsubscribeLogs = null; }
+                if (unsubscribeEmps) { unsubscribeEmps(); unsubscribeEmps = null; }
             }
         });
 
-        // Bootstrap App
         initAuth();
         updateUIState();
 
