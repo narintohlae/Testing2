@@ -781,8 +781,33 @@
             c.classList.remove('scale-100'); c.classList.add('scale-95'); setTimeout(() => { m.classList.add('opacity-0', 'pointer-events-none'); }, 200);
         };
 
-        window.deleteEmployee = async function(docId) {
-            if(confirm('ลบพนักงานคนนี้ออกจากระบบ?')) { if(user) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', docId)); }
+        window.deleteEmployee = async function(docId, empId) {
+            if(confirm('คุณต้องการลบพนักงานคนนี้ และประวัติการทำงาน/คำขอทั้งหมด ออกจากระบบใช่หรือไม่?')) { 
+                if(!user) return;
+                try {
+                    // 1. ลบข้อมูลบัญชีพนักงาน
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', docId));
+                    
+                    // 2. ดึงประวัติและคำขอทั้งหมดของพนักงานคนนี้ (จาก Memory)
+                    const logsToDelete = allLogs.filter(l => l.employeeId === empId);
+                    const reqsToDelete = allRequests.filter(r => r.employeeId === empId);
+                    
+                    // 3. เตรียมคำสั่งลบข้อมูลที่เกี่ยวข้องทั้งหมด
+                    const deletePromises = [
+                        ...logsToDelete.map(log => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance_logs', log.id))),
+                        ...reqsToDelete.map(req => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', req.id)))
+                    ];
+
+                    // 4. สั่งรันการลบทั้งหมดพร้อมกัน
+                    if (deletePromises.length > 0) {
+                        await Promise.all(deletePromises);
+                    }
+                    
+                } catch(e) { 
+                    console.error("Delete Error:", e); 
+                    alert('เกิดข้อผิดพลาดในการลบข้อมูลพนักงาน');
+                } 
+            }
         };
 
         window.submitRequest = async function(type) {
@@ -1117,7 +1142,7 @@
                 const safePersonal = e.personalQuota !== undefined ? e.personalQuota : 6;
                 const safeAnnual = e.annualQuota !== undefined ? e.annualQuota : 6;
                 
-                return `<div class="flex justify-between items-center p-3 sm:p-4 bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 hover:border-blue-100 transition-colors"><div class="flex items-center gap-2 sm:gap-3 overflow-hidden"><div class="w-8 h-8 sm:w-10 sm:h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 shrink-0"><i data-lucide="user" class="w-4 h-4"></i></div><div class="truncate"><p class="font-bold text-slate-800 text-xs sm:text-sm truncate">${e.empName}</p><p class="text-[9px] sm:text-[11px] text-slate-500">${e.empId} | PIN: ${e.empPin||'0000'} | ฿${e.wage||0}</p></div></div><div class="flex gap-1 shrink-0"><button onclick="window.openModal('${e.id}', '${safeId}', '${safeName}', '${safePin}', '${e.wage||0}', '${e.otRate||0}', '${safeOffDays}', '${safeSick}', '${safePersonal}', '${safeAnnual}')" class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-blue-500 bg-blue-50 rounded-lg hover:bg-blue-500 hover:text-white"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button><button onclick="window.deleteEmployee('${e.id}')" class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-rose-500 bg-rose-50 rounded-lg hover:bg-rose-500 hover:text-white"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></div>`;
+                return `<div class="flex justify-between items-center p-3 sm:p-4 bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 hover:border-blue-100 transition-colors"><div class="flex items-center gap-2 sm:gap-3 overflow-hidden"><div class="w-8 h-8 sm:w-10 sm:h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 shrink-0"><i data-lucide="user" class="w-4 h-4"></i></div><div class="truncate"><p class="font-bold text-slate-800 text-xs sm:text-sm truncate">${e.empName}</p><p class="text-[9px] sm:text-[11px] text-slate-500">${e.empId} | PIN: ${e.empPin||'0000'} | ฿${e.wage||0}</p></div></div><div class="flex gap-1 shrink-0"><button onclick="window.openModal('${e.id}', '${safeId}', '${safeName}', '${safePin}', '${e.wage||0}', '${e.otRate||0}', '${safeOffDays}', '${safeSick}', '${safePersonal}', '${safeAnnual}')" class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-blue-500 bg-blue-50 rounded-lg hover:bg-blue-500 hover:text-white"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button><button onclick="window.deleteEmployee('${e.id}', '${safeId}')" class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-rose-500 bg-rose-50 rounded-lg hover:bg-rose-500 hover:text-white"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button></div></div>`;
             }).join('');
             
             const ts = new Date(); ts.setHours(0,0,0,0);
