@@ -2,7 +2,8 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- ปรับ viewport เพื่อป้องกันการซูมในเบราว์เซอร์ส่วนใหญ่ -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Time Attendance & Store Settings</title>
     
     <!-- Tailwind CSS -->
@@ -12,6 +13,21 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
+        /* ล็อคหน้าจอหลัก ป้องกันการเด้ง (Bounce) และการเลื่อนหน้าเว็บทั้งหน้า */
+        html, body {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden;
+            overscroll-behavior: none;
+            touch-action: manipulation; /* ป้องกัน Double tap zoom */
+            -webkit-text-size-adjust: 100%;
+        }
+
+        /* บังคับ Font Size 16px ป้องกัน iOS Safari ซูมอัตโนมัติเวลาโฟกัสช่องกรอกข้อมูล */
+        input[type="text"], input[type="number"], input[type="date"], input[type="time"], select, textarea {
+            font-size: 16px !important;
+        }
+
         @keyframes blob {
             0% { transform: translate(0px, 0px) scale(1); }
             33% { transform: translate(30px, -50px) scale(1.1); }
@@ -29,6 +45,9 @@
         }
         .animate-shake { animation: shake 0.4s ease-in-out; }
         
+        .custom-scrollbar {
+            -webkit-overflow-scrolling: touch; /* ให้เลื่อนลื่นขึ้นใน iOS */
+        }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -45,9 +64,10 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-slate-100 font-sans select-none overflow-hidden sm:overflow-auto">
+<body class="bg-slate-100 font-sans select-none">
 
-    <div class="min-h-screen flex flex-col items-center justify-center sm:p-6 relative overflow-hidden">
+    <!-- Wrapper ล็อคหน้าจอให้อยู่ตรงกลางเสมอ -->
+    <div class="absolute inset-0 flex flex-col items-center justify-center sm:p-6 overflow-hidden">
         
         <!-- Animated Background -->
         <div class="absolute inset-0 overflow-hidden pointer-events-none">
@@ -56,25 +76,25 @@
         </div>
 
         <!-- Main App Container -->
-        <div class="w-full max-w-[420px] h-[100dvh] sm:h-[850px] sm:rounded-[40px] shadow-2xl border border-white/80 relative overflow-hidden z-10 bg-slate-50/50 backdrop-blur-3xl">
+        <div class="w-full h-full sm:h-[850px] max-w-[420px] sm:rounded-[40px] shadow-2xl border border-white/80 relative overflow-hidden z-10 bg-slate-50/50 backdrop-blur-3xl flex flex-col">
             
             <!-- ========================================== -->
             <!-- EMPLOYEE SELECTOR (LOGIN) OVERLAY -->
             <!-- ========================================== -->
             <div id="login-overlay" class="absolute inset-0 z-30 bg-white/95 backdrop-blur-xl flex flex-col transition-all duration-500 opacity-100">
-                <div class="p-6 pb-2 flex justify-end">
+                <div class="p-6 pb-2 flex justify-end shrink-0">
                     <button id="btn-go-owner-from-login" class="w-10 h-10 rounded-full bg-slate-100 shadow-sm border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-200 hover:text-blue-600 transition-colors">
                         <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
                     </button>
                 </div>
-                <div class="flex-1 flex flex-col items-center justify-center px-6 pb-12">
-                    <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6 shadow-inner text-blue-600">
+                <div class="flex-1 flex flex-col items-center justify-center px-6 pb-12 overflow-hidden">
+                    <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6 shadow-inner text-blue-600 shrink-0">
                         <i data-lucide="users" class="w-10 h-10"></i>
                     </div>
-                    <h2 class="text-2xl font-black text-slate-800 tracking-tight mb-2">เข้าสู่ระบบ</h2>
-                    <p class="text-sm text-slate-500 mb-8">กรุณาเลือกชื่อพนักงานเพื่อเข้าใช้งาน</p>
+                    <h2 class="text-2xl font-black text-slate-800 tracking-tight mb-2 shrink-0">เข้าสู่ระบบ</h2>
+                    <p class="text-sm text-slate-500 mb-8 shrink-0">กรุณาเลือกชื่อพนักงานเพื่อเข้าใช้งาน</p>
                     
-                    <div id="employee-select-list" class="w-full space-y-3 overflow-y-auto max-h-[50vh] custom-scrollbar px-2">
+                    <div id="employee-select-list" class="w-full space-y-3 overflow-y-auto custom-scrollbar px-2 pb-4">
                         <p class="text-center text-slate-400 text-sm italic py-4">กำลังโหลดรายชื่อ...</p>
                     </div>
                 </div>
@@ -85,7 +105,7 @@
             <!-- ========================================== -->
             <div id="employee-view" class="flex flex-col h-full w-full absolute top-0 left-0 transition-all duration-500 transform translate-x-0 opacity-100 bg-white/40">
                 <!-- Header -->
-                <div class="p-6 pb-2 flex justify-between items-center bg-white/60">
+                <div class="p-4 sm:p-6 pb-2 flex justify-between items-center bg-white/60 shrink-0">
                     <div>
                         <p class="text-slate-500 font-medium text-xs flex items-center gap-1.5 uppercase tracking-wider">
                             <span id="greeting-text">สวัสดี</span> 
@@ -93,68 +113,68 @@
                                 <i data-lucide="sun" class="w-3 h-3"></i>
                             </span>
                         </p>
-                        <h2 id="current-emp-name" class="text-xl font-bold text-slate-800 tracking-tight mt-0.5">...</h2>
+                        <h2 id="current-emp-name" class="text-xl font-bold text-slate-800 tracking-tight mt-0.5 truncate max-w-[200px]">...</h2>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                         <button id="btn-go-owner" class="w-10 h-10 rounded-full bg-white/80 shadow-sm border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 hover:text-blue-600 transition-colors">
                             <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
                         </button>
-                        <div id="btn-logout" class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm cursor-pointer hover:border-rose-300 transition-colors" title="สลับบัญชีผู้ใช้">
-                            <img id="current-emp-avatar" src="https://ui-avatars.com/api/?name=User&background=eff6ff&color=2563eb&bold=true" alt="Profile" />
+                        <div id="btn-logout" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden border-2 border-white shadow-sm cursor-pointer hover:border-rose-300 transition-colors" title="สลับบัญชีผู้ใช้">
+                            <img id="current-emp-avatar" src="https://ui-avatars.com/api/?name=User&background=eff6ff&color=2563eb&bold=true" alt="Profile" class="w-full h-full object-cover" />
                         </div>
                     </div>
                 </div>
 
                 <!-- Employee Tabs -->
-                <div class="flex border-b border-slate-200/50 bg-white/60 px-4 pt-1 shadow-sm relative z-20">
-                    <button id="emp-tab-clock" class="flex-1 pb-3 text-[10px] sm:text-sm font-bold border-b-2 border-blue-600 text-blue-600 transition-colors flex flex-col items-center gap-1">
+                <div class="flex border-b border-slate-200/50 bg-white/60 px-4 pt-1 shadow-sm relative z-20 shrink-0">
+                    <button id="emp-tab-clock" class="flex-1 pb-3 text-[11px] sm:text-sm font-bold border-b-2 border-blue-600 text-blue-600 transition-colors flex flex-col items-center gap-1">
                         <i data-lucide="clock" class="w-4 h-4"></i> บันทึกเวลา
                     </button>
-                    <button id="emp-tab-leave" class="flex-1 pb-3 text-[10px] sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors flex flex-col items-center gap-1">
+                    <button id="emp-tab-leave" class="flex-1 pb-3 text-[11px] sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors flex flex-col items-center gap-1">
                         <i data-lucide="calendar-off" class="w-4 h-4"></i> ลางาน
                     </button>
-                    <button id="emp-tab-swap" class="flex-1 pb-3 text-[10px] sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors flex flex-col items-center gap-1">
+                    <button id="emp-tab-swap" class="flex-1 pb-3 text-[11px] sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors flex flex-col items-center gap-1">
                         <i data-lucide="arrow-left-right" class="w-4 h-4"></i> สลับวันหยุด
                     </button>
                 </div>
 
                 <!-- 1. CONTENT: CLOCK IN/OUT -->
                 <div id="emp-content-clock" class="flex-1 flex flex-col h-full overflow-hidden transition-opacity duration-300 relative z-10">
-                    <div class="px-6 flex gap-2 mt-4 justify-center">
+                    <div class="px-4 flex gap-2 mt-4 justify-center shrink-0">
                         <div id="date-display" class="bg-white/80 px-3 py-1.5 rounded-full text-[11px] font-bold text-slate-500 shadow-sm border border-white">กำลังโหลด...</div>
                         <div id="conn-status" class="px-3 py-1.5 rounded-full text-[11px] font-bold shadow-sm transition-colors bg-slate-300 text-slate-600">CONNECTING...</div>
                     </div>
 
                     <div class="flex flex-col items-center justify-center flex-grow text-center mt-2">
-                        <h1 id="clock-display" class="text-[5.5rem] font-light tracking-tighter text-slate-800 leading-none tabular-nums">00:00</h1>
-                        <div id="timer-container" class="mt-6 h-20 transition-all duration-500 opacity-0 scale-95 pointer-events-none">
-                            <span class="text-emerald-600 font-black text-xs tracking-widest uppercase bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">Working Now</span>
-                            <div id="elapsed-time" class="text-4xl font-black text-slate-800 mt-2 tabular-nums drop-shadow-sm">00:00:00</div>
+                        <h1 id="clock-display" class="text-6xl sm:text-[5.5rem] font-light tracking-tighter text-slate-800 leading-none tabular-nums">00:00</h1>
+                        <div id="timer-container" class="mt-4 sm:mt-6 h-16 sm:h-20 transition-all duration-500 opacity-0 scale-95 pointer-events-none">
+                            <span class="text-emerald-600 font-black text-[10px] sm:text-xs tracking-widest uppercase bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">Working Now</span>
+                            <div id="elapsed-time" class="text-3xl sm:text-4xl font-black text-slate-800 mt-1 sm:mt-2 tabular-nums drop-shadow-sm">00:00:00</div>
                         </div>
                     </div>
 
-                    <div class="py-4 flex justify-center items-center min-h-[220px]">
-                        <div id="hold-area" class="relative w-[180px] h-[180px] flex items-center justify-center cursor-pointer" style="-webkit-tap-highlight-color: transparent;">
+                    <div class="py-2 sm:py-4 flex justify-center items-center shrink-0">
+                        <div id="hold-area" class="relative w-[160px] h-[160px] sm:w-[180px] sm:h-[180px] flex items-center justify-center cursor-pointer" style="-webkit-tap-highlight-color: transparent;">
                             <svg class="absolute inset-0 w-full h-full -rotate-90 pointer-events-none drop-shadow-md">
-                                <circle cx="90" cy="90" r="82" class="text-slate-200/80 backdrop-blur-sm" stroke-width="8" fill="none" stroke="currentColor" />
-                                <circle id="progress-ring" cx="90" cy="90" r="82" class="text-blue-600 transition-all duration-75" stroke-width="8" fill="none" stroke="currentColor" stroke-dasharray="515" stroke-dashoffset="515" stroke-linecap="round" />
+                                <circle cx="50%" cy="50%" r="45%" class="text-slate-200/80 backdrop-blur-sm" stroke-width="8" fill="none" stroke="currentColor" />
+                                <circle id="progress-ring" cx="50%" cy="50%" r="45%" class="text-blue-600 transition-all duration-75" stroke-width="8" fill="none" stroke="currentColor" stroke-dasharray="283" stroke-dashoffset="283" stroke-linecap="round" />
                             </svg>
-                            <div id="btn-inner" class="w-[136px] h-[136px] rounded-full flex flex-col items-center justify-center transition-all duration-300 shadow-xl bg-slate-200 text-slate-400 cursor-not-allowed opacity-70 border-2 border-transparent">
+                            <div id="btn-inner" class="w-[120px] h-[120px] sm:w-[136px] sm:h-[136px] rounded-full flex flex-col items-center justify-center transition-all duration-300 shadow-xl bg-slate-200 text-slate-400 cursor-not-allowed opacity-70 border-2 border-transparent">
                                 <div id="btn-icon-container" class="mb-1 flex items-center justify-center">
-                                    <i data-lucide="fingerprint" class="w-10 h-10"></i>
+                                    <i data-lucide="fingerprint" class="w-8 h-8 sm:w-10 sm:h-10"></i>
                                 </div>
-                                <span id="btn-text" class="font-bold text-slate-800 text-lg tracking-wide">เข้างาน</span>
-                                <span id="btn-subtext" class="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider">Connecting...</span>
+                                <span id="btn-text" class="font-bold text-slate-800 text-base sm:text-lg tracking-wide">เข้างาน</span>
+                                <span id="btn-subtext" class="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider">Connecting...</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-white/90 backdrop-blur-xl px-6 pt-5 pb-6 rounded-t-[40px] shadow-[0_-20px_50px_rgba(0,0,0,0.05)] h-[25vh] overflow-hidden flex flex-col relative">
-                        <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4 shrink-0"></div>
-                        <h3 class="font-bold text-slate-800 flex items-center gap-2 mb-3 text-sm uppercase tracking-wider shrink-0">
+                    <div class="bg-white/90 backdrop-blur-xl px-4 sm:px-6 pt-4 pb-4 rounded-t-[30px] sm:rounded-t-[40px] shadow-[0_-20px_50px_rgba(0,0,0,0.05)] h-[25vh] overflow-hidden flex flex-col relative shrink-0">
+                        <div class="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-3 shrink-0"></div>
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2 mb-2 text-xs sm:text-sm uppercase tracking-wider shrink-0">
                             <i data-lucide="history" class="w-4 h-4 text-slate-400"></i> ประวัติวันนี้
                         </h3>
-                        <div id="history-list" class="flex-1 overflow-y-auto space-y-3 custom-scrollbar pr-2">
+                        <div id="history-list" class="flex-1 overflow-y-auto space-y-2 custom-scrollbar pr-1">
                             <p class="text-center text-slate-400 text-xs py-5 italic">กำลังดึงข้อมูล...</p>
                         </div>
                     </div>
@@ -162,71 +182,71 @@
 
                 <!-- 2. CONTENT: LEAVE REQUEST -->
                 <div id="emp-content-leave" class="flex-1 hidden flex-col h-full overflow-hidden bg-slate-50/80 relative z-10">
-                    <div class="p-6 flex-1 overflow-y-auto custom-scrollbar">
-                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-6">
-                            <h3 class="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">
+                    <div class="p-4 sm:p-6 flex-1 overflow-y-auto custom-scrollbar">
+                        <div class="bg-white p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-100 mb-4 sm:mb-6">
+                            <h3 class="font-bold text-slate-800 text-base sm:text-lg mb-3 flex items-center gap-2">
                                 <i data-lucide="file-text" class="w-5 h-5 text-blue-500"></i> แบบฟอร์มลางาน
                             </h3>
-                            <div class="space-y-4">
+                            <div class="space-y-3">
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">ประเภทการลา</label>
-                                    <select id="leave-type" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-blue-500/50 outline-none">
+                                    <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">ประเภทการลา</label>
+                                    <select id="leave-type" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-blue-500/50 outline-none text-sm">
                                         <option value="ลาป่วย">ลาป่วย</option>
                                         <option value="ลากิจ">ลากิจ</option>
                                         <option value="ลาพักร้อน">ลาพักร้อน</option>
                                     </select>
                                 </div>
-                                <div class="grid grid-cols-2 gap-3">
+                                <div class="grid grid-cols-2 gap-2">
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">วันที่เริ่ม</label>
-                                        <input type="date" id="leave-start" class="w-full px-3 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-blue-500/50 outline-none text-sm">
+                                        <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">วันที่เริ่ม</label>
+                                        <input type="date" id="leave-start" class="w-full px-2 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-blue-500/50 outline-none text-[13px] sm:text-sm">
                                     </div>
                                     <div>
-                                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">ถึงวันที่</label>
-                                        <input type="date" id="leave-end" class="w-full px-3 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-blue-500/50 outline-none text-sm">
+                                        <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">ถึงวันที่</label>
+                                        <input type="date" id="leave-end" class="w-full px-2 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-blue-500/50 outline-none text-[13px] sm:text-sm">
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">เหตุผลการลา</label>
-                                    <textarea id="leave-reason" rows="2" placeholder="ระบุเหตุผล..." class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-blue-500/50 outline-none resize-none"></textarea>
+                                    <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">เหตุผลการลา</label>
+                                    <textarea id="leave-reason" rows="2" placeholder="ระบุเหตุผล..." class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-blue-500/50 outline-none resize-none text-sm"></textarea>
                                 </div>
-                                <button onclick="submitRequest('LEAVE')" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-600/20 transition-all flex justify-center items-center gap-2">
+                                <button onclick="submitRequest('LEAVE')" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-600/20 transition-all flex justify-center items-center gap-2 mt-1 text-sm sm:text-base">
                                     <i data-lucide="send" class="w-4 h-4"></i> ยื่นคำขอลางาน
                                 </button>
                             </div>
                         </div>
-                        <h3 class="font-bold text-slate-800 text-sm mb-3 uppercase tracking-wider pl-1">ประวัติคำขอ</h3>
-                        <div id="emp-leave-history" class="space-y-3 pb-6"></div>
+                        <h3 class="font-bold text-slate-800 text-xs sm:text-sm mb-2 uppercase tracking-wider pl-1">ประวัติคำขอ</h3>
+                        <div id="emp-leave-history" class="space-y-2 pb-6"></div>
                     </div>
                 </div>
 
                 <!-- 3. CONTENT: SHIFT SWAP -->
                 <div id="emp-content-swap" class="flex-1 hidden flex-col h-full overflow-hidden bg-slate-50/80 relative z-10">
-                    <div class="p-6 flex-1 overflow-y-auto custom-scrollbar">
-                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-6">
-                            <h3 class="font-bold text-slate-800 text-lg mb-4 flex items-center gap-2">
+                    <div class="p-4 sm:p-6 flex-1 overflow-y-auto custom-scrollbar">
+                        <div class="bg-white p-4 sm:p-5 rounded-3xl shadow-sm border border-slate-100 mb-4 sm:mb-6">
+                            <h3 class="font-bold text-slate-800 text-base sm:text-lg mb-3 flex items-center gap-2">
                                 <i data-lucide="arrow-left-right" class="w-5 h-5 text-purple-500"></i> ขอสลับวันหยุด
                             </h3>
-                            <div class="space-y-4">
+                            <div class="space-y-3">
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 text-purple-600">วันที่ขอมาทำแทน (มาทำงาน)</label>
-                                    <input type="date" id="swap-work-date" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-purple-500/50 outline-none">
+                                    <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1 text-purple-600">วันที่ขอมาทำแทน (มาทำงาน)</label>
+                                    <input type="date" id="swap-work-date" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-purple-500/50 outline-none text-[13px] sm:text-sm">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 text-rose-500">วันที่ขอหยุด (ไม่มาทำงาน)</label>
-                                    <input type="date" id="swap-off-date" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-rose-500/50 outline-none">
+                                    <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1 text-rose-500">วันที่ขอหยุด (ไม่มาทำงาน)</label>
+                                    <input type="date" id="swap-off-date" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-rose-500/50 outline-none text-[13px] sm:text-sm">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">เหตุผล</label>
-                                    <textarea id="swap-reason" rows="2" placeholder="ระบุเหตุผลในการสลับวัน..." class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-purple-500/50 outline-none resize-none"></textarea>
+                                    <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">เหตุผล</label>
+                                    <textarea id="swap-reason" rows="2" placeholder="ระบุเหตุผลในการสลับวัน..." class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-purple-500/50 outline-none resize-none text-sm"></textarea>
                                 </div>
-                                <button onclick="submitRequest('SWAP')" class="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-md shadow-purple-600/20 transition-all flex justify-center items-center gap-2">
+                                <button onclick="submitRequest('SWAP')" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-bold shadow-md shadow-purple-600/20 transition-all flex justify-center items-center gap-2 mt-1 text-sm sm:text-base">
                                     <i data-lucide="send" class="w-4 h-4"></i> ส่งคำขอสลับวัน
                                 </button>
                             </div>
                         </div>
-                        <h3 class="font-bold text-slate-800 text-sm mb-3 uppercase tracking-wider pl-1">ประวัติคำขอ</h3>
-                        <div id="emp-swap-history" class="space-y-3 pb-6"></div>
+                        <h3 class="font-bold text-slate-800 text-xs sm:text-sm mb-2 uppercase tracking-wider pl-1">ประวัติคำขอ</h3>
+                        <div id="emp-swap-history" class="space-y-2 pb-6"></div>
                     </div>
                 </div>
 
@@ -238,55 +258,55 @@
             <div id="owner-view" class="flex flex-col h-full w-full absolute top-0 left-0 transition-all duration-500 transform translate-x-full opacity-0 bg-white/95 backdrop-blur-3xl z-40">
                 
                 <!-- Owner Header -->
-                <div class="p-6 pb-2 flex items-center justify-between bg-white shrink-0">
+                <div class="p-4 sm:p-6 pb-2 flex items-center justify-between bg-white shrink-0">
                     <button id="btn-back-employee" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-slate-200 hover:text-slate-800 transition-colors -ml-2">
                         <i data-lucide="chevron-left" class="w-6 h-6"></i>
                     </button>
-                    <h2 class="text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+                    <h2 class="text-lg sm:text-xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
                         <i data-lucide="crown" class="w-5 h-5 text-amber-500"></i> ระบบจัดการร้าน
                     </h2>
                     <div class="w-10 h-10"></div>
                 </div>
 
                 <!-- Owner Tabs -->
-                <div class="flex border-b border-slate-200 bg-white px-2 sm:px-6 pt-2 shrink-0">
-                    <button id="tab-overview" class="flex-1 pb-3 text-[10px] sm:text-sm font-bold border-b-2 border-blue-600 text-blue-600 transition-colors">ภาพรวม</button>
-                    <button id="tab-approvals" class="flex-1 pb-3 text-[10px] sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors relative">
-                        คำขออนุมัติ
+                <div class="flex border-b border-slate-200 bg-white px-2 sm:px-6 pt-1 shrink-0">
+                    <button id="tab-overview" class="flex-1 pb-2 sm:pb-3 text-[11px] sm:text-sm font-bold border-b-2 border-blue-600 text-blue-600 transition-colors">ภาพรวม</button>
+                    <button id="tab-approvals" class="flex-1 pb-2 sm:pb-3 text-[11px] sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors relative">
+                        คำขอ<span class="hidden sm:inline">อนุมัติ</span>
                         <span id="badge-pending" class="absolute top-0 right-2 w-2 h-2 bg-rose-500 rounded-full hidden"></span>
                     </button>
-                    <button id="tab-employees" class="flex-1 pb-3 text-[10px] sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors">พนักงาน</button>
-                    <button id="tab-settings" class="flex-1 pb-3 text-[10px] sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors">ตั้งค่า</button>
+                    <button id="tab-employees" class="flex-1 pb-2 sm:pb-3 text-[11px] sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors">พนักงาน</button>
+                    <button id="tab-settings" class="flex-1 pb-2 sm:pb-3 text-[11px] sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors">ตั้งค่า</button>
                 </div>
 
                 <!-- TAB 1: OVERVIEW -->
                 <div id="owner-content-overview" class="flex-1 flex flex-col overflow-hidden">
-                    <div class="p-6 grid grid-cols-2 gap-4 bg-slate-50/50 shrink-0">
-                        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100/50 p-5 rounded-3xl shadow-sm relative overflow-hidden">
-                            <div class="absolute top-0 right-0 p-4 opacity-10"><i data-lucide="users" class="w-12 h-12 text-blue-600"></i></div>
-                            <p class="text-xs text-blue-600 font-bold mb-1 uppercase tracking-wider">กำลังทำงาน</p>
+                    <div class="p-4 sm:p-6 grid grid-cols-2 gap-3 sm:gap-4 bg-slate-50/50 shrink-0">
+                        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100/50 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-3 sm:p-4 opacity-10"><i data-lucide="users" class="w-10 h-10 sm:w-12 sm:h-12 text-blue-600"></i></div>
+                            <p class="text-[10px] sm:text-xs text-blue-600 font-bold mb-1 uppercase tracking-wider">กำลังทำงาน</p>
                             <div class="flex items-baseline gap-1">
-                                <p id="owner-active-count" class="text-4xl font-black text-blue-700">0</p>
-                                <p class="text-sm font-bold text-blue-500">คน</p>
+                                <p id="owner-active-count" class="text-3xl sm:text-4xl font-black text-blue-700">0</p>
+                                <p class="text-xs sm:text-sm font-bold text-blue-500">คน</p>
                             </div>
                         </div>
-                        <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100/50 p-5 rounded-3xl shadow-sm relative overflow-hidden">
-                            <div class="absolute top-0 right-0 p-4 opacity-10"><i data-lucide="list-checks" class="w-12 h-12 text-emerald-600"></i></div>
-                            <p class="text-xs text-emerald-600 font-bold mb-1 uppercase tracking-wider">บันทึกวันนี้</p>
+                        <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100/50 p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-3 sm:p-4 opacity-10"><i data-lucide="list-checks" class="w-10 h-10 sm:w-12 sm:h-12 text-emerald-600"></i></div>
+                            <p class="text-[10px] sm:text-xs text-emerald-600 font-bold mb-1 uppercase tracking-wider">บันทึกวันนี้</p>
                             <div class="flex items-baseline gap-1">
-                                <p id="owner-today-count" class="text-4xl font-black text-emerald-700">0</p>
-                                <p class="text-sm font-bold text-emerald-500">ครั้ง</p>
+                                <p id="owner-today-count" class="text-3xl sm:text-4xl font-black text-emerald-700">0</p>
+                                <p class="text-xs sm:text-sm font-bold text-emerald-500">ครั้ง</p>
                             </div>
                         </div>
                     </div>
 
                     <div class="flex-1 overflow-hidden flex flex-col bg-white border-t border-slate-100">
-                        <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center shadow-sm z-10 shrink-0">
-                            <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm uppercase tracking-wider">
+                        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 flex justify-between items-center shadow-sm z-10 shrink-0">
+                            <h3 class="font-bold text-slate-800 flex items-center gap-2 text-xs sm:text-sm uppercase tracking-wider">
                                 <i data-lucide="activity" class="w-4 h-4 text-slate-400"></i> ความเคลื่อนไหวทั้งหมด
                             </h3>
                         </div>
-                        <div id="owner-history-list" class="flex-1 overflow-y-auto px-6 py-4 space-y-3 custom-scrollbar">
+                        <div id="owner-history-list" class="flex-1 overflow-y-auto px-4 sm:px-6 py-3 sm:py-4 space-y-2 sm:space-y-3 custom-scrollbar pb-6">
                             <p class="text-center text-slate-400 text-xs py-10 italic">กำลังดึงข้อมูล...</p>
                         </div>
                     </div>
@@ -294,89 +314,87 @@
 
                 <!-- TAB 2: APPROVALS -->
                 <div id="owner-content-approvals" class="flex-1 hidden flex-col overflow-hidden bg-slate-50/50">
-                    <div class="p-6 pb-2 shrink-0">
-                        <h3 class="font-bold text-slate-800 text-lg">รายการรออนุมัติ</h3>
-                        <p class="text-xs text-slate-500 mt-0.5">จัดการคำขอลางานและสลับวันหยุด</p>
+                    <div class="p-4 sm:p-6 pb-2 shrink-0">
+                        <h3 class="font-bold text-slate-800 text-base sm:text-lg">รายการรออนุมัติ</h3>
+                        <p class="text-[10px] sm:text-xs text-slate-500 mt-0.5">จัดการคำขอลางานและสลับวันหยุด</p>
                     </div>
-                    <div id="owner-requests-list" class="flex-1 overflow-y-auto px-6 pb-6 space-y-4 custom-scrollbar mt-2">
+                    <div id="owner-requests-list" class="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 space-y-3 custom-scrollbar mt-2">
                         <!-- Requests will load here -->
                     </div>
                 </div>
 
                 <!-- TAB 3: MANAGE EMPLOYEES -->
                 <div id="owner-content-employees" class="flex-1 hidden flex-col overflow-hidden bg-slate-50/50">
-                    <div class="p-6 flex justify-between items-center shrink-0">
+                    <div class="p-4 sm:p-6 flex justify-between items-center shrink-0">
                         <div>
-                            <h3 class="font-bold text-slate-800 text-lg">รายชื่อพนักงาน</h3>
-                            <p class="text-xs text-slate-500 mt-0.5">พนักงานทั้งหมด <span id="owner-emp-total" class="font-bold">0</span> คน</p>
+                            <h3 class="font-bold text-slate-800 text-base sm:text-lg">รายชื่อพนักงาน</h3>
+                            <p class="text-[10px] sm:text-xs text-slate-500 mt-0.5">พนักงานทั้งหมด <span id="owner-emp-total" class="font-bold">0</span> คน</p>
                         </div>
-                        <button id="btn-add-employee" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm shadow-blue-600/30 transition-all flex items-center gap-1">
+                        <button id="btn-add-employee" class="bg-blue-600 hover:bg-blue-700 text-white px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold shadow-sm shadow-blue-600/30 transition-all flex items-center gap-1">
                             <i data-lucide="plus" class="w-4 h-4"></i> เพิ่ม
                         </button>
                     </div>
-                    <div id="owner-employee-list" class="flex-1 overflow-y-auto px-6 pb-6 space-y-3 custom-scrollbar">
+                    <div id="owner-employee-list" class="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 space-y-2 sm:space-y-3 custom-scrollbar">
                         <!-- Employee list renders here -->
                     </div>
                 </div>
 
                 <!-- TAB 4: STORE SETTINGS -->
                 <div id="owner-content-settings" class="flex-1 hidden flex-col overflow-hidden bg-slate-50">
-                    <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+                    <div class="flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 space-y-4 sm:space-y-6 pb-10">
                         
                         <!-- Working Hours Section -->
-                        <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
-                            <div class="flex items-center gap-2 mb-4 border-b border-slate-100 pb-3">
-                                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><i data-lucide="clock" class="w-4 h-4"></i></div>
-                                <h3 class="font-bold text-slate-800">เวลาทำการ (Working Hours)</h3>
+                        <div class="bg-white rounded-[1.25rem] p-4 sm:p-5 shadow-sm border border-slate-100">
+                            <div class="flex items-center gap-2 mb-3 sm:mb-4 border-b border-slate-100 pb-2 sm:pb-3">
+                                <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><i data-lucide="clock" class="w-4 h-4"></i></div>
+                                <h3 class="font-bold text-slate-800 text-sm sm:text-base">เวลาทำการ (Working Hours)</h3>
                             </div>
                             
-                            <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div class="grid grid-cols-2 gap-2 sm:gap-4 mb-3 sm:mb-4">
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">เวลาเข้างาน</label>
-                                    <input type="time" id="set-work-start" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-blue-500/50 outline-none text-sm font-medium">
+                                    <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">เวลาเข้างาน</label>
+                                    <input type="time" id="set-work-start" class="w-full px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-blue-500/50 outline-none text-sm font-medium">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">เวลาเลิกงาน</label>
-                                    <input type="time" id="set-work-end" class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-blue-500/50 outline-none text-sm font-medium">
+                                    <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">เวลาเลิกงาน</label>
+                                    <input type="time" id="set-work-end" class="w-full px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-blue-500/50 outline-none text-sm font-medium">
                                 </div>
                             </div>
                             
-                            <div class="mb-4">
-                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">เริ่มคิด OT (หลังเลิกงานกี่นาที)</label>
+                            <div>
+                                <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase mb-1">เริ่มคิด OT (หลังเลิกงานกี่นาที)</label>
                                 <div class="flex items-center gap-2">
-                                    <input type="number" id="set-ot-grace" placeholder="เช่น 30" class="w-24 px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-blue-500/50 outline-none text-sm font-medium text-center tabular-nums">
-                                    <span class="text-sm font-medium text-slate-500">นาที</span>
+                                    <input type="number" id="set-ot-grace" placeholder="30" class="w-20 sm:w-24 px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:ring-2 focus:ring-blue-500/50 outline-none text-sm font-medium text-center tabular-nums">
+                                    <span class="text-xs sm:text-sm font-medium text-slate-500">นาที</span>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Public Holidays Section -->
-                        <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
-                            <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                        <div class="bg-white rounded-[1.25rem] p-4 sm:p-5 shadow-sm border border-slate-100">
+                            <div class="flex justify-between items-center mb-3 sm:mb-4 border-b border-slate-100 pb-2 sm:pb-3">
                                 <div class="flex items-center gap-2">
-                                    <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center"><i data-lucide="party-popper" class="w-4 h-4"></i></div>
-                                    <h3 class="font-bold text-slate-800">วันหยุดนักขัตฤกษ์</h3>
+                                    <div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center"><i data-lucide="party-popper" class="w-4 h-4"></i></div>
+                                    <h3 class="font-bold text-slate-800 text-sm sm:text-base">วันหยุดนักขัตฤกษ์</h3>
                                 </div>
                             </div>
                             
-                            <div class="flex gap-2 mb-4">
-                                <input type="date" id="new-holiday-date" class="w-1/3 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-blue-500/50">
-                                <input type="text" id="new-holiday-name" placeholder="ชื่อวันหยุด..." class="flex-1 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-blue-500/50">
-                                <button onclick="addHoliday()" class="bg-slate-800 hover:bg-slate-700 text-white px-3 rounded-xl flex items-center justify-center transition-colors">
+                            <div class="flex gap-2 mb-3">
+                                <input type="date" id="new-holiday-date" class="w-2/5 px-2 sm:px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-[13px] sm:text-sm outline-none focus:ring-2 focus:ring-blue-500/50 shrink-0">
+                                <input type="text" id="new-holiday-name" placeholder="ชื่อวันหยุด..." class="flex-1 px-2 sm:px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-blue-500/50 min-w-0">
+                                <button onclick="addHoliday()" class="bg-slate-800 hover:bg-slate-700 text-white px-2 sm:px-3 rounded-xl flex items-center justify-center transition-colors shrink-0">
                                     <i data-lucide="plus" class="w-4 h-4"></i>
                                 </button>
                             </div>
                             
-                            <div id="settings-holiday-list" class="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-2">
+                            <div id="settings-holiday-list" class="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
                                 <!-- Holidays render here -->
                             </div>
                         </div>
 
-                        <button onclick="saveStoreSettings()" id="btn-save-settings" class="w-full py-4 bg-slate-800 hover:bg-slate-900 text-white rounded-2xl font-bold shadow-lg shadow-slate-800/20 transition-all flex justify-center items-center gap-2">
-                            <i data-lucide="save" class="w-5 h-5"></i> บันทึกการตั้งค่าร้าน
+                        <button onclick="saveStoreSettings()" id="btn-save-settings" class="w-full py-3.5 sm:py-4 bg-slate-800 hover:bg-slate-900 text-white rounded-xl sm:rounded-2xl text-sm sm:text-base font-bold shadow-lg shadow-slate-800/20 transition-all flex justify-center items-center gap-2">
+                            <i data-lucide="save" class="w-4 h-4 sm:w-5 sm:h-5"></i> บันทึกการตั้งค่าร้าน
                         </button>
-                        <div class="h-4"></div> <!-- Padding bottom -->
-
                     </div>
                 </div>
 
@@ -385,53 +403,51 @@
             <!-- ========================================== -->
             <!-- EMPLOYEE MODAL (ADD / EDIT) -->
             <!-- ========================================== -->
-            <div id="employee-modal" class="absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 opacity-0 pointer-events-none transition-opacity duration-300">
-                <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300 flex flex-col max-h-full" id="employee-modal-content">
-                    <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
-                        <h3 id="modal-title" class="font-bold text-lg text-slate-800">เพิ่มพนักงานใหม่</h3>
+            <div id="employee-modal" class="absolute inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+                <div class="bg-white w-full max-w-[calc(100vw-2rem)] sm:max-w-sm rounded-3xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300 flex flex-col max-h-[90vh]" id="employee-modal-content">
+                    <div class="p-4 sm:p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50 shrink-0">
+                        <h3 id="modal-title" class="font-bold text-base sm:text-lg text-slate-800">เพิ่มพนักงานใหม่</h3>
                         <button id="btn-close-modal" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
                     </div>
-                    <div class="p-5 space-y-4 overflow-y-auto custom-scrollbar flex-1">
+                    <div class="p-4 sm:p-5 space-y-3 sm:space-y-4 overflow-y-auto custom-scrollbar flex-1">
                         <input type="hidden" id="modal-doc-id">
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">รหัสพนักงาน <span class="text-rose-500">*</span></label>
-                            <input type="text" id="modal-emp-id" placeholder="เช่น EMP-001" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all font-medium">
+                            <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">รหัสพนักงาน <span class="text-rose-500">*</span></label>
+                            <input type="text" id="modal-emp-id" placeholder="เช่น EMP-001" class="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">ชื่อ - นามสกุล <span class="text-rose-500">*</span></label>
-                            <input type="text" id="modal-emp-name" placeholder="ชื่อพนักงาน" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all font-medium">
+                            <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">ชื่อ - นามสกุล <span class="text-rose-500">*</span></label>
+                            <input type="text" id="modal-emp-name" placeholder="ชื่อพนักงาน" class="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium text-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">รหัส PIN (4 หลัก) <span class="text-rose-500">*</span></label>
-                            <input type="text" id="modal-emp-pin" placeholder="0000" maxlength="4" pattern="[0-9]*" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all font-medium tabular-nums tracking-[0.5em]">
+                            <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">รหัส PIN (4 หลัก) <span class="text-rose-500">*</span></label>
+                            <input type="text" id="modal-emp-pin" placeholder="0000" maxlength="4" pattern="[0-9]*" class="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium tabular-nums tracking-[0.5em] text-sm text-center">
                         </div>
                         
-                        <!-- New Fields: Wage, OT, Off days -->
-                        <hr class="border-slate-100 my-2">
-                        <div class="grid grid-cols-2 gap-3">
+                        <hr class="border-slate-100 my-1">
+                        <div class="grid grid-cols-2 gap-2">
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">ค่าแรง (บาท/วัน)</label>
-                                <input type="number" id="modal-emp-wage" placeholder="เช่น 500" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium tabular-nums">
+                                <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">ค่าแรง (บาท/วัน)</label>
+                                <input type="number" id="modal-emp-wage" placeholder="เช่น 500" class="w-full px-2 sm:px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium tabular-nums text-sm">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">เรท OT (บาท/ชม.)</label>
-                                <input type="number" id="modal-emp-ot" placeholder="เช่น 50" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium tabular-nums">
+                                <label class="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">เรท OT (บาท/ชม.)</label>
+                                <input type="number" id="modal-emp-ot" placeholder="เช่น 50" class="w-full px-2 sm:px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-medium tabular-nums text-sm">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center justify-between">
+                            <label class="block text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center justify-between">
                                 วันหยุดประจำสัปดาห์
-                                <span class="text-[9px] font-normal text-rose-500 bg-rose-50 px-2 py-0.5 rounded">แตะเพื่อกำหนดวันหยุด</span>
+                                <span class="text-[9px] font-normal text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded">แตะเพื่อกำหนด</span>
                             </label>
                             <div class="flex gap-1 justify-between" id="modal-emp-offdays">
                                 <!-- Generated by JS -->
                             </div>
                         </div>
-
                     </div>
-                    <div class="p-5 border-t border-slate-100 bg-white shrink-0">
-                        <button id="btn-save-employee" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md shadow-blue-600/20 transition-all flex justify-center items-center gap-2">
-                            <i data-lucide="save" class="w-5 h-5"></i> บันทึกข้อมูลพนักงาน
+                    <div class="p-4 sm:p-5 border-t border-slate-100 bg-white shrink-0">
+                        <button id="btn-save-employee" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm sm:text-base font-bold shadow-md shadow-blue-600/20 transition-all flex justify-center items-center gap-2">
+                            <i data-lucide="save" class="w-4 h-4 sm:w-5 sm:h-5"></i> บันทึกข้อมูลพนักงาน
                         </button>
                     </div>
                 </div>
@@ -441,45 +457,45 @@
             <!-- PIN PAD OVERLAY -->
             <!-- ========================================== -->
             <div id="pin-overlay" class="absolute inset-0 z-[60] bg-slate-900/40 backdrop-blur-md flex flex-col items-center justify-end sm:justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-                <div class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden p-6 flex flex-col items-center transform translate-y-full sm:translate-y-0 sm:scale-95 transition-all duration-300" id="pin-modal-content">
+                <div class="bg-white w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden p-5 sm:p-6 flex flex-col items-center transform translate-y-full sm:translate-y-0 sm:scale-95 transition-all duration-300" id="pin-modal-content">
                     
-                    <div class="w-full flex justify-between items-center mb-6">
+                    <div class="w-full flex justify-between items-center mb-4 sm:mb-6">
                         <button id="btn-close-pin" class="text-slate-400 hover:text-slate-600 transition-colors w-10 h-10 flex items-center justify-center rounded-full bg-slate-50">
                             <i data-lucide="chevron-left" class="w-5 h-5"></i>
                         </button>
                         <h3 class="font-bold text-slate-800 text-center flex-1 pr-10">กรอกรหัส PIN</h3>
                     </div>
 
-                    <div class="w-16 h-16 rounded-full overflow-hidden border-2 border-slate-100 shadow-sm mb-3">
-                        <img id="pin-avatar" src="" alt="Profile" />
+                    <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-slate-100 shadow-sm mb-3">
+                        <img id="pin-avatar" src="" alt="Profile" class="w-full h-full object-cover" />
                     </div>
-                    <p id="pin-emp-name" class="font-bold text-slate-800 text-lg mb-6">...</p>
+                    <p id="pin-emp-name" class="font-bold text-slate-800 text-base sm:text-lg mb-5">...</p>
 
                     <!-- PIN Dots -->
-                    <div id="pin-dots-container" class="flex gap-4 mb-8">
-                        <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-300 transition-colors"></div>
-                        <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-300 transition-colors"></div>
-                        <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-300 transition-colors"></div>
-                        <div class="pin-dot w-4 h-4 rounded-full border-2 border-slate-300 transition-colors"></div>
+                    <div id="pin-dots-container" class="flex gap-4 mb-6 sm:mb-8">
+                        <div class="pin-dot w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-slate-300 transition-colors"></div>
+                        <div class="pin-dot w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-slate-300 transition-colors"></div>
+                        <div class="pin-dot w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-slate-300 transition-colors"></div>
+                        <div class="pin-dot w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-slate-300 transition-colors"></div>
                     </div>
 
-                    <p id="pin-error-msg" class="text-rose-500 text-sm font-bold h-5 mb-4 opacity-0 transition-opacity">รหัส PIN ไม่ถูกต้อง</p>
+                    <p id="pin-error-msg" class="text-rose-500 text-xs sm:text-sm font-bold h-4 sm:h-5 mb-3 sm:mb-4 opacity-0 transition-opacity">รหัส PIN ไม่ถูกต้อง</p>
 
                     <!-- Numpad -->
-                    <div class="grid grid-cols-3 gap-3 w-full max-w-[260px] pb-4">
-                        <button onclick="handlePinInput('1')" class="h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xl transition-colors">1</button>
-                        <button onclick="handlePinInput('2')" class="h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xl transition-colors">2</button>
-                        <button onclick="handlePinInput('3')" class="h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xl transition-colors">3</button>
-                        <button onclick="handlePinInput('4')" class="h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xl transition-colors">4</button>
-                        <button onclick="handlePinInput('5')" class="h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xl transition-colors">5</button>
-                        <button onclick="handlePinInput('6')" class="h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xl transition-colors">6</button>
-                        <button onclick="handlePinInput('7')" class="h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xl transition-colors">7</button>
-                        <button onclick="handlePinInput('8')" class="h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xl transition-colors">8</button>
-                        <button onclick="handlePinInput('9')" class="h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xl transition-colors">9</button>
+                    <div class="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-[260px] pb-2 sm:pb-4">
+                        <button onclick="handlePinInput('1')" class="h-12 sm:h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-lg sm:text-xl transition-colors">1</button>
+                        <button onclick="handlePinInput('2')" class="h-12 sm:h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-lg sm:text-xl transition-colors">2</button>
+                        <button onclick="handlePinInput('3')" class="h-12 sm:h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-lg sm:text-xl transition-colors">3</button>
+                        <button onclick="handlePinInput('4')" class="h-12 sm:h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-lg sm:text-xl transition-colors">4</button>
+                        <button onclick="handlePinInput('5')" class="h-12 sm:h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-lg sm:text-xl transition-colors">5</button>
+                        <button onclick="handlePinInput('6')" class="h-12 sm:h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-lg sm:text-xl transition-colors">6</button>
+                        <button onclick="handlePinInput('7')" class="h-12 sm:h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-lg sm:text-xl transition-colors">7</button>
+                        <button onclick="handlePinInput('8')" class="h-12 sm:h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-lg sm:text-xl transition-colors">8</button>
+                        <button onclick="handlePinInput('9')" class="h-12 sm:h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-lg sm:text-xl transition-colors">9</button>
                         <div></div>
-                        <button onclick="handlePinInput('0')" class="h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-xl transition-colors">0</button>
-                        <button onclick="deletePinChar()" class="h-14 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors">
-                            <i data-lucide="delete" class="w-6 h-6"></i>
+                        <button onclick="handlePinInput('0')" class="h-12 sm:h-14 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-800 font-bold text-lg sm:text-xl transition-colors">0</button>
+                        <button onclick="deletePinChar()" class="h-12 sm:h-14 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors">
+                            <i data-lucide="delete" class="w-5 h-5 sm:w-6 sm:h-6"></i>
                         </button>
                     </div>
 
@@ -495,7 +511,6 @@
         import { getFirestore, collection, doc, setDoc, getDoc, addDoc, updateDoc, deleteDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // Firebase Configuration
         const firebaseConfig = typeof __firebase_config !== 'undefined' 
             ? JSON.parse(__firebase_config) 
             : {
@@ -504,17 +519,15 @@
                 projectId: "my-company-time-tracking",
                 storageBucket: "my-company-time-tracking.firebasestorage.app",
                 messagingSenderId: "758524847747",
-                appId: "1:758524847747:web:2e5a49e4064334f1265db6",
-                measurementId: "G-50SYJKTRT1"
+                appId: "1:758524847747:web:2e5a49e4064334f1265db6"
             };
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
 
-        // --- Core State ---
+        // --- State ---
         let user = null;
         let isCheckedIn = false;
         let allLogs = [];
@@ -523,970 +536,417 @@
         let allRequests = [];
         let checkInTime = null;
         
-        // Settings State
-        let storeSettings = {
-            workStart: '09:00',
-            workEnd: '18:00',
-            otGrace: 30,
-            holidays: [] // { date: 'YYYY-MM-DD', name: 'Name' }
-        };
-
-        // Modal Employee State
+        let storeSettings = { workStart: '09:00', workEnd: '18:00', otGrace: 30, holidays: [] };
         let currentModalOffDays = { 0:true, 1:false, 2:false, 3:false, 4:false, 5:false, 6:false };
         
         let currentEmpId = null;
         let currentEmpName = null;
         
         let pinMode = 'employee'; 
-        let pendingEmpId = null;
-        let pendingEmpName = null;
-        let expectedPin = "0000";
-        let currentEnteredPin = "";
-
-        let holdProgress = 0;
-        let isHolding = false;
-        let showSuccess = false;
-        let holdIntervalId = null;
+        let pendingEmpId = null; let pendingEmpName = null;
+        let expectedPin = "0000"; let currentEnteredPin = "";
+        let holdProgress = 0; let isHolding = false; let showSuccess = false; let holdIntervalId = null;
         
-        let unsubscribeLogs = null;
-        let unsubscribeEmps = null;
-        let unsubscribeRequests = null;
+        let unsubscribeLogs = null; let unsubscribeEmps = null; let unsubscribeRequests = null;
 
-        // --- DOM Elements Init ---
+        // --- UI Setup ---
+        lucide.createIcons();
         const loginOverlay = document.getElementById('login-overlay');
         const empSelectList = document.getElementById('employee-select-list');
         const currentEmpNameEl = document.getElementById('current-emp-name');
         const currentEmpAvatarEl = document.getElementById('current-emp-avatar');
-        const btnLogout = document.getElementById('btn-logout');
-
+        
         const employeeView = document.getElementById('employee-view');
         const ownerView = document.getElementById('owner-view');
-        const btnGoOwner = document.getElementById('btn-go-owner');
-        const btnGoOwnerFromLogin = document.getElementById('btn-go-owner-from-login');
-        const btnBackEmployee = document.getElementById('btn-back-employee');
 
-        // Emp Tabs
-        const empTabClock = document.getElementById('emp-tab-clock');
-        const empTabLeave = document.getElementById('emp-tab-leave');
-        const empTabSwap = document.getElementById('emp-tab-swap');
-        const empContentClock = document.getElementById('emp-content-clock');
-        const empContentLeave = document.getElementById('emp-content-leave');
-        const empContentSwap = document.getElementById('emp-content-swap');
-
-        // Owner Tabs
-        const tabOverview = document.getElementById('tab-overview');
-        const tabApprovals = document.getElementById('tab-approvals');
-        const tabEmployees = document.getElementById('tab-employees');
-        const tabSettings = document.getElementById('tab-settings');
-        
-        const ownerContentOverview = document.getElementById('owner-content-overview');
-        const ownerContentApprovals = document.getElementById('owner-content-approvals');
-        const ownerContentEmployees = document.getElementById('owner-content-employees');
-        const ownerContentSettings = document.getElementById('owner-content-settings');
-        const badgePending = document.getElementById('badge-pending');
-
-        const clockDisplay = document.getElementById('clock-display');
-        const dateDisplay = document.getElementById('date-display');
-        const greetingText = document.getElementById('greeting-text');
-        const greetingIconContainer = document.getElementById('greeting-icon-container');
-        const connStatus = document.getElementById('conn-status');
-        const timerContainer = document.getElementById('timer-container');
-        const elapsedTimeDisplay = document.getElementById('elapsed-time');
-        
-        const blob1 = document.getElementById('blob1');
-        const blob2 = document.getElementById('blob2');
-        
-        const holdArea = document.getElementById('hold-area');
-        const progressRing = document.getElementById('progress-ring');
-        const btnInner = document.getElementById('btn-inner');
-        const btnIconContainer = document.getElementById('btn-icon-container');
-        const btnText = document.getElementById('btn-text');
-        const btnSubtext = document.getElementById('btn-subtext');
-        
-        const historyList = document.getElementById('history-list');
-
-        const ownerActiveCount = document.getElementById('owner-active-count');
-        const ownerTodayCount = document.getElementById('owner-today-count');
-        const ownerHistoryList = document.getElementById('owner-history-list');
-        const ownerEmployeeList = document.getElementById('owner-employee-list');
-        const ownerRequestsList = document.getElementById('owner-requests-list');
-        const ownerEmpTotal = document.getElementById('owner-emp-total');
-
-        // Modal
-        const employeeModal = document.getElementById('employee-modal');
-        const employeeModalContent = document.getElementById('employee-modal-content');
-        const btnAddEmployee = document.getElementById('btn-add-employee');
-        const btnCloseModal = document.getElementById('btn-close-modal');
-        const btnSaveEmployee = document.getElementById('btn-save-employee');
-        
-        const modalTitle = document.getElementById('modal-title');
-        const modalDocId = document.getElementById('modal-doc-id');
-        const modalEmpId = document.getElementById('modal-emp-id');
-        const modalEmpName = document.getElementById('modal-emp-name');
-        const modalEmpPin = document.getElementById('modal-emp-pin');
-        const modalEmpWage = document.getElementById('modal-emp-wage');
-        const modalEmpOt = document.getElementById('modal-emp-ot');
-        const modalEmpOffdays = document.getElementById('modal-emp-offdays');
-
-        // PIN
-        const pinOverlay = document.getElementById('pin-overlay');
-        const pinModalContent = document.getElementById('pin-modal-content');
-        const pinEmpName = document.getElementById('pin-emp-name');
-        const pinAvatar = document.getElementById('pin-avatar');
-        const pinDots = document.querySelectorAll('.pin-dot');
-        const pinErrorMsg = document.getElementById('pin-error-msg');
-        const pinDotsContainer = document.getElementById('pin-dots-container');
-        const btnClosePin = document.getElementById('btn-close-pin');
-
-        // Settings Elements
-        const setWorkStart = document.getElementById('set-work-start');
-        const setWorkEnd = document.getElementById('set-work-end');
-        const setOtGrace = document.getElementById('set-ot-grace');
-        const settingsHolidayList = document.getElementById('settings-holiday-list');
-
-        lucide.createIcons();
-
-        // --- UI Navigation Logic ---
-        
-        // Employee Tabs
-        function switchEmpTab(activeTab) {
-            [empTabClock, empTabLeave, empTabSwap].forEach(tab => {
-                tab.className = 'flex-1 pb-3 text-[10px] sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors flex flex-col items-center gap-1';
-            });
-            [empContentClock, empContentLeave, empContentSwap].forEach(content => {
-                content.classList.add('hidden'); content.classList.remove('flex');
-            });
-
-            if(activeTab === 'clock') {
-                empTabClock.className = 'flex-1 pb-3 text-[10px] sm:text-sm font-bold border-b-2 border-blue-600 text-blue-600 transition-colors flex flex-col items-center gap-1';
-                empContentClock.classList.remove('hidden'); empContentClock.classList.add('flex');
-            } else if (activeTab === 'leave') {
-                empTabLeave.className = 'flex-1 pb-3 text-[10px] sm:text-sm font-bold border-b-2 border-blue-600 text-blue-600 transition-colors flex flex-col items-center gap-1';
-                empContentLeave.classList.remove('hidden'); empContentLeave.classList.add('flex');
-            } else if (activeTab === 'swap') {
-                empTabSwap.className = 'flex-1 pb-3 text-[10px] sm:text-sm font-bold border-b-2 border-blue-600 text-blue-600 transition-colors flex flex-col items-center gap-1';
-                empContentSwap.classList.remove('hidden'); empContentSwap.classList.add('flex');
-            }
-        }
-        empTabClock.addEventListener('click', () => switchEmpTab('clock'));
-        empTabLeave.addEventListener('click', () => switchEmpTab('leave'));
-        empTabSwap.addEventListener('click', () => switchEmpTab('swap'));
-
-        // Owner View Toggle
-        function openOwnerView() {
-            employeeView.classList.add('-translate-x-full', 'opacity-0', 'pointer-events-none');
-            ownerView.classList.remove('translate-x-full', 'opacity-0');
-            ownerView.classList.add('z-40');
-            if(!currentEmpId) loginOverlay.classList.add('opacity-0', 'pointer-events-none');
-            fetchStoreSettings();
-        }
-
-        function closeOwnerView() {
+        // Navigation
+        document.getElementById('btn-go-owner').addEventListener('click', () => window.promptOwnerPin());
+        document.getElementById('btn-go-owner-from-login').addEventListener('click', () => window.promptOwnerPin());
+        document.getElementById('btn-back-employee').addEventListener('click', () => {
             ownerView.classList.add('translate-x-full', 'opacity-0');
             employeeView.classList.remove('-translate-x-full', 'opacity-0', 'pointer-events-none');
             setTimeout(() => ownerView.classList.remove('z-40'), 300);
             if(!currentEmpId) loginOverlay.classList.remove('opacity-0', 'pointer-events-none');
-        }
-
-        btnGoOwner.addEventListener('click', () => window.promptOwnerPin());
-        btnGoOwnerFromLogin.addEventListener('click', () => window.promptOwnerPin());
-        btnBackEmployee.addEventListener('click', closeOwnerView);
-
-        // Owner Tabs
-        function switchOwnerTab(activeTab) {
-            [tabOverview, tabApprovals, tabEmployees, tabSettings].forEach(tab => {
-                tab.classList.remove('border-blue-600', 'text-blue-600');
-                tab.classList.add('border-transparent', 'text-slate-400');
-            });
-            [ownerContentOverview, ownerContentApprovals, ownerContentEmployees, ownerContentSettings].forEach(content => {
-                content.classList.add('hidden'); content.classList.remove('flex');
-            });
-
-            if (activeTab === 'overview') {
-                tabOverview.classList.add('border-blue-600', 'text-blue-600');
-                ownerContentOverview.classList.remove('hidden'); ownerContentOverview.classList.add('flex');
-            } else if (activeTab === 'approvals') {
-                tabApprovals.classList.add('border-blue-600', 'text-blue-600');
-                ownerContentApprovals.classList.remove('hidden'); ownerContentApprovals.classList.add('flex');
-            } else if (activeTab === 'employees') {
-                tabEmployees.classList.add('border-blue-600', 'text-blue-600');
-                ownerContentEmployees.classList.remove('hidden'); ownerContentEmployees.classList.add('flex');
-            } else if (activeTab === 'settings') {
-                tabSettings.classList.add('border-blue-600', 'text-blue-600');
-                ownerContentSettings.classList.remove('hidden'); ownerContentSettings.classList.add('flex');
-            }
-        }
-        tabOverview.addEventListener('click', () => switchOwnerTab('overview'));
-        tabApprovals.addEventListener('click', () => switchOwnerTab('approvals'));
-        tabEmployees.addEventListener('click', () => switchOwnerTab('employees'));
-        tabSettings.addEventListener('click', () => switchOwnerTab('settings'));
-
-        // --- Store Settings Logic ---
-        
-        function renderSettingsUI() {
-            setWorkStart.value = storeSettings.workStart;
-            setWorkEnd.value = storeSettings.workEnd;
-            setOtGrace.value = storeSettings.otGrace;
-            renderHolidaysList();
-        }
-
-        function renderHolidaysList() {
-            if(storeSettings.holidays.length === 0) {
-                settingsHolidayList.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-4">ไม่มีรายการวันหยุดพิเศษ</p>';
-                return;
-            }
-            const sortedHolidays = [...storeSettings.holidays].sort((a,b) => new Date(a.date) - new Date(b.date));
-            let html = '';
-            sortedHolidays.forEach((h, index) => {
-                const d = new Date(h.date);
-                const dStr = d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
-                
-                html += `
-                <div class="flex justify-between items-center bg-white border border-slate-100 p-2.5 rounded-xl">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center font-bold text-xs">
-                            ${d.getDate()}
-                        </div>
-                        <div>
-                            <p class="text-sm font-bold text-slate-700">${h.name}</p>
-                            <p class="text-[10px] text-slate-500">${dStr}</p>
-                        </div>
-                    </div>
-                    <button onclick="removeHoliday(${index})" class="text-slate-300 hover:text-rose-500 transition-colors p-1">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    </button>
-                </div>`;
-            });
-            settingsHolidayList.innerHTML = html;
-            lucide.createIcons();
-        }
-
-        window.addHoliday = () => {
-            const dateVal = document.getElementById('new-holiday-date').value;
-            const nameVal = document.getElementById('new-holiday-name').value.trim();
-
-            if(!dateVal || !nameVal) { alert('กรุณากรอกวันที่และชื่อวันหยุดให้ครบ'); return; }
-            storeSettings.holidays.push({ date: dateVal, name: nameVal });
-            document.getElementById('new-holiday-date').value = '';
-            document.getElementById('new-holiday-name').value = '';
-            renderHolidaysList();
-        };
-
-        window.removeHoliday = (index) => {
-            storeSettings.holidays.splice(index, 1);
-            renderHolidaysList();
-        };
-
-        async function fetchStoreSettings() {
-            if(!user) return;
-            try {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'store_config');
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    storeSettings = { ...storeSettings, ...docSnap.data() };
-                }
-                renderSettingsUI();
-            } catch (e) { console.error("Error fetching settings:", e); }
-        }
-
-        window.saveStoreSettings = async () => {
-            if(!user) return;
-            storeSettings.workStart = setWorkStart.value;
-            storeSettings.workEnd = setWorkEnd.value;
-            storeSettings.otGrace = parseInt(setOtGrace.value) || 0;
-
-            const btn = document.getElementById('btn-save-settings');
-            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> กำลังบันทึก...';
-            lucide.createIcons();
-            btn.disabled = true;
-
-            try {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'store_config'), {
-                    ...storeSettings, updatedAt: serverTimestamp()
-                });
-                
-                btn.classList.remove('bg-slate-800', 'hover:bg-slate-900');
-                btn.classList.add('bg-emerald-500', 'hover:bg-emerald-600');
-                btn.innerHTML = '<i data-lucide="check" class="w-5 h-5"></i> บันทึกสำเร็จ';
-                lucide.createIcons();
-                
-                setTimeout(() => {
-                    btn.classList.add('bg-slate-800', 'hover:bg-slate-900');
-                    btn.classList.remove('bg-emerald-500', 'hover:bg-emerald-600');
-                    btn.innerHTML = '<i data-lucide="save" class="w-5 h-5"></i> บันทึกการตั้งค่าร้าน';
-                    lucide.createIcons();
-                    btn.disabled = false;
-                }, 2000);
-
-            } catch (e) {
-                console.error(e); alert("เกิดข้อผิดพลาดในการบันทึก");
-                btn.disabled = false; btn.innerHTML = '<i data-lucide="save" class="w-5 h-5"></i> บันทึกการตั้งค่าร้าน'; lucide.createIcons();
-            }
-        };
-
-        // --- PIN Logic ---
-        window.promptPin = (empId, empName, pin) => {
-            pinMode = 'employee';
-            pendingEmpId = empId; pendingEmpName = empName;
-            expectedPin = String(pin).trim() || '0000';
-            currentEnteredPin = '';
-            
-            pinEmpName.textContent = empName;
-            pinAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(empName)}&background=eff6ff&color=2563eb&bold=true`;
-            pinErrorMsg.classList.remove('opacity-100');
-            updatePinDotsUI();
-
-            pinOverlay.classList.remove('opacity-0', 'pointer-events-none');
-            setTimeout(() => pinModalContent.classList.remove('translate-y-full', 'sm:scale-95'), 10);
-        };
-
-        window.promptOwnerPin = () => {
-            pinMode = 'owner';
-            expectedPin = '9999';
-            currentEnteredPin = '';
-            
-            pinEmpName.textContent = 'ผู้ดูแลระบบ (Owner)';
-            pinAvatar.src = `https://ui-avatars.com/api/?name=Owner&background=f59e0b&color=fff&bold=true`;
-            pinErrorMsg.classList.remove('opacity-100');
-            updatePinDotsUI();
-
-            pinOverlay.classList.remove('opacity-0', 'pointer-events-none');
-            setTimeout(() => pinModalContent.classList.remove('translate-y-full', 'sm:scale-95'), 10);
-        };
-
-        window.closePinOverlay = () => {
-            pinModalContent.classList.add('translate-y-full', 'sm:scale-95');
-            setTimeout(() => {
-                pinOverlay.classList.add('opacity-0', 'pointer-events-none');
-                pinOverlay.classList.remove('opacity-100');
-                pendingEmpId = null;
-            }, 300);
-        };
-        btnClosePin.addEventListener('click', window.closePinOverlay);
-
-        window.handlePinInput = (num) => {
-            if (currentEnteredPin.length < 4) {
-                currentEnteredPin += num;
-                updatePinDotsUI();
-                pinErrorMsg.classList.remove('opacity-100');
-                if (currentEnteredPin.length === 4) setTimeout(() => window.verifyPin(), 150);
-            }
-        };
-
-        window.deletePinChar = () => {
-            if (currentEnteredPin.length > 0) {
-                currentEnteredPin = currentEnteredPin.slice(0, -1);
-                updatePinDotsUI();
-            }
-        };
-
-        function updatePinDotsUI() {
-            pinDots.forEach((dot, index) => {
-                if (index < currentEnteredPin.length) {
-                    dot.className = 'pin-dot w-4 h-4 rounded-full border-2 border-blue-500 bg-blue-500 transition-colors';
-                } else {
-                    dot.className = 'pin-dot w-4 h-4 rounded-full border-2 border-slate-300 bg-transparent transition-colors';
-                }
-            });
-        }
-
-        window.verifyPin = () => {
-            try {
-                if (currentEnteredPin === expectedPin) {
-                    if (pinMode === 'employee') window.loginAs(pendingEmpId, pendingEmpName);
-                    else if (pinMode === 'owner') openOwnerView();
-                    window.closePinOverlay();
-                } else {
-                    pinErrorMsg.classList.add('opacity-100');
-                    pinDotsContainer.classList.remove('animate-shake');
-                    void pinDotsContainer.offsetWidth;
-                    pinDotsContainer.classList.add('animate-shake');
-                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-                    setTimeout(() => { currentEnteredPin = ''; updatePinDotsUI(); }, 400);
-                }
-            } catch (err) { console.error(err); }
-        };
-
-        // --- Employee Session ---
-        window.loginAs = (empId, empName) => {
-            currentEmpId = empId;
-            currentEmpName = empName;
-            
-            currentEmpNameEl.textContent = empName;
-            currentEmpAvatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(empName)}&background=eff6ff&color=2563eb&bold=true`;
-            
-            loginOverlay.classList.remove('opacity-100');
-            loginOverlay.classList.add('opacity-0', 'pointer-events-none');
-            
-            switchEmpTab('clock');
-            refreshCurrentUserState();
-            renderEmployeeRequests();
-        };
-
-        btnLogout.addEventListener('click', () => {
-            currentEmpId = null;
-            currentEmpName = null;
-            isCheckedIn = false;
-            checkInTime = null;
-            updateUIState();
-            loginOverlay.classList.remove('opacity-0', 'pointer-events-none');
-            loginOverlay.classList.add('opacity-100');
         });
 
-        function renderEmployeeSelector() {
-            if (allEmployees.length === 0) {
-                empSelectList.innerHTML = `<div class="text-center bg-rose-50 border border-rose-100 p-4 rounded-2xl"><p class="text-rose-600 font-bold text-sm mb-1">ยังไม่มีข้อมูลพนักงานในระบบ</p><p class="text-rose-500/80 text-xs">กรุณากดไอคอนมุมขวาบนเพื่อเข้าสู่โหมดเจ้าของร้าน และเพิ่มพนักงาน</p></div>`;
-                return;
-            }
-            let html = '';
-            allEmployees.forEach(emp => {
-                const pin = emp.empPin || '0000';
-                const safeId = String(emp.empId).replace(/'/g, "\\'");
-                const safeName = String(emp.empName).replace(/'/g, "\\'");
-                const safePin = String(pin).replace(/'/g, "\\'");
-                
-                html += `<button onclick="promptPin('${safeId}', '${safeName}', '${safePin}')" class="w-full flex items-center p-3.5 bg-white border border-slate-100 shadow-sm rounded-2xl hover:border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition-all group">
-                    <div class="w-12 h-12 bg-slate-100 text-slate-600 rounded-full flex items-center justify-center mr-4 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors"><i data-lucide="user" class="w-5 h-5"></i></div>
-                    <div class="text-left flex-1"><p class="font-bold text-slate-800">${emp.empName}</p><p class="text-xs text-slate-500 font-medium">${emp.empId}</p></div>
-                    <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300 group-hover:text-blue-500 transition-colors"></i>
-                </button>`;
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            currentEmpId = null; currentEmpName = null; isCheckedIn = false; checkInTime = null;
+            updateUIState();
+            loginOverlay.classList.remove('opacity-0', 'pointer-events-none');
+        });
+
+        // Tabs
+        ['clock','leave','swap'].forEach(t => {
+            document.getElementById(`emp-tab-${t}`).addEventListener('click', () => {
+                ['clock','leave','swap'].forEach(x => {
+                    document.getElementById(`emp-tab-${x}`).className = 'flex-1 pb-3 text-[11px] sm:text-sm font-bold border-b-2 border-transparent text-slate-400 hover:text-slate-600 transition-colors flex flex-col items-center gap-1';
+                    document.getElementById(`emp-content-${x}`).classList.add('hidden'); document.getElementById(`emp-content-${x}`).classList.remove('flex');
+                });
+                document.getElementById(`emp-tab-${t}`).className = 'flex-1 pb-3 text-[11px] sm:text-sm font-bold border-b-2 border-blue-600 text-blue-600 transition-colors flex flex-col items-center gap-1';
+                document.getElementById(`emp-content-${t}`).classList.remove('hidden'); document.getElementById(`emp-content-${t}`).classList.add('flex');
             });
-            empSelectList.innerHTML = html;
-            lucide.createIcons();
-        }
+        });
 
-        // --- Requests Logic (Leave & Swap) ---
-        window.submitRequest = async (type) => {
-            if (!user || !currentEmpId) return;
-
-            let data = { employeeId: currentEmpId, employeeName: currentEmpName, requestType: type, status: 'PENDING', timestamp: serverTimestamp() };
-
-            if (type === 'LEAVE') {
-                const lType = document.getElementById('leave-type').value;
-                const start = document.getElementById('leave-start').value;
-                const end = document.getElementById('leave-end').value;
-                const reason = document.getElementById('leave-reason').value;
-
-                if(!start || !end || !reason) { alert('กรุณากรอกข้อมูลให้ครบถ้วน'); return; }
-                if(new Date(start) > new Date(end)) { alert('วันที่เริ่มต้องไม่มากกว่าวันที่สิ้นสุด'); return; }
-
-                data.leaveType = lType; data.startDate = start; data.endDate = end; data.reason = reason;
-            } else if (type === 'SWAP') {
-                const workDate = document.getElementById('swap-work-date').value;
-                const offDate = document.getElementById('swap-off-date').value;
-                const reason = document.getElementById('swap-reason').value;
-
-                if(!workDate || !offDate || !reason) { alert('กรุณากรอกข้อมูลให้ครบถ้วน'); return; }
-
-                data.workDate = workDate; data.offDate = offDate; data.reason = reason;
-            }
-
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), data);
-                
-                if(type === 'LEAVE') {
-                    document.getElementById('leave-start').value = ''; document.getElementById('leave-end').value = ''; document.getElementById('leave-reason').value = '';
-                } else {
-                    document.getElementById('swap-work-date').value = ''; document.getElementById('swap-off-date').value = ''; document.getElementById('swap-reason').value = '';
-                }
-                alert('ส่งคำขอเรียบร้อยแล้ว');
-            } catch(e) { console.error(e); alert('เกิดข้อผิดพลาดในการส่งคำขอ'); }
-        };
-
-        window.updateRequestStatus = async (docId, status) => {
-            if(!user) return;
-            try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', docId), { status: status, updatedAt: serverTimestamp() }); } 
-            catch(e) { console.error(e); }
-        };
-
-        window.deleteRequest = async (docId) => {
-            if(!user) return;
-            if(confirm('ยกเลิกคำขอนี้ใช่หรือไม่?')) {
-                try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'requests', docId)); } 
-                catch(e) { console.error(e); }
-            }
-        };
-
-        function getStatusBadge(status) {
-            if(status === 'APPROVED') return '<span class="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[10px] font-bold">อนุมัติแล้ว</span>';
-            if(status === 'REJECTED') return '<span class="bg-rose-100 text-rose-600 px-2 py-0.5 rounded text-[10px] font-bold">ไม่อนุมัติ</span>';
-            return '<span class="bg-amber-100 text-amber-600 px-2 py-0.5 rounded text-[10px] font-bold">รออนุมัติ</span>';
-        }
-
-        function formatDateTh(dateStr) {
-            if(!dateStr) return '';
-            return new Date(dateStr).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
-        }
-
-        function renderEmployeeRequests() {
-            if (!currentEmpId) return;
-            const myLeaves = allRequests.filter(r => r.employeeId === currentEmpId && r.requestType === 'LEAVE');
-            const mySwaps = allRequests.filter(r => r.employeeId === currentEmpId && r.requestType === 'SWAP');
-
-            const leaveContainer = document.getElementById('emp-leave-history');
-            const swapContainer = document.getElementById('emp-swap-history');
-
-            if(myLeaves.length === 0) leaveContainer.innerHTML = '<p class="text-center text-slate-400 text-xs italic">ไม่มีประวัติการลางาน</p>';
-            else {
-                let html = '';
-                myLeaves.forEach(req => {
-                    html += `<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 relative">
-                        ${req.status === 'PENDING' ? `<button onclick="deleteRequest('${req.id}')" class="absolute top-3 right-3 text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
-                        <div class="flex items-center gap-2 mb-2">${getStatusBadge(req.status)}<span class="font-bold text-slate-700 text-sm">${req.leaveType}</span></div>
-                        <p class="text-xs text-slate-600 mb-1"><span class="text-slate-400">วันที่:</span> ${formatDateTh(req.startDate)} - ${formatDateTh(req.endDate)}</p>
-                        <p class="text-xs text-slate-600"><span class="text-slate-400">เหตุผล:</span> ${req.reason}</p>
-                    </div>`;
+        ['overview','approvals','employees','settings'].forEach(t => {
+            document.getElementById(`tab-${t}`).addEventListener('click', () => {
+                ['overview','approvals','employees','settings'].forEach(x => {
+                    document.getElementById(`tab-${x}`).classList.remove('border-blue-600', 'text-blue-600');
+                    document.getElementById(`tab-${x}`).classList.add('border-transparent', 'text-slate-400');
+                    document.getElementById(`owner-content-${x}`).classList.add('hidden'); document.getElementById(`owner-content-${x}`).classList.remove('flex');
                 });
-                leaveContainer.innerHTML = html;
-            }
+                document.getElementById(`tab-${t}`).classList.add('border-blue-600', 'text-blue-600');
+                document.getElementById(`owner-content-${t}`).classList.remove('hidden'); document.getElementById(`owner-content-${t}`).classList.add('flex');
+            });
+        });
 
-            if(mySwaps.length === 0) swapContainer.innerHTML = '<p class="text-center text-slate-400 text-xs italic">ไม่มีประวัติการสลับวัน</p>';
-            else {
-                let html = '';
-                mySwaps.forEach(req => {
-                    html += `<div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 relative">
-                        ${req.status === 'PENDING' ? `<button onclick="deleteRequest('${req.id}')" class="absolute top-3 right-3 text-slate-300 hover:text-rose-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : ''}
-                        <div class="flex items-center gap-2 mb-2">${getStatusBadge(req.status)}<span class="font-bold text-slate-700 text-sm">ขอสลับวันหยุด</span></div>
-                        <p class="text-xs text-slate-600 mb-1"><span class="text-slate-400">มาทำแทน:</span> ${formatDateTh(req.workDate)}</p>
-                        <p class="text-xs text-slate-600 mb-1"><span class="text-slate-400">ขอหยุด:</span> ${formatDateTh(req.offDate)}</p>
-                        <p class="text-xs text-slate-600"><span class="text-slate-400">เหตุผล:</span> ${req.reason}</p>
-                    </div>`;
-                });
-                swapContainer.innerHTML = html;
-            }
-            lucide.createIcons();
+        function openOwnerView() {
+            employeeView.classList.add('-translate-x-full', 'opacity-0', 'pointer-events-none');
+            ownerView.classList.remove('translate-x-full', 'opacity-0'); ownerView.classList.add('z-40');
+            if(!currentEmpId) loginOverlay.classList.add('opacity-0', 'pointer-events-none');
+            fetchStoreSettings();
         }
 
-        function renderOwnerRequests() {
-            const container = document.getElementById('owner-requests-list');
-            let pendingCount = 0;
-
-            if (allRequests.length === 0) {
-                container.innerHTML = '<div class="flex flex-col items-center justify-center py-10 opacity-60"><i data-lucide="inbox" class="w-12 h-12 text-slate-400 mb-3"></i><p class="text-sm font-medium text-slate-500">ไม่มีคำขออนุมัติ</p></div>';
-            } else {
-                let html = '';
-                allRequests.forEach(req => {
-                    if (req.status === 'PENDING') pendingCount++;
-                    const isLeave = req.requestType === 'LEAVE';
-                    const iconColor = isLeave ? 'text-blue-500 bg-blue-50' : 'text-purple-500 bg-purple-50';
-                    const iconName = isLeave ? 'calendar-off' : 'arrow-left-right';
-                    const title = isLeave ? `ลางาน (${req.leaveType})` : 'ขอสลับวันหยุด';
-                    const detailHTML = isLeave 
-                        ? `<p class="text-xs text-slate-600"><span class="text-slate-400">วันที่:</span> ${formatDateTh(req.startDate)} - ${formatDateTh(req.endDate)}</p>`
-                        : `<p class="text-xs text-slate-600"><span class="text-slate-400">มาทำแทน:</span> ${formatDateTh(req.workDate)} <span class="text-slate-300">|</span> <span class="text-slate-400">ขอหยุด:</span> ${formatDateTh(req.offDate)}</p>`;
-
-                    html += `<div class="bg-white p-4 rounded-2xl shadow-sm border ${req.status === 'PENDING' ? 'border-amber-200 shadow-amber-100/50' : 'border-slate-100'}">
-                        <div class="flex items-center justify-between mb-3">
-                            <div class="flex items-center gap-2">
-                                <div class="w-8 h-8 rounded-lg flex items-center justify-center ${iconColor}"><i data-lucide="${iconName}" class="w-4 h-4"></i></div>
-                                <div><p class="font-bold text-slate-800 text-sm">${req.employeeName}</p><p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">${title}</p></div>
-                            </div>
-                            ${getStatusBadge(req.status)}
-                        </div>
-                        <div class="bg-slate-50 p-3 rounded-xl mb-3">${detailHTML}<p class="text-xs text-slate-600 mt-1"><span class="text-slate-400">เหตุผล:</span> ${req.reason}</p></div>
-                        ${req.status === 'PENDING' ? `
-                        <div class="flex gap-2">
-                            <button onclick="updateRequestStatus('${req.id}', 'APPROVED')" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> อนุมัติ</button>
-                            <button onclick="updateRequestStatus('${req.id}', 'REJECTED')" class="flex-1 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold py-2.5 rounded-lg transition-colors flex items-center justify-center gap-1"><i data-lucide="x" class="w-3 h-3"></i> ไม่อนุมัติ</button>
-                        </div>` : ''}
-                    </div>`;
-                });
-                container.innerHTML = html;
-            }
-            if(pendingCount > 0) badgePending.classList.remove('hidden');
-            else badgePending.classList.add('hidden');
-            lucide.createIcons();
-        }
-
-        // --- Core UI Updates ---
+        // --- Clock / Update Logic ---
         function updateTime() {
             const now = new Date();
-            clockDisplay.textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-            dateDisplay.textContent = now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long' });
+            document.getElementById('clock-display').textContent = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('date-display').textContent = now.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'long' });
 
             const hour = now.getHours();
-            let greeting = 'สวัสดี';
-            let iconName = 'sun';
-            let iconColor = 'text-amber-500';
-
-            if (hour < 12) { greeting = 'อรุณสวัสดิ์'; iconName = 'sun'; iconColor = 'text-amber-500'; } 
+            let greeting = 'สวัสดี', iconName = 'sun', iconColor = 'text-amber-500';
+            if (hour < 12) { greeting = 'อรุณสวัสดิ์'; } 
             else if (hour < 18) { greeting = 'สวัสดีตอนบ่าย'; iconName = 'coffee'; iconColor = 'text-orange-500'; } 
             else { greeting = 'สวัสดีตอนเย็น'; iconName = 'moon'; iconColor = 'text-indigo-400'; }
 
-            greetingText.textContent = greeting;
-            if(!greetingIconContainer.querySelector(`[data-lucide="${iconName}"]`)) {
-                greetingIconContainer.className = `${iconColor} w-3 h-3 flex items-center justify-center`;
-                greetingIconContainer.innerHTML = `<i data-lucide="${iconName}" class="w-3 h-3"></i>`;
+            document.getElementById('greeting-text').textContent = greeting;
+            const gc = document.getElementById('greeting-icon-container');
+            if(!gc.querySelector(`[data-lucide="${iconName}"]`)) {
+                gc.className = `${iconColor} w-3 h-3 flex items-center justify-center`;
+                gc.innerHTML = `<i data-lucide="${iconName}" class="w-3 h-3"></i>`;
                 lucide.createIcons();
             }
 
             if (isCheckedIn && checkInTime) {
                 const diff = Math.floor((now - checkInTime) / 1000);
-                const hours = String(Math.floor(diff / 3600)).padStart(2, '0');
-                const minutes = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
-                const seconds = String(diff % 60).padStart(2, '0');
-                elapsedTimeDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+                const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+                const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+                const s = String(diff % 60).padStart(2, '0');
+                document.getElementById('elapsed-time').textContent = `${h}:${m}:${s}`;
             }
         }
-        setInterval(updateTime, 1000);
-        updateTime();
+        setInterval(updateTime, 1000); updateTime();
 
         function updateUIState() {
-            if (user) {
-                connStatus.textContent = 'CONNECTED TO CLOUD';
-                connStatus.className = 'px-3 py-1.5 rounded-full text-[11px] font-bold shadow-sm transition-colors bg-emerald-500 text-white';
-            } else {
-                connStatus.textContent = 'CONNECTING...';
-                connStatus.className = 'px-3 py-1.5 rounded-full text-[11px] font-bold shadow-sm transition-colors bg-slate-300 text-slate-600';
-            }
+            const conn = document.getElementById('conn-status');
+            if (user) { conn.textContent = 'CONNECTED TO CLOUD'; conn.className = 'px-3 py-1.5 rounded-full text-[11px] font-bold shadow-sm transition-colors bg-emerald-500 text-white'; } 
+            else { conn.textContent = 'CONNECTING...'; conn.className = 'px-3 py-1.5 rounded-full text-[11px] font-bold shadow-sm transition-colors bg-slate-300 text-slate-600'; }
 
             const showActive = isCheckedIn && currentEmpId !== null;
-
+            const tc = document.getElementById('timer-container'), b1 = document.getElementById('blob1'), b2 = document.getElementById('blob2');
             if (showActive) {
-                timerContainer.className = 'mt-6 h-20 transition-all duration-500 opacity-100 scale-100';
-                blob1.className = 'absolute -top-[10%] -left-[10%] w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob transition-colors duration-1000 bg-emerald-400';
-                blob2.className = 'absolute top-[20%] -right-[10%] w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob animation-delay-2000 transition-colors duration-1000 bg-teal-300';
+                tc.className = 'mt-4 sm:mt-6 h-16 sm:h-20 transition-all duration-500 opacity-100 scale-100';
+                b1.className = 'absolute -top-[10%] -left-[10%] w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob transition-colors duration-1000 bg-emerald-400';
+                b2.className = 'absolute top-[20%] -right-[10%] w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob animation-delay-2000 transition-colors duration-1000 bg-teal-300';
             } else {
-                timerContainer.className = 'mt-6 h-20 transition-all duration-500 opacity-0 scale-95 pointer-events-none absolute';
-                blob1.className = 'absolute -top-[10%] -left-[10%] w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob transition-colors duration-1000 bg-blue-400';
-                blob2.className = 'absolute top-[20%] -right-[10%] w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob animation-delay-2000 transition-colors duration-1000 bg-indigo-400';
+                tc.className = 'mt-4 sm:mt-6 h-16 sm:h-20 transition-all duration-500 opacity-0 scale-95 pointer-events-none absolute';
+                b1.className = 'absolute -top-[10%] -left-[10%] w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob transition-colors duration-1000 bg-blue-400';
+                b2.className = 'absolute top-[20%] -right-[10%] w-96 h-96 rounded-full mix-blend-multiply filter blur-[100px] opacity-40 animate-blob animation-delay-2000 transition-colors duration-1000 bg-indigo-400';
             }
 
-            progressRing.setAttribute('class', `text-${showActive ? 'rose-500' : 'blue-600'} transition-all duration-75`);
-
-            let btnClasses = 'w-[136px] h-[136px] rounded-full flex flex-col items-center justify-center transition-all duration-300 shadow-xl relative overflow-hidden ';
+            const pRing = document.getElementById('progress-ring'), btnIn = document.getElementById('btn-inner');
+            pRing.setAttribute('class', `text-${showActive ? 'rose-500' : 'blue-600'} transition-all duration-75`);
+            
+            // Note size updates for responsive btn
+            let bc = 'w-[120px] h-[120px] sm:w-[136px] sm:h-[136px] rounded-full flex flex-col items-center justify-center transition-all duration-300 shadow-xl relative overflow-hidden ';
+            const btnIcon = document.getElementById('btn-icon-container'), btnT = document.getElementById('btn-text'), btnSub = document.getElementById('btn-subtext');
             
             if (!user || !currentEmpId) {
-                btnClasses += 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-70 border-2 border-transparent';
-                btnIconContainer.innerHTML = '<i data-lucide="fingerprint" class="w-[42px] h-[42px]"></i>';
-                btnText.textContent = 'เข้างาน';
-                btnText.className = 'mt-2 font-bold text-slate-400 text-lg tracking-wide';
-                btnSubtext.textContent = !user ? 'Connecting...' : 'Login Required';
-                btnSubtext.className = 'text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider';
+                bc += 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-70 border-2 border-transparent';
+                btnIcon.innerHTML = '<i data-lucide="fingerprint" class="w-8 h-8 sm:w-10 sm:h-10"></i>';
+                btnT.textContent = 'เข้างาน'; btnT.className = 'font-bold text-slate-400 text-base sm:text-lg tracking-wide';
+                btnSub.textContent = !user ? 'Connecting...' : 'Login Required'; btnSub.className = 'text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-wider';
             } else if (showSuccess) {
-                btnClasses += 'bg-emerald-500 text-white scale-110 border-2 border-transparent';
-                btnIconContainer.innerHTML = '<i data-lucide="check-circle-2" class="w-12 h-12 animate-[bounce-in_0.5s_cubic-bezier(0.175,0.885,0.32,1.275)] drop-shadow-md"></i>';
-                btnText.textContent = 'สำเร็จ!';
-                btnText.className = 'mt-2 font-bold text-white text-sm tracking-wide';
-                btnSubtext.textContent = '';
+                bc += 'bg-emerald-500 text-white scale-110 border-2 border-transparent';
+                btnIcon.innerHTML = '<i data-lucide="check-circle-2" class="w-10 h-10 sm:w-12 sm:h-12 animate-[bounce-in_0.5s_cubic-bezier(0.175,0.885,0.32,1.275)] drop-shadow-md"></i>';
+                btnT.textContent = 'สำเร็จ!'; btnT.className = 'mt-1 sm:mt-2 font-bold text-white text-sm tracking-wide'; btnSub.textContent = '';
             } else {
-                btnClasses += isHolding ? 'scale-95 shadow-inner ' : 'scale-100 hover:scale-105 hover:shadow-2xl ';
+                bc += isHolding ? 'scale-95 shadow-inner ' : 'scale-100 hover:scale-105 hover:shadow-2xl ';
                 if (showActive) {
-                    btnClasses += 'bg-gradient-to-b from-white to-rose-50 text-rose-600 border-2 border-white';
-                    btnIconContainer.innerHTML = '<i data-lucide="log-out" class="w-9 h-9"></i>';
-                    btnText.textContent = 'เลิกงาน';
+                    bc += 'bg-gradient-to-b from-white to-rose-50 text-rose-600 border-2 border-white';
+                    btnIcon.innerHTML = '<i data-lucide="log-out" class="w-7 h-7 sm:w-9 sm:h-9"></i>';
+                    btnT.textContent = 'เลิกงาน';
                 } else {
-                    btnClasses += 'bg-gradient-to-b from-white to-blue-50 text-blue-600 border-2 border-white';
-                    btnIconContainer.innerHTML = '<i data-lucide="fingerprint" class="w-[42px] h-[42px]"></i>';
-                    btnText.textContent = 'เข้างาน';
+                    bc += 'bg-gradient-to-b from-white to-blue-50 text-blue-600 border-2 border-white';
+                    btnIcon.innerHTML = '<i data-lucide="fingerprint" class="w-8 h-8 sm:w-[42px] sm:h-[42px]"></i>';
+                    btnT.textContent = 'เข้างาน';
                 }
-                btnText.className = 'mt-2 font-bold text-slate-800 text-lg tracking-wide';
-                btnSubtext.textContent = isHolding ? 'Recording...' : 'Hold Me';
-                btnSubtext.className = `text-[10px] font-bold uppercase mt-0.5 tracking-wider ${isHolding ? 'text-blue-500 animate-pulse' : 'text-slate-400'}`;
+                btnT.className = 'font-bold text-slate-800 text-base sm:text-lg tracking-wide';
+                btnSub.textContent = isHolding ? 'Recording...' : 'Hold Me';
+                btnSub.className = `text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${isHolding ? 'text-blue-500 animate-pulse' : 'text-slate-400'}`;
             }
-
-            btnInner.className = btnClasses;
+            btnIn.className = bc;
             lucide.createIcons();
-            const offset = 515 - (515 * holdProgress / 100);
-            progressRing.style.strokeDashoffset = offset;
+            const strokeDash = 283; // 2 * pi * r (approx 2 * 3.14 * 45) in percentage svg? actually let's just let css dash array do its thing
+            pRing.style.strokeDashoffset = 283 - (283 * holdProgress / 100);
         }
 
-        function refreshCurrentUserState() {
-            if(!currentEmpId) return;
-            employeeLogs = allLogs.filter(log => log.employeeId === currentEmpId);
-            if (employeeLogs.length > 0 && employeeLogs[0].type === 'IN') {
-                isCheckedIn = true; checkInTime = employeeLogs[0].time;
-            } else {
-                isCheckedIn = false; checkInTime = null;
-            }
-            updateTime(); updateUIState(); renderEmployeeHistoryTab();
-        }
-
-        function renderEmployeeHistoryTab() {
-            if (!currentEmpId) return;
-            if (employeeLogs.length === 0) {
-                historyList.innerHTML = '<p class="text-center text-slate-400 text-xs py-5 italic">ไม่มีข้อมูลการบันทึก...</p>';
-                return;
-            }
-            let html = '';
-            employeeLogs.slice(0, 5).forEach((log, index) => {
-                const timeStr = log.time.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-                const isFirst = index === 0;
-                const borderClass = isFirst ? (log.type === 'IN' ? 'border-l-4 border-l-blue-500' : 'border-l-4 border-l-rose-500') : '';
-                
-                html += `<div class="flex items-center justify-between p-3 rounded-2xl bg-white/80 border border-white shadow-sm backdrop-blur-md transition-all ${borderClass}">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner ${log.type === 'IN' ? 'bg-blue-50 text-blue-600' : 'bg-rose-50 text-rose-500'}">
-                            <i data-lucide="${log.type === 'IN' ? 'log-in' : 'log-out'}" class="w-4 h-4"></i>
+        // --- Store Settings ---
+        function renderSettingsUI() {
+            document.getElementById('set-work-start').value = storeSettings.workStart;
+            document.getElementById('set-work-end').value = storeSettings.workEnd;
+            document.getElementById('set-ot-grace').value = storeSettings.otGrace;
+            
+            const hl = document.getElementById('settings-holiday-list');
+            if(storeSettings.holidays.length === 0) hl.innerHTML = '<p class="text-xs text-slate-400 italic text-center py-4">ไม่มีรายการวันหยุดพิเศษ</p>';
+            else {
+                let html = '';
+                [...storeSettings.holidays].sort((a,b) => new Date(a.date) - new Date(b.date)).forEach((h, i) => {
+                    const d = new Date(h.date);
+                    html += `<div class="flex justify-between items-center bg-white border border-slate-100 p-2 rounded-xl">
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center font-bold text-xs">${d.getDate()}</div>
+                            <div><p class="text-xs font-bold text-slate-700">${h.name}</p><p class="text-[9px] text-slate-500">${d.toLocaleDateString('th-TH', { day:'numeric',month:'short',year:'numeric' })}</p></div>
                         </div>
-                        <div>
-                            <p class="font-bold text-slate-700 text-sm">${log.type === 'IN' ? 'เข้างาน' : 'เลิกงาน'}</p>
-                            <p class="text-[10px] text-slate-400 font-medium mt-0.5">${log.location}</p>
-                        </div>
-                    </div>
-                    <div class="font-bold text-slate-800 text-sm tabular-nums tracking-tight">${timeStr}</div>
-                </div>`;
-            });
-            historyList.innerHTML = html;
-            lucide.createIcons();
+                        <button onclick="removeHoliday(${i})" class="text-slate-300 hover:text-rose-500 p-1"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                    </div>`;
+                });
+                hl.innerHTML = html; lucide.createIcons();
+            }
         }
 
-        // Employee CRUD
+        window.addHoliday = () => {
+            const d = document.getElementById('new-holiday-date').value, n = document.getElementById('new-holiday-name').value.trim();
+            if(!d || !n) return alert('กรอกให้ครบ');
+            storeSettings.holidays.push({date:d, name:n}); document.getElementById('new-holiday-date').value=''; document.getElementById('new-holiday-name').value='';
+            renderSettingsUI();
+        };
+        window.removeHoliday = (i) => { storeSettings.holidays.splice(i,1); renderSettingsUI(); };
+
+        async function fetchStoreSettings() {
+            if(!user) return;
+            try {
+                const s = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'store_config'));
+                if(s.exists()) storeSettings = {...storeSettings, ...s.data()};
+                renderSettingsUI();
+            } catch(e){}
+        }
+
+        window.saveStoreSettings = async () => {
+            if(!user) return;
+            storeSettings.workStart = document.getElementById('set-work-start').value;
+            storeSettings.workEnd = document.getElementById('set-work-end').value;
+            storeSettings.otGrace = parseInt(document.getElementById('set-ot-grace').value) || 0;
+            const btn = document.getElementById('btn-save-settings');
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> บันทึก...'; btn.disabled=true;
+            try {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'store_config'), {...storeSettings, updatedAt: serverTimestamp()});
+                btn.className = 'w-full py-3.5 sm:py-4 bg-emerald-500 text-white rounded-xl sm:rounded-2xl text-sm sm:text-base font-bold shadow-lg transition-all flex justify-center items-center gap-2';
+                btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> สำเร็จ'; lucide.createIcons();
+                setTimeout(()=>{ btn.className = 'w-full py-3.5 sm:py-4 bg-slate-800 hover:bg-slate-900 text-white rounded-xl sm:rounded-2xl text-sm sm:text-base font-bold shadow-lg shadow-slate-800/20 transition-all flex justify-center items-center gap-2'; btn.innerHTML='<i data-lucide="save" class="w-4 h-4 sm:w-5 sm:h-5"></i> บันทึกการตั้งค่าร้าน'; btn.disabled=false; lucide.createIcons(); }, 1500);
+            } catch(e){ alert('Error'); btn.disabled=false; }
+        };
+
+        // --- Modals & CRUD ---
         function renderModalOffDays() {
             const container = document.getElementById('modal-emp-offdays');
-            const weekdaysTH = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+            const th = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
             let html = '';
             for(let i=0; i<7; i++) {
                 const isOff = currentModalOffDays[i];
-                html += `<button type="button" onclick="toggleModalOffDay(${i})" class="flex-1 py-2.5 rounded-lg text-[10px] sm:text-xs font-bold border transition-colors ${isOff ? 'bg-rose-500 text-white border-rose-500 shadow-sm' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'}">${weekdaysTH[i]}</button>`;
+                html += `<button type="button" onclick="toggleModalOffDay(${i})" class="flex-1 py-2 sm:py-2.5 rounded-lg text-[9px] sm:text-[10px] font-bold border transition-colors ${isOff ? 'bg-rose-500 text-white border-rose-500 shadow-sm' : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100'}">${th[i]}</button>`;
             }
             container.innerHTML = html;
         }
 
-        window.toggleModalOffDay = (dayIndex) => {
-            currentModalOffDays[dayIndex] = !currentModalOffDays[dayIndex];
+        window.toggleModalOffDay = (i) => { currentModalOffDays[i] = !currentModalOffDays[i]; renderModalOffDays(); };
+
+        window.openModal = (docId = '', empId = '', empName = '', empPin = '0000', wage = '', otRate = '', offDaysStr = '') => {
+            document.getElementById('modal-doc-id').value = docId; document.getElementById('modal-emp-id').value = empId; document.getElementById('modal-emp-name').value = empName;
+            document.getElementById('modal-emp-pin').value = empPin; document.getElementById('modal-emp-wage').value = wage; document.getElementById('modal-emp-ot').value = otRate;
+            try { currentModalOffDays = offDaysStr ? JSON.parse(decodeURIComponent(offDaysStr)) : {0:true, 1:false, 2:false, 3:false, 4:false, 5:false, 6:false}; } 
+            catch(e){ currentModalOffDays = {0:true, 1:false, 2:false, 3:false, 4:false, 5:false, 6:false}; }
             renderModalOffDays();
+            document.getElementById('modal-title').textContent = docId ? 'แก้ไขพนักงาน' : 'เพิ่มพนักงาน';
+            const m = document.getElementById('employee-modal'), c = document.getElementById('employee-modal-content');
+            m.classList.remove('opacity-0', 'pointer-events-none'); setTimeout(() => { c.classList.remove('scale-95'); c.classList.add('scale-100'); }, 10);
         };
 
-        function openModal(docId = null, empId = '', empName = '', empPin = '', wage = '', otRate = '', offDaysStr = '') {
-            modalDocId.value = docId || ''; 
-            modalEmpId.value = empId; 
-            modalEmpName.value = empName; 
-            modalEmpPin.value = empPin;
-            modalEmpWage.value = wage;
-            modalEmpOt.value = otRate;
-            
-            if(offDaysStr) {
-                try {
-                    currentModalOffDays = JSON.parse(decodeURIComponent(offDaysStr));
-                } catch(e) {
-                    currentModalOffDays = { 0:true, 1:false, 2:false, 3:false, 4:false, 5:false, 6:false };
-                }
-            } else {
-                currentModalOffDays = { 0:true, 1:false, 2:false, 3:false, 4:false, 5:false, 6:false }; // Default Sun
-            }
-            renderModalOffDays();
-
-            modalTitle.textContent = docId ? 'แก้ไขข้อมูลพนักงาน' : 'เพิ่มพนักงานใหม่';
-            employeeModal.classList.remove('opacity-0', 'pointer-events-none');
-            setTimeout(() => { employeeModalContent.classList.remove('scale-95'); employeeModalContent.classList.add('scale-100'); }, 10);
-        }
-
-        function closeModal() {
-            employeeModalContent.classList.remove('scale-100'); employeeModalContent.classList.add('scale-95');
-            setTimeout(() => { employeeModal.classList.add('opacity-0', 'pointer-events-none'); }, 200);
-        }
-
-        btnAddEmployee.addEventListener('click', () => openModal());
-        btnCloseModal.addEventListener('click', closeModal);
-        window.editEmployee = (docId, empId, empName, empPin, wage, otRate, offDaysStr) => openModal(docId, empId, empName, empPin || '0000', wage, otRate, offDaysStr);
+        window.closeModal = () => {
+            const m = document.getElementById('employee-modal'), c = document.getElementById('employee-modal-content');
+            c.classList.remove('scale-100'); c.classList.add('scale-95'); setTimeout(() => { m.classList.add('opacity-0', 'pointer-events-none'); }, 200);
+        };
+        document.getElementById('btn-add-employee').addEventListener('click', () => window.openModal());
+        document.getElementById('btn-close-modal').addEventListener('click', window.closeModal);
         
         window.deleteEmployee = async (docId) => {
-            if(confirm('ลบพนักงานคนนี้ใช่หรือไม่?')) {
-                if(!user) return;
-                try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', docId)); } 
-                catch(e) { console.error(e); }
+            if(confirm('ลบ?')) { if(user) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', docId)); }
+        };
+
+        document.getElementById('btn-save-employee').addEventListener('click', async () => {
+            if(!user) return;
+            const docId = document.getElementById('modal-doc-id').value, empId = document.getElementById('modal-emp-id').value.trim(), empName = document.getElementById('modal-emp-name').value.trim();
+            const empPin = document.getElementById('modal-emp-pin').value.trim() || '0000', wage = Number(document.getElementById('modal-emp-wage').value)||0, otRate = Number(document.getElementById('modal-emp-ot').value)||0;
+            if(!empId || !empName || empPin.length !== 4) return alert('กรอกให้ครบ');
+            const btn = document.getElementById('btn-save-employee'); btn.disabled=true; btn.innerHTML='<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> บันทึก...'; lucide.createIcons();
+            const data = { empId, empName, empPin, wage, otRate, offDays: currentModalOffDays };
+            try {
+                if(docId) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', docId), data);
+                else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), {...data, createdAt: serverTimestamp()});
+                window.closeModal(); if(currentEmpId===empId) { currentEmpName=empName; currentEmpNameEl.textContent=empName; }
+            } catch(e){} finally { btn.disabled=false; btn.innerHTML='<i data-lucide="save" class="w-4 h-4"></i> บันทึก'; lucide.createIcons(); }
+        });
+
+        // --- PIN & Data Render ---
+        const pinOverlay = document.getElementById('pin-overlay'), pinContent = document.getElementById('pin-modal-content'), pinErr = document.getElementById('pin-error-msg');
+        window.promptPin = (empId, empName, pin) => {
+            pinMode='employee'; pendingEmpId=empId; pendingEmpName=empName; expectedPin=pin||'0000'; currentEnteredPin='';
+            document.getElementById('pin-emp-name').textContent = empName; document.getElementById('pin-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(empName)}&background=eff6ff&color=2563eb&bold=true`;
+            pinErr.classList.remove('opacity-100'); updatePinDotsUI();
+            pinOverlay.classList.remove('opacity-0', 'pointer-events-none'); setTimeout(() => pinContent.classList.remove('translate-y-full', 'sm:scale-95'), 10);
+        };
+        window.promptOwnerPin = () => {
+            pinMode='owner'; expectedPin='9999'; currentEnteredPin='';
+            document.getElementById('pin-emp-name').textContent = 'ผู้ดูแลระบบ'; document.getElementById('pin-avatar').src = `https://ui-avatars.com/api/?name=Owner&background=f59e0b&color=fff&bold=true`;
+            pinErr.classList.remove('opacity-100'); updatePinDotsUI();
+            pinOverlay.classList.remove('opacity-0', 'pointer-events-none'); setTimeout(() => pinContent.classList.remove('translate-y-full', 'sm:scale-95'), 10);
+        };
+        window.closePinOverlay = () => { pinContent.classList.add('translate-y-full', 'sm:scale-95'); setTimeout(() => { pinOverlay.classList.add('opacity-0', 'pointer-events-none'); pendingEmpId=null; }, 300); };
+        document.getElementById('btn-close-pin').addEventListener('click', window.closePinOverlay);
+        window.handlePinInput = (num) => { if(currentEnteredPin.length<4) { currentEnteredPin+=num; updatePinDotsUI(); pinErr.classList.remove('opacity-100'); if(currentEnteredPin.length===4) setTimeout(window.verifyPin,150); } };
+        window.deletePinChar = () => { if(currentEnteredPin.length>0) { currentEnteredPin=currentEnteredPin.slice(0,-1); updatePinDotsUI(); } };
+        function updatePinDotsUI() {
+            document.querySelectorAll('.pin-dot').forEach((d,i) => { d.className = i<currentEnteredPin.length ? 'pin-dot w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-blue-500 bg-blue-500 transition-colors' : 'pin-dot w-3 h-3 sm:w-4 sm:h-4 rounded-full border-2 border-slate-300 bg-transparent transition-colors'; });
+        }
+        window.verifyPin = () => {
+            if(currentEnteredPin===expectedPin) { if(pinMode==='employee') window.loginAs(pendingEmpId,pendingEmpName); else openOwnerView(); window.closePinOverlay(); }
+            else {
+                pinErr.classList.add('opacity-100'); const c = document.getElementById('pin-dots-container');
+                c.classList.remove('animate-shake'); void c.offsetWidth; c.classList.add('animate-shake');
+                if(navigator.vibrate) navigator.vibrate([100,50,100]);
+                setTimeout(()=>{ currentEnteredPin=''; updatePinDotsUI(); }, 400);
             }
         };
 
-        btnSaveEmployee.addEventListener('click', async () => {
-            if(!user) return;
-            const docId = modalDocId.value;
-            const empId = modalEmpId.value.trim();
-            const empName = modalEmpName.value.trim();
-            const empPin = modalEmpPin.value.trim() || '0000';
-            const wage = Number(modalEmpWage.value) || 0;
-            const otRate = Number(modalEmpOt.value) || 0;
+        window.loginAs = (id, name) => {
+            currentEmpId=id; currentEmpName=name; currentEmpNameEl.textContent=name;
+            currentEmpAvatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=eff6ff&color=2563eb&bold=true`;
+            loginOverlay.classList.add('opacity-0', 'pointer-events-none');
+            document.getElementById('emp-tab-clock').click(); refreshCurrentUserState(); renderEmployeeRequests();
+        };
 
-            if (!empId || !empName || empPin.length !== 4) { alert('กรอกข้อมูลให้ครบและ PIN 4 หลัก'); return; }
-
-            btnSaveEmployee.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> กำลังบันทึก...';
-            lucide.createIcons(); btnSaveEmployee.disabled = true;
-
-            const empData = {
-                empId: empId, 
-                empName: empName, 
-                empPin: empPin,
-                wage: wage,
-                otRate: otRate,
-                offDays: currentModalOffDays
-            };
-
-            try {
-                if (docId) {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'employees', docId), empData);
-                } else {
-                    empData.createdAt = serverTimestamp();
-                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), empData);
-                }
-                
-                closeModal();
-                if(currentEmpId === empId) { currentEmpName = empName; currentEmpNameEl.textContent = empName; }
-            } catch (e) { console.error(e); alert('Error'); } 
-            finally {
-                btnSaveEmployee.disabled = false; btnSaveEmployee.innerHTML = '<i data-lucide="save" class="w-5 h-5"></i> บันทึกข้อมูลพนักงาน'; lucide.createIcons();
-            }
-        });
-
-        function renderOwnerEmployeeList() {
-            ownerEmpTotal.textContent = allEmployees.length;
-            if (allEmployees.length === 0) {
-                ownerEmployeeList.innerHTML = `<div class="flex flex-col items-center justify-center py-10 opacity-60"><i data-lucide="users" class="w-12 h-12 text-slate-400 mb-3"></i><p class="text-sm font-medium text-slate-500">ยังไม่มีพนักงานในระบบ</p></div>`;
-                lucide.createIcons(); return;
-            }
-
-            let html = '';
-            allEmployees.forEach(emp => {
-                const safeId = String(emp.empId).replace(/'/g, "\\'");
-                const safeName = String(emp.empName).replace(/'/g, "\\'");
-                const safePin = String(emp.empPin || '0000').replace(/'/g, "\\'");
-                const safeWage = emp.wage || 0;
-                const safeOt = emp.otRate || 0;
-                
-                // Encode Object to URI Component to safely pass in HTML onclick
-                const defaultOffDays = {0:true, 1:false, 2:false, 3:false, 4:false, 5:false, 6:false};
-                const safeOffDays = encodeURIComponent(JSON.stringify(emp.offDays || defaultOffDays));
-                
-                html += `<div class="flex justify-between items-center p-4 bg-white rounded-2xl shadow-sm border border-slate-100 hover:border-blue-100 transition-colors">
-                    <div class="flex items-center gap-3 overflow-hidden">
-                        <div class="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 shrink-0"><i data-lucide="user" class="w-5 h-5"></i></div>
-                        <div class="truncate">
-                            <p class="font-bold text-slate-800 text-sm truncate">${emp.empName}</p>
-                            <p class="text-[11px] text-slate-500 font-medium">${emp.empId} <span class="text-slate-300 mx-1">|</span> ค่าแรง: ${safeWage}฿</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-1.5 shrink-0">
-                        <button onclick="editEmployee('${emp.id}', '${safeId}', '${safeName}', '${safePin}', '${safeWage}', '${safeOt}', '${safeOffDays}')" class="w-8 h-8 flex items-center justify-center text-blue-500 bg-blue-50 rounded-lg hover:bg-blue-500 hover:text-white transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                        <button onclick="deleteEmployee('${emp.id}')" class="w-8 h-8 flex items-center justify-center text-rose-500 bg-rose-50 rounded-lg hover:bg-rose-500 hover:text-white transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                </div>`;
-            });
-            ownerEmployeeList.innerHTML = html;
-            lucide.createIcons();
-        }
-
-        function renderOwnerDashboard() {
-            const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-            let todayCount = 0; const activeEmployees = new Set(), latestStatusByEmployee = {};
-
-            allLogs.forEach(log => {
-                if (log.time >= todayStart) todayCount++;
-                if (!latestStatusByEmployee[log.employeeId]) {
-                    latestStatusByEmployee[log.employeeId] = log;
-                    if (log.type === 'IN') activeEmployees.add(log.employeeId);
-                }
-            });
-
-            ownerActiveCount.textContent = activeEmployees.size;
-            ownerTodayCount.textContent = todayCount;
-
-            if (allLogs.length === 0) ownerHistoryList.innerHTML = '<p class="text-center text-slate-400 text-xs py-10 italic">ไม่มีข้อมูลในระบบ...</p>';
+        function renderLists() {
+            // Emp selector
+            const sl = document.getElementById('employee-select-list');
+            if(allEmployees.length===0) sl.innerHTML = `<p class="text-center text-rose-500 text-sm py-4">ไม่มีรายชื่อ</p>`;
             else {
-                let html = '';
-                allLogs.slice(0, 20).forEach((log) => {
-                    const timeStr = log.time.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }), dateStr = log.time.toLocaleDateString('th-TH', { month: 'short', day: 'numeric' });
-                    html += `<div class="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-100 shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full flex items-center justify-center ${log.type === 'IN' ? 'bg-blue-50 text-blue-600' : 'bg-rose-50 text-rose-500'}"><i data-lucide="${log.type === 'IN' ? 'log-in' : 'log-out'}" class="w-[18px] h-[18px]"></i></div>
-                            <div>
-                                <p class="font-bold text-slate-800 text-sm">${log.employeeName || log.employeeId}</p>
-                                <p class="text-[11px] font-medium mt-0.5 ${log.type === 'IN' ? 'text-blue-500' : 'text-rose-500'}">${log.type === 'IN' ? 'Clock In' : 'Clock Out'} • <span class="text-slate-400">${log.location}</span></p>
-                            </div>
-                        </div>
-                        <div class="text-right"><div class="font-bold text-slate-800 text-sm tabular-nums tracking-tight">${timeStr}</div><div class="text-[10px] text-slate-400">${dateStr}</div></div>
-                    </div>`;
-                });
-                ownerHistoryList.innerHTML = html;
+                sl.innerHTML = allEmployees.map(e => `<button onclick="promptPin('${e.empId}', '${e.empName}', '${e.empPin||'0000'}')" class="w-full flex items-center p-3 sm:p-3.5 bg-white border border-slate-100 shadow-sm rounded-2xl hover:border-blue-300 hover:shadow-md transition-all group">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 bg-slate-100 text-slate-600 rounded-full flex items-center justify-center mr-3 group-hover:bg-blue-100 group-hover:text-blue-600"><i data-lucide="user" class="w-4 h-4 sm:w-5 sm:h-5"></i></div>
+                    <div class="text-left flex-1"><p class="font-bold text-slate-800 text-sm sm:text-base">${e.empName}</p><p class="text-[10px] sm:text-xs text-slate-500">${e.empId}</p></div><i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-blue-500"></i></button>`).join('');
             }
+            // Owner Emp List
+            document.getElementById('owner-emp-total').textContent = allEmployees.length;
+            const ol = document.getElementById('owner-employee-list');
+            if(allEmployees.length===0) ol.innerHTML='';
+            else ol.innerHTML = allEmployees.map(e => {
+                const offDaysStr = encodeURIComponent(JSON.stringify(e.offDays || {0:true,1:false,2:false,3:false,4:false,5:false,6:false}));
+                return `<div class="flex justify-between items-center p-3 sm:p-4 bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 hover:border-blue-100 transition-colors">
+                    <div class="flex items-center gap-2 sm:gap-3 overflow-hidden">
+                        <div class="w-8 h-8 sm:w-10 sm:h-10 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 shrink-0"><i data-lucide="user" class="w-4 h-4"></i></div>
+                        <div class="truncate"><p class="font-bold text-slate-800 text-xs sm:text-sm truncate">${e.empName}</p><p class="text-[9px] sm:text-[11px] text-slate-500">${e.empId} | PIN: ${e.empPin||'0000'} | ฿${e.wage||0}</p></div>
+                    </div>
+                    <div class="flex gap-1 shrink-0">
+                        <button onclick="editEmployee('${e.id}', '${e.empId}', '${e.empName}', '${e.empPin||'0000'}', '${e.wage||0}', '${e.otRate||0}', '${offDaysStr}')" class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-blue-500 bg-blue-50 rounded-lg hover:bg-blue-500 hover:text-white"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                        <button onclick="deleteEmployee('${e.id}')" class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center text-rose-500 bg-rose-50 rounded-lg hover:bg-rose-500 hover:text-white"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                    </div></div>`;
+            }).join('');
+            
+            // Dashboard & Logs
+            const ts = new Date(); ts.setHours(0,0,0,0);
+            let tCount = 0; const aEmps = new Set(), lStat = {};
+            allLogs.forEach(l => {
+                if(l.time >= ts) tCount++;
+                if(!lStat[l.employeeId]) { lStat[l.employeeId]=l; if(l.type==='IN') aEmps.add(l.employeeId); }
+            });
+            document.getElementById('owner-active-count').textContent = aEmps.size;
+            document.getElementById('owner-today-count').textContent = tCount;
+            document.getElementById('owner-history-list').innerHTML = allLogs.slice(0,20).map(l => `<div class="flex items-center justify-between p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-white border border-slate-100 shadow-sm"><div class="flex items-center gap-2 sm:gap-3"><div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${l.type==='IN'?'bg-blue-50 text-blue-600':'bg-rose-50 text-rose-500'}"><i data-lucide="${l.type==='IN'?'log-in':'log-out'}" class="w-4 h-4"></i></div><div><p class="font-bold text-slate-800 text-xs sm:text-sm">${l.employeeName||l.employeeId}</p><p class="text-[9px] sm:text-[11px] font-medium mt-0.5 ${l.type==='IN'?'text-blue-500':'text-rose-500'}">${l.type==='IN'?'เข้างาน':'เลิกงาน'} • <span class="text-slate-400">${l.location}</span></p></div></div><div class="text-right"><div class="font-bold text-slate-800 text-xs sm:text-sm tabular-nums">${l.time.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})}</div><div class="text-[9px] sm:text-[10px] text-slate-400">${l.time.toLocaleDateString('th-TH',{month:'short',day:'numeric'})}</div></div></div>`).join('') || '<p class="text-center text-xs py-5">ไม่มีข้อมูล</p>';
+            
+            lucide.createIcons();
+            refreshCurrentUserState();
+        }
+
+        // Requests
+        window.submitRequest = async (type) => {
+            if(!user||!currentEmpId) return;
+            const d = { employeeId:currentEmpId, employeeName:currentEmpName, requestType:type, status:'PENDING', timestamp:serverTimestamp() };
+            if(type==='LEAVE') {
+                d.leaveType=document.getElementById('leave-type').value; d.startDate=document.getElementById('leave-start').value; d.endDate=document.getElementById('leave-end').value; d.reason=document.getElementById('leave-reason').value;
+                if(!d.startDate||!d.endDate||!d.reason) return alert('กรอกให้ครบ');
+            } else {
+                d.workDate=document.getElementById('swap-work-date').value; d.offDate=document.getElementById('swap-off-date').value; d.reason=document.getElementById('swap-reason').value;
+                if(!d.workDate||!d.offDate||!d.reason) return alert('กรอกให้ครบ');
+            }
+            try { await addDoc(collection(db,'artifacts',appId,'public','data','requests'), d); alert('ส่งคำขอแล้ว'); } catch(e){ alert('Error'); }
+        };
+        window.updateRequestStatus = async (id, s) => { if(user) await updateDoc(doc(db,'artifacts',appId,'public','data','requests',id), {status:s, updatedAt:serverTimestamp()}); };
+        window.deleteRequest = async (id) => { if(user&&confirm('ลบ?')) await deleteDoc(doc(db,'artifacts',appId,'public','data','requests',id)); };
+
+        function renderEmployeeRequests() {
+            if(!currentEmpId) return;
+            const formatD = (ds) => ds ? new Date(ds).toLocaleDateString('th-TH',{day:'numeric',month:'short'}) : '';
+            const b = (s) => s==='APPROVED'?'<span class="bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded text-[9px] font-bold">อนุมัติ</span>':(s==='REJECTED'?'<span class="bg-rose-100 text-rose-600 px-1.5 py-0.5 rounded text-[9px] font-bold">ไม่อนุมัติ</span>':'<span class="bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded text-[9px] font-bold">รออนุมัติ</span>');
+            
+            document.getElementById('emp-leave-history').innerHTML = allRequests.filter(r=>r.employeeId===currentEmpId&&r.requestType==='LEAVE').map(r=>`<div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 relative">${r.status==='PENDING'?`<button onclick="deleteRequest('${r.id}')" class="absolute top-2 right-2 text-slate-300"><i data-lucide="trash-2" class="w-3 h-3"></i></button>`:''}<div class="flex items-center gap-2 mb-1">${b(r.status)}<span class="font-bold text-slate-700 text-xs">${r.leaveType}</span></div><p class="text-[10px] text-slate-600">วันที่: ${formatD(r.startDate)} - ${formatD(r.endDate)}</p><p class="text-[10px] text-slate-600">เหตุผล: ${r.reason}</p></div>`).join('')||'<p class="text-xs text-slate-400 text-center">ไม่มีประวัติ</p>';
+            
+            document.getElementById('emp-swap-history').innerHTML = allRequests.filter(r=>r.employeeId===currentEmpId&&r.requestType==='SWAP').map(r=>`<div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 relative">${r.status==='PENDING'?`<button onclick="deleteRequest('${r.id}')" class="absolute top-2 right-2 text-slate-300"><i data-lucide="trash-2" class="w-3 h-3"></i></button>`:''}<div class="flex items-center gap-2 mb-1">${b(r.status)}<span class="font-bold text-slate-700 text-xs">สลับวันหยุด</span></div><p class="text-[10px] text-slate-600">มาทำแทน: ${formatD(r.workDate)} | ขอหยุด: ${formatD(r.offDate)}</p><p class="text-[10px] text-slate-600">เหตุผล: ${r.reason}</p></div>`).join('')||'<p class="text-xs text-slate-400 text-center">ไม่มีประวัติ</p>';
             lucide.createIcons();
         }
 
-        // Clock Action
-        async function handlePunch() {
-            if (!user || !currentEmpId) return;
-            try {
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'attendance_logs'), {
-                    employeeId: currentEmpId, employeeName: currentEmpName, type: isCheckedIn ? 'OUT' : 'IN', timestamp: serverTimestamp(), location: 'สำนักงานใหญ่ HQ (GPS)', device: 'Web Browser'
-                });
-            } catch (error) { console.error(error); alert("Error"); }
-        }
-
-        function startHold(e) {
-            e.preventDefault();
-            if (showSuccess || !user || !currentEmpId) return;
-            isHolding = true; holdProgress = 0;
+        function renderOwnerRequests() {
+            let pCount = 0;
+            const formatD = (ds) => ds ? new Date(ds).toLocaleDateString('th-TH',{day:'numeric',month:'short'}) : '';
+            const b = (s) => s==='APPROVED'?'<span class="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold">อนุมัติแล้ว</span>':(s==='REJECTED'?'<span class="bg-rose-100 text-rose-600 px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold">ไม่อนุมัติ</span>':'<span class="bg-amber-100 text-amber-600 px-2 py-0.5 rounded text-[9px] sm:text-[10px] font-bold">รออนุมัติ</span>');
             
-            holdIntervalId = setInterval(() => {
-                holdProgress += 2;
-                if (holdProgress >= 100) {
-                    clearInterval(holdIntervalId); showSuccess = true;
-                    if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
-                    updateUIState(); handlePunch();
-                    setTimeout(() => { showSuccess = false; holdProgress = 0; isHolding = false; updateUIState(); }, 1500);
-                } else updateUIState();
-            }, 10);
+            document.getElementById('owner-requests-list').innerHTML = allRequests.map(r => {
+                if(r.status==='PENDING') pCount++;
+                const isL = r.requestType==='LEAVE';
+                return `<div class="bg-white p-3 sm:p-4 rounded-xl sm:rounded-2xl shadow-sm border ${r.status==='PENDING'?'border-amber-200':'border-slate-100'}">
+                    <div class="flex justify-between mb-2"><div class="flex gap-2"><div class="w-7 h-7 rounded bg-slate-50 flex items-center justify-center ${isL?'text-blue-500':'text-purple-500'}"><i data-lucide="${isL?'calendar-off':'arrow-left-right'}" class="w-4 h-4"></i></div><div><p class="font-bold text-xs sm:text-sm">${r.employeeName}</p><p class="text-[9px] text-slate-400">${isL?`ลางาน (${r.leaveType})`:'สลับวันหยุด'}</p></div></div>${b(r.status)}</div>
+                    <div class="bg-slate-50 p-2 rounded text-[10px] sm:text-xs text-slate-600 mb-2">${isL?`วันที่: ${formatD(r.startDate)} - ${formatD(r.endDate)}`:`มาทำ: ${formatD(r.workDate)} | หยุด: ${formatD(r.offDate)}`}<br>เหตุผล: ${r.reason}</div>
+                    ${r.status==='PENDING'?`<div class="flex gap-2"><button onclick="updateRequestStatus('${r.id}','APPROVED')" class="flex-1 bg-emerald-500 text-white text-[10px] py-1.5 rounded"><i data-lucide="check" class="w-3 h-3 inline"></i> อนุมัติ</button><button onclick="updateRequestStatus('${r.id}','REJECTED')" class="flex-1 bg-rose-50 text-rose-600 text-[10px] py-1.5 rounded"><i data-lucide="x" class="w-3 h-3 inline"></i> ไม่อนุมัติ</button></div>`:''}
+                </div>`;
+            }).join('') || '<p class="text-xs text-center py-5">ไม่มีคำขอ</p>';
+            
+            document.getElementById('badge-pending').className = pCount>0 ? 'absolute top-0 right-1 sm:right-2 w-2 h-2 bg-rose-500 rounded-full' : 'hidden';
+            lucide.createIcons();
+        }
+
+        // Punch Actions
+        function startHold(e) {
+            e.preventDefault(); if(showSuccess||!user||!currentEmpId) return;
+            isHolding=true; holdProgress=0;
+            holdIntervalId = setInterval(()=>{ holdProgress+=2; if(holdProgress>=100){ clearInterval(holdIntervalId); showSuccess=true; if(navigator.vibrate)navigator.vibrate([50,50]); updateUIState(); addDoc(collection(db,'artifacts',appId,'public','data','attendance_logs'), {employeeId:currentEmpId, employeeName:currentEmpName, type:isCheckedIn?'OUT':'IN', timestamp:serverTimestamp(), location:'HQ (GPS)'}); setTimeout(()=>{showSuccess=false; holdProgress=0; isHolding=false; updateUIState();}, 1500); } else updateUIState(); }, 10);
             updateUIState();
         }
+        function endHold() { if(showSuccess||!user||!currentEmpId) return; clearInterval(holdIntervalId); holdProgress=0; isHolding=false; updateUIState(); }
+        const ha = document.getElementById('hold-area'); ha.addEventListener('mousedown',startHold); ha.addEventListener('mouseup',endHold); ha.addEventListener('mouseleave',endHold); ha.addEventListener('touchstart',startHold,{passive:false}); ha.addEventListener('touchend',endHold);
 
-        function endHold() {
-            if (showSuccess || !user || !currentEmpId) return;
-            clearInterval(holdIntervalId); holdProgress = 0; isHolding = false; updateUIState();
-        }
-
-        holdArea.addEventListener('mousedown', startHold); holdArea.addEventListener('mouseup', endHold); holdArea.addEventListener('mouseleave', endHold);
-        holdArea.addEventListener('touchstart', startHold, {passive: false}); holdArea.addEventListener('touchend', endHold);
-
-        // --- Init ---
-        async function initAuth() {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
-                else await signInAnonymously(auth);
-            } catch (e) { console.error(e); }
-        }
-
-        onAuthStateChanged(auth, (currentUser) => {
-            user = currentUser;
-            updateUIState();
-
-            if (user) {
-                if (unsubscribeLogs) unsubscribeLogs();
-                unsubscribeLogs = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'attendance_logs'), (snapshot) => {
-                    allLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), time: doc.data().timestamp ? doc.data().timestamp.toDate() : new Date() })).sort((a, b) => b.time - a.time);
-                    refreshCurrentUserState(); renderOwnerDashboard();
+        // Init
+        async function initAuth() { try{ if(typeof __initial_auth_token!=='undefined'&&__initial_auth_token) await signInWithCustomToken(auth,__initial_auth_token); else await signInAnonymously(auth); }catch(e){} }
+        onAuthStateChanged(auth, (u) => {
+            user = u; updateUIState();
+            if(u) {
+                unsubscribeLogs = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'attendance_logs'), (s) => { allLogs = s.docs.map(d=>({id:d.id,...d.data(),time:d.data().timestamp?d.data().timestamp.toDate():new Date()})).sort((a,b)=>b.time-a.time); renderLists(); });
+                unsubscribeEmps = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), (s) => { 
+                    allEmployees = s.docs.map(d=>({id:d.id,...d.data()})); 
+                    if(allEmployees.length===0 && !s.metadata.hasPendingWrites) { addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), {empId:'EMP-001',empName:'สมชาย ใจดี',empPin:'0000',wage:500,otRate:50,offDays:{0:true,1:false,2:false,3:false,4:false,5:false,6:false},createdAt:serverTimestamp()}); return; }
+                    allEmployees.sort((a,b)=>String(a.empId).localeCompare(String(b.empId)));
+                    renderLists();
                 });
-
-                if (unsubscribeEmps) unsubscribeEmps();
-                unsubscribeEmps = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), (snapshot) => {
-                    allEmployees = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    if(allEmployees.length === 0 && !snapshot.metadata.hasPendingWrites) {
-                        // Demo user creation with defaults
-                        addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'employees'), { 
-                            empId: 'EMP-1042', empName: 'สมชาย ใจดี', empPin: '0000', 
-                            wage: 500, otRate: 50, 
-                            offDays: {0:true, 1:false, 2:false, 3:false, 4:false, 5:false, 6:false},
-                            createdAt: serverTimestamp() 
-                        });
-                        return;
-                    }
-                    allEmployees.sort((a, b) => String(a.empId).localeCompare(String(b.empId)));
-                    if(currentEmpId && !allEmployees.find(e => e.empId === currentEmpId)) btnLogout.click(); 
-                    renderEmployeeSelector(); renderOwnerEmployeeList();
-                });
-
-                if (unsubscribeRequests) unsubscribeRequests();
-                unsubscribeRequests = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), (snapshot) => {
-                    allRequests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data(), time: doc.data().timestamp ? doc.data().timestamp.toDate() : new Date() })).sort((a, b) => b.time - a.time);
-                    renderEmployeeRequests(); renderOwnerRequests();
-                });
-            } else {
-                if (unsubscribeLogs) { unsubscribeLogs(); unsubscribeLogs = null; }
-                if (unsubscribeEmps) { unsubscribeEmps(); unsubscribeEmps = null; }
-                if (unsubscribeRequests) { unsubscribeRequests(); unsubscribeRequests = null; }
+                unsubscribeRequests = onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'requests'), (s) => { allRequests = s.docs.map(d=>({id:d.id,...d.data(),time:d.data().timestamp?d.data().timestamp.toDate():new Date()})).sort((a,b)=>b.time-a.time); renderEmployeeRequests(); renderOwnerRequests(); });
             }
         });
-
         initAuth();
-        updateUIState();
     </script>
 </body>
 </html>
